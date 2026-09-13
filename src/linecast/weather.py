@@ -247,8 +247,8 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     has_wind_row = bool(all_winds) and max(all_winds) > wind_threshold
     all_uv = hourly.get("uv_index", [])
     has_uv_row = bool(all_uv) and max(all_uv) >= 6
-    has_precip_graph = (bool(hourly.get("precipitation_probability"))
-                        and max(hourly.get("precipitation_probability", [0])) > 5)
+    has_precip_graph = (bool(hourly.get("precipitation"))
+                        and max(hourly.get("precipitation", [0])) > 0)
 
     # Count non-hourly lines precisely
     non_hourly = 2  # header + blank

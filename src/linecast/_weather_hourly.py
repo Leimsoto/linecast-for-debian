@@ -1,10 +1,11 @@
 """Hourly weather chart rendering."""
 
+import math
 from datetime import datetime, timedelta
 
 from linecast import _theme
 from linecast._braille import build_braille_curve, interpolate
-from linecast._graphics import bg, fg, fmt_hour, fmt_time_dt, RESET, visible_len
+from linecast._graphics import bg, color_mode, fg, fmt_hour, fmt_time_dt, RESET, visible_len
 from linecast._runtime import WeatherRuntime, current_runtime, log_skipped
 from linecast._i18n import lang_of
 from linecast._weather_i18n import FULL_DAY_NAMES, _s
@@ -22,8 +23,9 @@ from linecast._weather_style import (
     UV_COLOR,
     WIND_ARROWS,
     WIND_COLOR,
+    PRECIP_BAR_FULL,
     _colored_temp,
-    _precip_color,
+    _precip_rgb,
     _temp_color,
 )
 
@@ -89,24 +91,56 @@ def _parse_sun_events(daily):
 # ---------------------------------------------------------------------------
 # Braille temperature curve (multi-row, smooth line)
 # ---------------------------------------------------------------------------
-def _build_precip_blocks(precip_probs, weather_codes, graph_w, n_rows=1, indicator_cols=None):
-    """Build multi-row block bar graph for precipitation probability.
+def _precip_bar_full(data, runtime):
+    """Hourly amount that fills the precipitation bar, in the data's unit."""
+    unit = (data.get("hourly_units") or {}).get("precipitation")
+    if unit not in PRECIP_BAR_FULL:
+        unit = "mm" if runtime.metric else "inch"
+    return PRECIP_BAR_FULL[unit]
+
+
+def _precip_columns(amounts, probs, weather_codes, graph_w, full):
+    """Per-column (height fraction, color) for the precipitation bar.
+
+    Height follows the forecast amount: the square root of its fraction of
+    `full`, so drizzle registers and heavy rain tops out.  Color is the
+    precipitation type faded toward the background by the probability, so a
+    likely shower is solid and a long shot is a ghost of one.  Terminals
+    with 16 colors or none cannot blend, so there the bar is always solid.
+    A column with no forecast amount has height 0 whatever the probability.
+    """
+    col_amounts = interpolate(amounts, graph_w)
+    col_probs = interpolate(probs, graph_w) if probs else [100] * graph_w
+    blend = color_mode() in ("truecolor", "256")
+    columns = []
+    for x in range(graph_w):
+        amount = col_amounts[x]
+        if amount <= 0:
+            columns.append((0.0, ""))
+            continue
+        frac = math.sqrt(min(1.0, amount / full))
+        code_t = x / max(1, graph_w - 1) * max(0, len(weather_codes) - 1)
+        code_i = max(0, min(len(weather_codes) - 1, int(round(code_t))))
+        rgb = _precip_rgb(weather_codes[code_i] if weather_codes else 0)
+        if blend:
+            alpha = max(0.0, min(1.0, col_probs[x] / 100))
+            rgb = _theme.lerp_rgb(_theme.theme_bg, rgb, alpha)
+        columns.append((frac, fg(*rgb)))
+    return columns
+
+
+def _build_precip_blocks(amounts, probs, weather_codes, graph_w, n_rows=1, indicator_cols=None,
+                         full=PRECIP_BAR_FULL["mm"]):
+    """Build multi-row block bar graph for precipitation.
 
     Returns a list of rendered line strings (n_rows lines).
     Bars grow upward from the bottom using partial block characters (▁▂▃▄▅▆▇█),
-    giving 8 levels of vertical resolution per character row.
+    giving 8 levels of vertical resolution per character row.  See
+    _precip_columns for what height and color mean.
     indicator_cols: set of 0-based graph columns to draw │ where cell is empty.
     """
     total_eighths = n_rows * 8  # total vertical resolution units
-
-    # Interpolate precip probability to 1 sample per column
-    col_probs = interpolate(precip_probs, graph_w)
-    # Nearest-neighbor for discrete weather codes
-    col_codes = []
-    for x in range(graph_w):
-        code_t = x / max(1, graph_w - 1) * max(0, len(weather_codes) - 1)
-        code_i = max(0, min(len(weather_codes) - 1, int(round(code_t))))
-        col_codes.append(weather_codes[code_i] if weather_codes else 0)
+    columns = _precip_columns(amounts, probs, weather_codes, graph_w, full)
 
     # Build rows top-down (row 0 = top, row n_rows-1 = bottom)
     result = []
@@ -115,10 +149,10 @@ def _build_precip_blocks(precip_probs, weather_codes, graph_w, n_rows=1, indicat
         row_bottom = (n_rows - 1 - r) * 8  # eighths at bottom of this row
         row_top = row_bottom + 8             # eighths at top of this row
         for x in range(graph_w):
-            p = col_probs[x]
-            is_empty = p <= 5
+            frac, color = columns[x]
+            is_empty = frac <= 0
             if not is_empty:
-                bar_h = max(1, int(p / 100 * total_eighths + 0.5))
+                bar_h = max(1, int(frac * total_eighths + 0.5))
                 is_empty = bar_h <= row_bottom
 
             if is_empty:
@@ -127,11 +161,9 @@ def _build_precip_blocks(precip_probs, weather_codes, graph_w, n_rows=1, indicat
                 else:
                     line += " "
             elif bar_h >= row_top:
-                color = _precip_color(col_codes[x])
                 line += f"{color}\u2588"
             else:
                 eighths_in_row = bar_h - row_bottom  # 1-7
-                color = _precip_color(col_codes[x])
                 line += f"{color}{SPARKLINE[eighths_in_row - 1]}"
         result.append(f"{line}{RESET}")
 
@@ -152,6 +184,7 @@ def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0):
     times = hourly.get("time", [])
     temps = hourly.get("temperature_2m", [])
     precip_prob = hourly.get("precipitation_probability", [])
+    precip_amount = hourly.get("precipitation", [])
     weather_codes = hourly.get("weather_code", [])
     wind_speeds = hourly.get("wind_speed_10m", [])
     wind_directions = hourly.get("wind_direction_10m", [])
@@ -201,6 +234,7 @@ def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0):
         return None
 
     window_precip = precip_prob[start_idx:end_idx + 1] if precip_prob else []
+    window_amount = precip_amount[start_idx:end_idx + 1] if precip_amount else []
     window_codes = weather_codes[start_idx:end_idx + 1] if weather_codes else []
     window_winds = wind_speeds[start_idx:end_idx + 1] if wind_speeds else []
     window_wind_dirs = wind_directions[start_idx:end_idx + 1] if wind_directions else []
@@ -220,11 +254,12 @@ def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0):
     all_temp_hi = max(temps) if temps else 0
     all_wind_max = max(wind_speeds) if wind_speeds else 0
     all_uv_max = max(uv_indices) if uv_indices else 0
-    all_precip_max = max(precip_prob) if precip_prob else 0
+    all_precip_max = max(precip_amount) if precip_amount else 0
 
     return {
         "temps": window_temps,
         "precip": window_precip,
+        "precip_amount": window_amount,
         "codes": window_codes,
         "winds": window_winds,
         "wind_dirs": window_wind_dirs,
@@ -916,28 +951,25 @@ def _render_uv_row(window_uv, total_hours, graph_w, runtime,
                                 now_col=now_col)
 
 
-def _render_precip_rows(window_precip, window_codes, graph_w, n_precip_rows, indicator_cols=None):
-    """Render precipitation probability graph rows."""
-    if not window_precip or max(window_precip, default=0) <= 5:
+def _render_precip_rows(window_amount, window_precip, window_codes, graph_w, n_precip_rows,
+                        indicator_cols=None, full=PRECIP_BAR_FULL["mm"]):
+    """Render precipitation graph rows: height is amount, color is probability."""
+    if not window_amount or max(window_amount, default=0) <= 0:
         return []
     if n_precip_rows >= 1:
-        return _build_precip_blocks(window_precip, window_codes, graph_w, n_precip_rows,
-                                    indicator_cols=indicator_cols)
+        return _build_precip_blocks(window_amount, window_precip, window_codes, graph_w,
+                                    n_precip_rows, indicator_cols=indicator_cols, full=full)
 
     precip_chars = []
-    col_precip = _interpolate_columns(window_precip, graph_w)
-    for x, p in enumerate(col_precip):
-        if p <= 5:
+    for x, (frac, color) in enumerate(_precip_columns(window_amount, window_precip, window_codes,
+                                                      graph_w, full)):
+        if frac <= 0:
             if indicator_cols and x in indicator_cols:
                 precip_chars.append(f"{DIM}\u2502")
             else:
                 precip_chars.append(" ")
             continue
-        code_t = x / max(1, graph_w - 1) * max(0, len(window_codes) - 1)
-        code_i = max(0, min(len(window_codes) - 1, int(round(code_t))))
-        wmo = window_codes[code_i] if window_codes else 0
-        color = _precip_color(wmo)
-        idx = max(0, min(7, int(p / 100 * 7.99)))
+        idx = max(0, min(7, int(frac * 7.99)))
         precip_chars.append(f"{color}{SPARKLINE[idx]}")
     return [f"{''.join(precip_chars)}{RESET}"]
 
@@ -960,6 +992,7 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
 
     window_temps = window["temps"]
     window_precip = window["precip"]
+    window_amount = window["precip_amount"]
     window_codes = window["codes"]
     window_winds = window["winds"]
     window_wind_dirs = window["wind_dirs"]
@@ -1049,7 +1082,7 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     wind_threshold = 25 if runtime.metric else 15
     has_global_wind = window.get("all_wind_max", 0) > wind_threshold
     has_global_uv = window.get("all_uv_max", 0) >= 6
-    has_global_precip = window.get("all_precip_max", 0) > 5
+    has_global_precip = window.get("all_precip_max", 0) > 0
 
     # Place wind and UV labels on the full dataset, then move the ones that
     # fall inside the window into it, so they hold still while scrolling.
@@ -1097,8 +1130,10 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
         indicator_cols.add(now_col)
     if hover_col is not None:
         indicator_cols.add(hover_col)
-    precip_lines = _render_precip_rows(window_precip, window_codes, graph_w, n_precip_rows,
-                                       indicator_cols=indicator_cols if indicator_cols else None)
+    precip_lines = _render_precip_rows(window_amount, window_precip, window_codes, graph_w,
+                                       n_precip_rows,
+                                       indicator_cols=indicator_cols if indicator_cols else None,
+                                       full=_precip_bar_full(data, runtime))
     if precip_lines:
         lines.extend(precip_lines)
     elif has_global_precip and n_precip_rows >= 1:

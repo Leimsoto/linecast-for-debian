@@ -197,12 +197,25 @@ def _india_aqi_color(aqi):
     return fg(*interp_stops(INDIA_AQI_COLORS, aqi))
 
 
+def _precip_rgb(wmo_code):
+    """RGB for precipitation type based on WMO code."""
+    if wmo_code in (71, 73, 75, 77, 85, 86):
+        return PRECIP_SNOW_RGB
+    if wmo_code in (56, 57, 66, 67):
+        return PRECIP_MIX_RGB
+    if wmo_code in (95, 96, 99):
+        return PRECIP_STORM_RGB
+    return PRECIP_RAIN_RGB
+
+
 def _precip_color(wmo_code):
     """ANSI color for precipitation type based on WMO code."""
-    if wmo_code in (71, 73, 75, 77, 85, 86):
-        return PRECIP_SNOW
-    if wmo_code in (56, 57, 66, 67):
-        return PRECIP_MIX
-    if wmo_code in (95, 96, 99):
-        return PRECIP_STORM
-    return PRECIP_RAIN
+    return fg(*_precip_rgb(wmo_code))
+
+
+# Hourly precipitation that fills the bar: about 5 mm/hr, the low end of
+# "heavy rain".  Anything above it draws at full height.  The bar's height
+# is the square root of the fraction, so 0.1 mm/hr drizzle still shows as
+# a stub and the range between drizzle and a downpour is not crushed into
+# the bottom eighth of a cell.
+PRECIP_BAR_FULL = {"mm": 5.0, "inch": 0.2}

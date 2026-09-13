@@ -14,6 +14,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 - Weather: In the morning the prose opens with how today compares to yesterday. From mid-afternoon it compares tomorrow to today, and that sentence follows the one about how the air feels now.
 - Live views: A redraw no longer flickers on terminals that support synchronized output, such as Alacritty, kitty, Ghostty, iTerm2, WezTerm, foot and Windows Terminal. Dragging the Moon or hovering over a chart used to show a half-drawn row for an instant.
 - Moon: The unlit edge of the Moon no longer shows a faint rim. The new Moon is dark all the way round, a thin crescent tapers to nothing at its horns, and the full Moon runs bright to its edge.
+- Weather: The bar under the hourly chart now shows how hard it is expected to rain, not how likely it is. The bar's height is the forecast amount, and its color fades with the probability, so a certain drizzle is a low solid bar and a possible downpour is a tall faint one. It used to draw the probability alone, which made a day of light drizzle look the same as a day of heavy rain.
 
 ## 2.4.0 — 2026-09-10
 

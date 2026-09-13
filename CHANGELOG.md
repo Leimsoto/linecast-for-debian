@@ -25,6 +25,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 - Help panel: The key column is in the display language too: wheel, space, hover, click, drag, and enter are translated, and the column widens to fit.
 - Sky: Zooming in stays responsive; constellation lines outside the view are no longer drawn.
 - Sky: The status text is drawn over the sky instead of on a solid footer, in ink that reads against both day and night.
+- Weather: The prose explains why the air feels warmer or cooler than the thermometer only when the two are six degrees Fahrenheit or three Celsius apart. A smaller gap goes unremarked.
 
 ## 2.3.3 — 2026-09-07
 

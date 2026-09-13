@@ -62,7 +62,7 @@ class TestFeelsSentence:
         assert feels_sentence(current, DAILY, midnight, _runtime()) == ""
 
     def test_dry_air_explains_a_cooler_reading_when_the_air_is_still(self):
-        current = {"temperature_2m": 95, "apparent_temperature": 90,
+        current = {"temperature_2m": 95, "apparent_temperature": 88,
                    "relative_humidity_2m": 8, "wind_speed_10m": 2,
                    "weather_code": 0}
 
@@ -72,7 +72,7 @@ class TestFeelsSentence:
     def test_a_breeze_outweighs_the_dryness_it_blows(self):
         # Same desert, now with 9 mph of wind: 2.8 C of cooling against the
         # dry air's 0.7, so the wind is what there is to say.
-        current = {"temperature_2m": 95, "apparent_temperature": 90,
+        current = {"temperature_2m": 95, "apparent_temperature": 88,
                    "relative_humidity_2m": 18, "wind_speed_10m": 9,
                    "weather_code": 0}
 
@@ -80,8 +80,10 @@ class TestFeelsSentence:
             _s("feels_wind", _runtime())
 
     def test_a_small_gap_says_nothing(self):
-        current = {"temperature_2m": 70, "apparent_temperature": 68,
-                   "wind_speed_10m": 20, "weather_code": 3}
+        # Five degrees is a difference on paper, not one you would feel.
+        current = {"temperature_2m": 70, "apparent_temperature": 65,
+                   "relative_humidity_2m": 60, "wind_speed_10m": 20,
+                   "weather_code": 3}
 
         assert feels_sentence(current, DAILY, NOON, _runtime()) == ""
 
@@ -94,9 +96,9 @@ class TestFeelsSentence:
         assert feels_sentence(current, DAILY, NOON, _runtime()) == ""
 
     def test_a_light_breeze_is_enough_to_name_the_wind(self):
-        # Reykjavik on a clear September afternoon: 6 mph carries 1.9 C of
-        # the 5 F gap, more than the dry air's 1.5.
-        current = {"temperature_2m": 52.2, "apparent_temperature": 46.7,
+        # Reykjavik on a clear September afternoon: 6 mph carries 2.2 C of
+        # the 6 F gap, more than the dry air's 1.5.
+        current = {"temperature_2m": 52.2, "apparent_temperature": 46.0,
                    "relative_humidity_2m": 56, "dew_point_2m": 37.4,
                    "wind_speed_10m": 6.9, "weather_code": 0}
 
@@ -104,7 +106,7 @@ class TestFeelsSentence:
             _s("feels_wind", _runtime())
 
     def test_nothing_worth_a_degree_says_nothing(self):
-        current = {"temperature_2m": 52, "apparent_temperature": 47,
+        current = {"temperature_2m": 52, "apparent_temperature": 46,
                    "relative_humidity_2m": 68, "wind_speed_10m": 1,
                    "weather_code": 0}
 
@@ -114,8 +116,8 @@ class TestFeelsSentence:
         assert feels_sentence({"temperature_2m": 55}, DAILY, NOON, _runtime()) == ""
 
     def test_the_threshold_follows_the_unit(self):
-        # Two and a half degrees is worth saying in Celsius, not in Fahrenheit.
-        current = {"temperature_2m": 20, "apparent_temperature": 17.5,
+        # Three and a half degrees is worth saying in Celsius, not in Fahrenheit.
+        current = {"temperature_2m": 20, "apparent_temperature": 16.5,
                    "relative_humidity_2m": 60, "wind_speed_10m": 25,
                    "weather_code": 3}
 

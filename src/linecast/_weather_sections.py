@@ -273,8 +273,10 @@ def feels_sentence(current, daily, now, runtime=None):
     if temp is None or feels is None or humidity is None or wind is None:
         return ""
 
+    # A gap has to be one a person would notice before it is worth a
+    # sentence: six degrees Fahrenheit, or three Celsius.
     gap = feels - temp
-    if abs(gap) < (2 if runtime.celsius else 3):
+    if abs(gap) < (3 if runtime.celsius else 6):
         return ""
 
     to_c = (lambda t: t) if runtime.celsius else (lambda t: (t - 32) * 5 / 9)

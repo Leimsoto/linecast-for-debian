@@ -190,9 +190,17 @@ def narrative_lines(data, now, width, runtime=None):
         runtime = current_runtime(WeatherRuntime)
     daily = data.get("daily", {})
     hourly = data.get("hourly", {})
+    feels = feels_sentence(data.get("current", {}), daily, now, runtime)
+    comparison = comparative_sentence(daily, now, runtime)
+    # Through the morning the comparison is about today, so it opens the
+    # paragraph and the feels-like sentence explains it.  From mid-afternoon
+    # it looks ahead to tomorrow, and a look ahead follows the present tense.
+    if now.hour < _COMPARISON_TURNS_TO_TOMORROW:
+        opening = (comparison, feels)
+    else:
+        opening = (feels, comparison)
     sentences = [s for s in (
-        feels_sentence(data.get("current", {}), daily, now, runtime),
-        comparative_sentence(daily, now, runtime),
+        *opening,
         precipitation_sentence(hourly, now, runtime),
         past_precip_sentence(hourly, now, runtime),
     ) if s]
@@ -308,6 +316,11 @@ def feels_sentence(current, daily, now, runtime=None):
 # ---------------------------------------------------------------------------
 # Comparative weather line
 # ---------------------------------------------------------------------------
+# The hour the comparison stops looking back at yesterday and starts looking
+# ahead to tomorrow.  Most of today's high is in by then.
+_COMPARISON_TURNS_TO_TOMORROW = 14
+
+
 def comparative_sentence(daily, now, runtime=None):
     """Plain-text natural language comparing today vs yesterday/tomorrow."""
     if runtime is None:
@@ -318,7 +331,7 @@ def comparative_sentence(daily, now, runtime=None):
     if len(hi_temps) < 3:
         return ""
 
-    if now.hour < 14:
+    if now.hour < _COMPARISON_TURNS_TO_TOMORROW:
         diff = hi_temps[1] - hi_temps[0]
         ref_day = _s("yesterday", runtime)
         subject = _s("today_subj", runtime)

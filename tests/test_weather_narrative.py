@@ -172,6 +172,18 @@ class TestNarrativePacking:
     def test_nothing_to_say_renders_nothing(self):
         assert narrative_lines({}, NOON, 100, _runtime()) == []
 
+    def test_a_comparison_about_today_opens_the_prose(self):
+        prose = self._plain(narrative_lines(self.DATA, NOON, 200, _runtime()))[0]
+
+        assert prose.startswith("Today will be"), prose
+
+    def test_a_comparison_about_tomorrow_follows_the_present_tense(self):
+        evening = datetime(2026, 7, 15, 18, 0)
+        prose = self._plain(narrative_lines(self.DATA, evening, 200, _runtime()))[0]
+
+        assert prose.startswith(_s("feels_wind", _runtime())), prose
+        assert "Tomorrow will be" in prose
+
 
 class TestFeelsStringsAreTranslated:
     def test_every_language_punctuates_its_own_sentences(self):

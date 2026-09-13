@@ -604,6 +604,18 @@ class TestSearch:
         assert search("moon", pool)[0].kind == "moon"
         assert search("xyzzy", pool) == []
 
+    def test_finds_a_star_by_the_designation_as_it_is_typed(self):
+        from linecast._sky_search import search
+        pool = self._pool()
+        # The component superscript is not on a keyboard, and the genitive
+        # is how a chart names a star.
+        for query in ("alpha centauri", "alpha cen", "α cen", "alpha1 cen"):
+            assert search(query, pool)[0].label == "Rigil Kentaurus · α¹ Cen", query
+        assert search("alpha lyrae", pool)[0].label == "Vega · α Lyr"
+        assert search("alpha crucis", pool)[0].label == "Acrux · α¹ Cru"
+        assert search("alpha bootis", pool)[0].label == "Arcturus · α Boo"
+        assert search("61 cygni", pool)[0].kind == "star"
+
     def test_finds_asterisms_and_english_constellation_names(self):
         import math
         from linecast._sky_search import search

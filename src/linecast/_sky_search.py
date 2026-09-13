@@ -13,6 +13,7 @@ question a search for something not up is really asking.
 
 import math
 import threading
+import unicodedata
 from datetime import timedelta, timezone
 
 from linecast import _theme
@@ -29,6 +30,8 @@ _GREEK = {
     "rho": "ρ", "sigma": "σ", "tau": "τ", "upsilon": "υ", "phi": "φ", "chi": "χ",
     "psi": "ψ", "omega": "ω",
 }
+_SUPERSCRIPTS = str.maketrans("", "", "¹²³⁴⁵⁶⁷⁸⁹")
+_SUPER_TO_DIGIT = str.maketrans("¹²³⁴⁵⁶⁷⁸⁹", "123456789")
 
 # The English names a few constellations go by, for the search; the label
 # keeps the Latin. Keyed by IAU code, so a tradition that keeps the IAU's
@@ -47,14 +50,17 @@ class Target:
     "constellation"; `label` is what the panel shows; `key` is the planet's
     name, the star's index, or the constellation, asterism or object
     record. `spread` is a constellation's or asterism's angular radius in
-    degrees, for the zoom that frames it.
+    degrees, for the zoom that frames it. `exact` names match only whole
+    or as a prefix: a star's "alpha Centauri" answers to that and to
+    "alpha cent", but not to "centauri", which is the constellation.
     """
 
-    __slots__ = ("kind", "label", "key", "names", "rank", "spread")
+    __slots__ = ("kind", "label", "key", "names", "exact", "rank", "spread")
 
-    def __init__(self, kind, label, key, names, rank, spread=0.0):
+    def __init__(self, kind, label, key, names, rank, spread=0.0, exact=()):
         self.kind, self.label, self.key = kind, label, key
         self.names = [n.lower() for n in names if n]
+        self.exact = [n.lower() for n in exact if n]
         self.rank = rank            # brighter or grander first, on ties
         self.spread = spread
 
@@ -111,24 +117,20 @@ def targets(runtime, culture=None):
     catalogue = stars()
     cultural = names_for(culture, lang) if culture else {}
     local = star_names(lang)
+    genitives = {c["id"]: c["gen"] for c in constellations()}
     for i, (proper, desig) in star_names().items():
         mag = catalogue[i][2]
         own = cultural.get(i, ("", ""))[0]
         mine = local[i][0]   # the language's own name, or the IAU's again
         label = own or mine or desig
-        names = [proper, desig, own, mine]
-        if desig:
-            # "alpha lyr" and "alpha lyrae" find α Lyr as well.
-            letter, _, con = desig.partition(" ")
-            for word, greek in _GREEK.items():
-                if letter.startswith(greek):
-                    names.append(f"{word}{letter[len(greek):]} {con}")
+        names = [proper, own, mine, *designation_names(desig)]
         out.append(Target("star", f"{label} · {desig}" if (proper or own) else label, i,
-                          names, mag))
+                          names, mag, exact=genitive_names(desig, genitives)))
     for i, (own, desig) in cultural.items():
         if i not in star_names() and own:
             out.append(Target("star", f"{own} · {desig}" if desig else own, i,
-                              [own, desig], catalogue[i][2]))
+                              [own, *designation_names(desig)], catalogue[i][2],
+                              exact=genitive_names(desig, genitives)))
     from linecast._sky_objects import object_name, objects
     for record in objects():
         name = object_name(record, lang)
@@ -164,16 +166,68 @@ def targets(runtime, culture=None):
     return out
 
 
+def _letters(letter):
+    """The ways a designation's letter is typed: "α¹" is also "α", "α1",
+    "alpha¹", "alpha" and "alpha1", since the component superscript is
+    not on a keyboard."""
+    out = [letter]
+    plain = letter.translate(_SUPERSCRIPTS)
+    if plain != letter:
+        out.append(plain)
+        out.append(plain + letter[len(plain):].translate(_SUPER_TO_DIGIT))
+    for word, greek in _GREEK.items():
+        if letter.startswith(greek):
+            out.extend(f"{word}{tail[len(greek):]}" for tail in list(out))
+            break
+    return out
+
+
+def designation_names(desig):
+    """"α¹ Cen" as it is typed: "α Cen", "alpha Cen", "alpha1 Cen"."""
+    if not desig:
+        return []
+    letter, _, con = desig.partition(" ")
+    return [f"{first} {con}" for first in _letters(letter)]
+
+
+def genitive_names(desig, genitives):
+    """"α¹ Cen" as a chart prints it: "alpha Centauri", and without the
+    accent where the genitive has one, "alpha Bootis". *genitives* maps
+    the IAU code to the genitive."""
+    if not desig:
+        return []
+    letter, _, con = desig.partition(" ")
+    if not genitives.get(con):
+        return []
+    cons = [genitives[con]]
+    folded = _fold(genitives[con])
+    if folded != genitives[con]:
+        cons.append(folded)
+    return [f"{first} {second}" for first in _letters(letter) for second in cons]
+
+
+def _fold(text):
+    """*text* without its accents."""
+    return "".join(ch for ch in unicodedata.normalize("NFKD", text)
+                   if not unicodedata.combining(ch))
+
+
 def search(query, pool, limit=MAX_ROWS):
     """The targets matching *query*: whole-name matches first, then those
     a name begins with, then those a word begins with, then any that
-    contain it; the brightest or grandest first within each."""
+    contain it; the brightest or grandest first within each. A target's
+    `exact` names take only the first two."""
     q = query.strip().lower()
     if not q:
         return []
     scored = []
     for t in pool:
         best = None
+        for name in t.exact:
+            if name == q:
+                best = 0
+            elif name.startswith(q) and best is None:
+                best = 1
         for name in t.names:
             if name == q:
                 score = 0

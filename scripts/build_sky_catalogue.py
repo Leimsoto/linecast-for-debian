@@ -591,6 +591,10 @@ def plain(text):
     return text.replace("\u2005", " ").replace("Maior", "Major")
 
 
+# Genitives the source data has wrong; the IAU's take their place.
+GENITIVES = {"Cru": "Crucis", "CrA": "Coronae Australis"}
+
+
 def constellation_labels(latins, src):
     """{Latin name: {wikidata lang: label}} for the constellations, matched
     by their English label or alias among Wikidata's constellations, the
@@ -637,7 +641,8 @@ def bake_constellations(src):
                 counts[lang] += 1
         ra, dec = f["geometry"]["coordinates"]
         records.append({
-            "id": f["id"], "name": latin, "gen": plain(p["gen"]),
+            "id": f["id"], "name": latin,
+            "gen": GENITIVES.get(f["id"], plain(p["gen"])),
             "at": hundredths(ra, dec), "names": names,
             "lines": [[hundredths(ra, dec) for ra, dec in line]
                       for line in lines.get(f["id"], [])],

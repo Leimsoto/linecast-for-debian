@@ -18,6 +18,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 - Sky: Press `m` to turn toward the Moon when it is above the horizon.
 - Sky: Search finds the asterisms by name: the Big Dipper, the Summer Triangle, Orion's Belt, the Teapot, and others, in the display language where it has its own. It also knows the English names of a few constellations, such as the Southern Cross.
 - Sky: Fixed a bug where, after moving to another search result, Enter still moved the clock to the previous result's rising.
+- Sky: Search finds a star by its designation as it is typed: "alpha cen", "alpha centauri", and "alpha crucis" all find the star, with or without the component number.
 - Sky, maps, and radar: Press `w`, `a`, `s`, or `d` to pan. In the sky each pan eases to rest, with smaller steps when zoomed in. In maps, daylight and directions move to `S` and `D`; in radar, wind and satellite move to `W` and `S` (Shift plus the letter).
 - Live views: A small `? keys` hint in the display language points to the controls, with room at the right edge so its last letter stays visible. The radar help now describes warning hover correctly.
 - Sky: Zooming in stays responsive; constellation lines outside the view are no longer drawn.

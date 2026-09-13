@@ -39,6 +39,7 @@ class TestRender:
             "mouse_pos": (2, 3), "active_alert": None, "modal_scroll": 0,
             "aqi_data": {"aqi": 1}, "historical": {"h": 1},
             "notice": None,   # today's data carries no stale-forecast line
+            "country_code": "US",
         }
 
     def test_render_after_the_interval_refreshes_in_the_background(self):

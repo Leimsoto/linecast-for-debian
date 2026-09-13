@@ -35,6 +35,7 @@ from linecast._weather_i18n import (
 )
 from linecast._weather_render import (
     ALERT_AMBER,
+    DIM,
     MUTED,
     RESET,
     TEXT,
@@ -53,9 +54,11 @@ from linecast._weather_render import (
 )
 from linecast._weather_historical import fetch_historical
 from linecast._weather_sources import (
+    ATTRIBUTION,
     _local_now_for_data,
     _reverse_geocode,
     _search_locations,
+    alert_attribution,
     apply_india_aqi,
     fetch_aqi,
     fetch_alerts,
@@ -69,6 +72,28 @@ from linecast._weather_sources import (
 # -- and three days is still a forecast.
 MIN_HOURLY_ROWS = 4
 MIN_DAILY_ROWS = 3
+
+
+def data_credits(country_code=""):
+    """The data credits, longest first: the forecast's with the alerts'
+    when a service supplies them, then the forecast's alone."""
+    alerts = alert_attribution(country_code)
+    return ((f"{ATTRIBUTION} · {alerts}", ATTRIBUTION) if alerts
+            else (ATTRIBUTION,))
+
+
+def credit_row(cols, lang, country_code=""):
+    """The live view's last row: the data credit at the left, in ink
+    fainter than the prose above it, and the help hint at the right.
+    The longest credit that leaves the whole hint its room wins; a
+    window too narrow for any shows the hint alone."""
+    from linecast import _help
+    from linecast._graphics import visible_len
+    hint = _help.hint(lang)
+    for credit in data_credits(country_code):
+        if visible_len(credit) + 2 + visible_len(hint) <= cols - 1:
+            return _help.footer(f"{DIM}{credit}{RESET}", cols, lang)
+    return _help.footer("", cols, lang)
 
 
 def _build_hover_tooltip(data, mouse_col, mouse_row, hourly_start, hourly_end, cols, rows,
@@ -192,11 +217,12 @@ def forecast_notice(data, runtime, live=False, fetching=False, failed_at=None):
 
 def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, mouse_pos=None,
                      active_alert=None, modal_scroll=0, aqi_data=None, historical=None,
-                     notice=None):
+                     notice=None, country_code=""):
     """Build the complete weather dashboard from preloaded data.
 
     `notice` is a line for under the header -- forecast_notice's, when
-    the forecast is not today's."""
+    the forecast is not today's. `country_code` names the alerts' source
+    in the live view's credit row."""
     if not data:
         return f"{TEXT}Could not fetch weather data.{RESET}", {}
 
@@ -235,6 +261,9 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
         non_hourly += 1 + len(alert_lines)  # blank + alerts
     if hint:
         non_hourly += 1
+    live = getattr(runtime, 'live', False)
+    if live:
+        non_hourly += 1  # the credit and help row
 
     # The shortest the hourly section will render: the day line, the ticks,
     # two rows of braille, and whichever of the wind, UV and precipitation
@@ -354,16 +383,8 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
 
     if hint:
         lines.append(hint)
-    if getattr(runtime, 'live', False):
-        from linecast import _help
-        # Prefer the final row's spare margin; otherwise use an existing
-        # blank separator. Neither alerts nor chart rows are displaced.
-        for i in [len(lines) - 1, *(j for j in range(len(lines) - 2, -1, -1)
-                                  if not lines[j].strip())]:
-            candidate = _help.footer(lines[i], cols, runtime.lang)
-            if '?' in candidate:
-                lines[i] = candidate
-                break
+    if live:
+        lines.append(credit_row(cols, runtime.lang, country_code))
 
     # Shorter still than the trimming above could reach: cut the bottom
     # rather than let the terminal scroll the header away.
@@ -491,7 +512,14 @@ class WeatherApp(_live.LiveApp):
             aqi_data=self.aqi,
             historical=self.historical,  # cached — doesn't need re-fetch
             notice=notice,
+            country_code=self.country,
         )
+
+    def help_panel(self):
+        from linecast._help import HelpPanel, entries
+        return HelpPanel('weather', self.runtime.lang, content=lambda cols, rows:
+                         entries('weather', self.runtime.lang,
+                                 credits=(ATTRIBUTION, alert_attribution(self.country))))
 
     def on_open(self, idx):
         if 0 <= idx < len(self.alerts):

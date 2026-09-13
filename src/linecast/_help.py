@@ -94,10 +94,17 @@ CONTROLS = {
 }
 
 
-def entries(view, lang):
-    return [(mark, ms(key, lang) if key.startswith('help_') else hs(key, lang))
+def entries(view, lang, credits=()):
+    """The panel's rows: the controls, then any data credits after a
+    spacer, as the maps panel lays its own out."""
+    rows = [(mark, ms(key, lang) if key.startswith('help_') else hs(key, lang))
             for mark, key in CONTROLS[view]] + [
                 ('?', ms('help_keys', lang)), ('q', ms('help_quit', lang))]
+    credits = [credit for credit in credits if credit]
+    if credits:
+        rows.append(None)
+        rows += [('', credit) for credit in credits]
+    return rows
 
 
 def fit(text, width):

@@ -11,7 +11,7 @@ from datetime import datetime
 
 from linecast._weather_i18n import WMO_NAMES, WMO_NAMES_I18N, _wmo_icons
 from linecast._weather_sections import comparative_sentence
-from linecast._weather_sources import _local_now_for_data
+from linecast._weather_sources import FORECAST_SOURCE, _local_now_for_data, alert_source
 
 SCHEMA_VERSION = 1
 
@@ -156,4 +156,9 @@ def build_payload(data, location_name, country_code, runtime,
         "alerts": list(alerts or []),
         "aqi": aqi_out,
         "historical": asdict(historical) if historical is not None else None,
+        "sources": {
+            "forecast": FORECAST_SOURCE,
+            "air_quality": FORECAST_SOURCE,
+            "alerts": alert_source(country_code),
+        },
     }

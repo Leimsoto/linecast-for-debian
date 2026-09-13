@@ -10,6 +10,44 @@ from linecast._http import fetch_json, fetch_json_cached
 from linecast._paths import cache_dir
 from linecast._runtime import WeatherRuntime, current_runtime, log_failure
 
+# The forecast, the air quality, and the geocoder are Open-Meteo's, and
+# its CC BY 4.0 terms ask for this line on screen. The alerts are the
+# national services'; the router below says whose. Both are proper names
+# and data credits: imported where shown, never retyped or translated.
+ATTRIBUTION = "Weather data by Open-Meteo"
+FORECAST_SOURCE = "Open-Meteo"
+
+_ALERT_SOURCES = {
+    "US": "US National Weather Service",
+    "CA": "Environment Canada",
+    "DE": "DWD",
+    "NO": "MET Norway",
+    "IE": "Met Éireann",
+    "JP": "Japan Meteorological Agency",
+    "HK": "Hong Kong Observatory",
+    "CN": "China Meteorological Administration",
+    "IN": "SACHET",
+    "NZ": "MetService",
+}
+
+
+def alert_source(country_code: str) -> str | None:
+    """Who issues the alerts shown for a country: its national service,
+    MeteoAlarm across the rest of Europe, None where linecast has no feed.
+    Mirrors _fetch_alerts_routed, which decides where the fetch goes."""
+    country_code = (country_code or "").upper()
+    if country_code in _ALERT_SOURCES:
+        return _ALERT_SOURCES[country_code]
+    if country_code in _METEOALARM_SLUGS:
+        return "MeteoAlarm"
+    return None
+
+
+def alert_attribution(country_code: str) -> str | None:
+    """The alerts credit for a country, or None where none are fetched."""
+    source = alert_source(country_code)
+    return f"Alerts by {source}" if source else None
+
 
 def _local_now_for_data(data):
     """Current local time in the forecast's timezone (as naive local datetime)."""

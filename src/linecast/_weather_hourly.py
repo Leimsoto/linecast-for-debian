@@ -15,7 +15,9 @@ from linecast._weather_style import (
     CHART_BG_NIGHT_RGB,
     CHART_HOVER_RGB,
     CHART_NOW_RGB,
+    CLOUD_RGB,
     DIM,
+    DIM_RGB,
     SPARKLINE,
     SUNRISE_LABEL_RGB,
     SUNSET_LABEL_RGB,
@@ -99,8 +101,54 @@ def _precip_bar_full(data, runtime):
     return PRECIP_BAR_FULL[unit]
 
 
+def _indicator_colors(graph_w, midnight_cols=None, hover_col=None, now_col=None):
+    """Column -> RGB of the vertical time line through it.
+
+    The hover line wins over the now line, which wins over a midnight
+    divider, as in the temperature rows."""
+    colors = {}
+    for c in midnight_cols or ():
+        if 0 <= c < graph_w:
+            colors[c] = DIM_RGB
+    if now_col is not None and 0 <= now_col < graph_w:
+        colors[now_col] = CHART_NOW_RGB
+    if hover_col is not None and 0 <= hover_col < graph_w:
+        colors[hover_col] = CHART_HOVER_RGB
+    return colors
+
+
+def _as_indicators(indicator_cols):
+    """Accept a column -> RGB map, or a bare set of columns in the divider color."""
+    if not indicator_cols:
+        return {}
+    if isinstance(indicator_cols, dict):
+        return indicator_cols
+    return {c: DIM_RGB for c in indicator_cols}
+
+
+def _indicator_row(graph_w, indicators):
+    """A row holding nothing but the vertical time lines, or "" without any.
+
+    Stands in for a wind, UV, or precipitation row that is reserved for
+    the sake of a steady layout but has nothing to show in this window,
+    so the lines run unbroken from the chart to the bottom of the section."""
+    if not indicators:
+        return ""
+    cells = [f"{fg(*indicators[x])}\u2502" if x in indicators else " " for x in range(graph_w)]
+    return f"{''.join(cells)}{RESET}"
+
+
+def _through_line(rgb, indicators, x):
+    """The color of a filled cell in column x, tinted toward the time line
+    through that column so the line reads on through the bar."""
+    ind = indicators.get(x)
+    if ind is None:
+        return rgb
+    return _theme.lerp_rgb(rgb, ind, 0.5)
+
+
 def _precip_columns(amounts, probs, weather_codes, graph_w, full):
-    """Per-column (height fraction, color) for the precipitation bar.
+    """Per-column (height fraction, RGB) for the precipitation bar.
 
     Height follows the forecast amount: the square root of its fraction of
     `full`, so drizzle registers and heavy rain tops out.  Color is the
@@ -116,7 +164,7 @@ def _precip_columns(amounts, probs, weather_codes, graph_w, full):
     for x in range(graph_w):
         amount = col_amounts[x]
         if amount <= 0:
-            columns.append((0.0, ""))
+            columns.append((0.0, None))
             continue
         frac = math.sqrt(min(1.0, amount / full))
         code_t = x / max(1, graph_w - 1) * max(0, len(weather_codes) - 1)
@@ -125,7 +173,7 @@ def _precip_columns(amounts, probs, weather_codes, graph_w, full):
         if blend:
             alpha = max(0.0, min(1.0, col_probs[x] / 100))
             rgb = _theme.lerp_rgb(_theme.theme_bg, rgb, alpha)
-        columns.append((frac, fg(*rgb)))
+        columns.append((frac, rgb))
     return columns
 
 
@@ -137,10 +185,13 @@ def _build_precip_blocks(amounts, probs, weather_codes, graph_w, n_rows=1, indic
     Bars grow upward from the bottom using partial block characters (▁▂▃▄▅▆▇█),
     giving 8 levels of vertical resolution per character row.  See
     _precip_columns for what height and color mean.
-    indicator_cols: set of 0-based graph columns to draw │ where cell is empty.
+    indicator_cols: columns of the vertical time lines (a column -> RGB
+    map, or a set drawn in the divider color): │ where the cell is empty,
+    and a tint through the bar where it is not.
     """
     total_eighths = n_rows * 8  # total vertical resolution units
     columns = _precip_columns(amounts, probs, weather_codes, graph_w, full)
+    indicators = _as_indicators(indicator_cols)
 
     # Build rows top-down (row 0 = top, row n_rows-1 = bottom)
     result = []
@@ -149,25 +200,49 @@ def _build_precip_blocks(amounts, probs, weather_codes, graph_w, n_rows=1, indic
         row_bottom = (n_rows - 1 - r) * 8  # eighths at bottom of this row
         row_top = row_bottom + 8             # eighths at top of this row
         for x in range(graph_w):
-            frac, color = columns[x]
+            frac, rgb = columns[x]
             is_empty = frac <= 0
             if not is_empty:
                 bar_h = max(1, int(frac * total_eighths + 0.5))
                 is_empty = bar_h <= row_bottom
 
             if is_empty:
-                if indicator_cols and x in indicator_cols:
-                    line += f"{DIM}\u2502"
+                if x in indicators:
+                    line += f"{fg(*indicators[x])}\u2502"
                 else:
                     line += " "
             elif bar_h >= row_top:
-                line += f"{color}\u2588"
+                line += f"{fg(*_through_line(rgb, indicators, x))}\u2588"
             else:
                 eighths_in_row = bar_h - row_bottom  # 1-7
-                line += f"{color}{SPARKLINE[eighths_in_row - 1]}"
+                line += f"{fg(*_through_line(rgb, indicators, x))}{SPARKLINE[eighths_in_row - 1]}"
         result.append(f"{line}{RESET}")
 
     return result
+
+
+def _render_cloud_row(window_cloud, graph_w, indicator_cols=None):
+    """One half-block strip of cloud cover, or None without data.
+
+    Each column is the lower half of the cell, faded from the background
+    toward CLOUD_RGB by the hour's cloud cover, so clear sky is nothing
+    and overcast is a solid band.  It sits directly on the precipitation
+    bar: cloud above, rain below.  The vertical time lines pass through a
+    clear column as a hairline and tint the strip where there is cloud.
+    """
+    if not window_cloud:
+        return None
+    indicators = _as_indicators(indicator_cols)
+    col_cover = interpolate(window_cloud, graph_w)
+    parts = []
+    for x in range(graph_w):
+        cover = max(0.0, min(100.0, col_cover[x])) / 100
+        if cover < 0.05:
+            parts.append(f"{fg(*indicators[x])}\u2502" if x in indicators else " ")
+            continue
+        rgb = _theme.lerp_rgb(_theme.theme_bg, CLOUD_RGB, cover)
+        parts.append(f"{fg(*_through_line(rgb, indicators, x))}\u2584")
+    return f"{''.join(parts)}{RESET}"
 
 
 def _interpolate_columns(values, graph_w):
@@ -192,6 +267,7 @@ def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0):
     humidity = hourly.get("relative_humidity_2m", [])
     dew_points = hourly.get("dew_point_2m", [])
     uv_indices = hourly.get("uv_index", [])
+    cloud_cover = hourly.get("cloud_cover", [])
     if not times or not temps:
         return None
 
@@ -242,6 +318,7 @@ def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0):
     window_humidity = humidity[start_idx:end_idx + 1] if humidity else []
     window_dew = dew_points[start_idx:end_idx + 1] if dew_points else []
     window_uv = uv_indices[start_idx:end_idx + 1] if uv_indices else []
+    window_cloud = cloud_cover[start_idx:end_idx + 1] if cloud_cover else []
     window_dts = [dt for i, dt in parsed if start_idx <= i <= end_idx]
 
     total_hours = 24
@@ -267,6 +344,7 @@ def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0):
         "humidity": window_humidity,
         "dew_points": window_dew,
         "uv": window_uv,
+        "cloud": window_cloud,
         "dts": window_dts,
         "total_hours": total_hours,
         "hours_shown": hours_shown,
@@ -960,17 +1038,18 @@ def _render_precip_rows(window_amount, window_precip, window_codes, graph_w, n_p
         return _build_precip_blocks(window_amount, window_precip, window_codes, graph_w,
                                     n_precip_rows, indicator_cols=indicator_cols, full=full)
 
+    indicators = _as_indicators(indicator_cols)
     precip_chars = []
-    for x, (frac, color) in enumerate(_precip_columns(window_amount, window_precip, window_codes,
-                                                      graph_w, full)):
+    for x, (frac, rgb) in enumerate(_precip_columns(window_amount, window_precip, window_codes,
+                                                    graph_w, full)):
         if frac <= 0:
-            if indicator_cols and x in indicator_cols:
-                precip_chars.append(f"{DIM}\u2502")
+            if x in indicators:
+                precip_chars.append(f"{fg(*indicators[x])}\u2502")
             else:
                 precip_chars.append(" ")
             continue
         idx = max(0, min(7, int(frac * 7.99)))
-        precip_chars.append(f"{color}{SPARKLINE[idx]}")
+        precip_chars.append(f"{fg(*_through_line(rgb, indicators, x))}{SPARKLINE[idx]}")
     return [f"{''.join(precip_chars)}{RESET}"]
 
 
@@ -1114,30 +1193,30 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
                                  now_col=now_col)
 
     # Always reserve rows for wind/UV/precip if they appear anywhere in the
-    # full dataset, so the chart height stays stable while scrolling.
+    # full dataset, so the chart height stays stable while scrolling.  A
+    # reserved row with nothing in it still carries the vertical time
+    # lines, so they run unbroken down the whole section.
+    indicators = _indicator_colors(graph_w, midnight_cols, hover_col, now_col)
     if wind_line:
         lines.append(wind_line)
     elif has_global_wind:
-        lines.append("")
+        lines.append(_indicator_row(graph_w, indicators))
     if uv_line:
         lines.append(uv_line)
     elif has_global_uv:
-        lines.append("")
+        lines.append(_indicator_row(graph_w, indicators))
 
-    # Indicator columns for precip: midnight dividers + now + hover
-    indicator_cols = set(midnight_cols)
-    if now_col is not None:
-        indicator_cols.add(now_col)
-    if hover_col is not None:
-        indicator_cols.add(hover_col)
+    cloud_line = _render_cloud_row(window.get("cloud", []), graph_w, indicator_cols=indicators)
+    if cloud_line:
+        lines.append(cloud_line)
+
     precip_lines = _render_precip_rows(window_amount, window_precip, window_codes, graph_w,
-                                       n_precip_rows,
-                                       indicator_cols=indicator_cols if indicator_cols else None,
+                                       n_precip_rows, indicator_cols=indicators,
                                        full=_precip_bar_full(data, runtime))
     if precip_lines:
         lines.extend(precip_lines)
     elif has_global_precip and n_precip_rows >= 1:
-        lines.extend([""] * n_precip_rows)
+        lines.extend([_indicator_row(graph_w, indicators)] * n_precip_rows)
     return lines
 
 _theme.track_imports(globals(), "linecast._weather_style")

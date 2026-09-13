@@ -36,6 +36,16 @@ def render_daily(data, width, runtime=None, now=None):
     `now` is the local time where the forecast is for; the first row is
     labelled "Today" only when it is today by that clock, and by its
     weekday like the rest when the forecast is from an earlier day."""
+    return render_daily_mapped(data, width, runtime, now)[0]
+
+
+def render_daily_mapped(data, width, runtime=None, now=None):
+    """render_daily's lines, with where each row's parts sit.
+
+    Returns (lines, spans): one dict per line, holding the day's index into
+    the daily arrays and, under "cols", the 0-based [start, end) columns of
+    each part present: "day" (name and icon), "bar", "prob", "precip",
+    "wind".  The live view's hover chip reads them."""
     if runtime is None:
         runtime = current_runtime(WeatherRuntime)
     if now is None:
@@ -50,18 +60,19 @@ def render_daily(data, width, runtime=None, now=None):
     wind_max = daily.get("wind_speed_10m_max", [])
 
     lines = []
+    spans = []
 
     # With past_days=1: 0=yesterday, 1=today, 2+=forecast
     # Show today (1) through end for scale, display 2+ as forecast rows
     display_end = min(len(times), 8)
     if display_end < 3:
-        return lines
+        return lines, spans
 
     # Common temperature scale across today + all forecast days
     all_lo = [lo_temps[i] for i in range(1, display_end) if i < len(lo_temps)]
     all_hi = [hi_temps[i] for i in range(1, display_end) if i < len(hi_temps)]
     if not all_lo or not all_hi:
-        return lines
+        return lines, spans
 
     scale_min = min(all_lo)
     scale_max = max(all_hi)
@@ -74,7 +85,7 @@ def render_daily(data, width, runtime=None, now=None):
     # A window too narrow even for a bare bar has no room for these rows,
     # and a row wider than the window wraps and shifts the whole dashboard.
     if width < left_prefix_w + MIN_BAR_W:
-        return lines
+        return lines, spans
     # Compute per-day detail fields in full and compact (no type/wind label) forms.
     # At narrow widths, drop "Snow"/"Rain" prefix and "Wind" label — the
     # colored amount + unit are enough context.
@@ -261,19 +272,40 @@ def render_daily(data, width, runtime=None, now=None):
 
         # Build the line with aligned right-side columns
         line = f"{TEXT}{day_name}  {icon}  {bar}"
+        bar_start = visible_len(day_name) + 2 + visible_len(icon) + 2
+        cols = {"day": (0, bar_start), "bar": (bar_start, bar_start + bar_w)}
+        cursor = bar_start + bar_w
 
         precip_s, prob_s, wind_s = day_details[i - 1]
         pcolor = _precip_color(wmo)
         # Pad by terminal columns, not code points: CJK labels are double-width.
         if max_prob_w:
             line += f"  {pcolor}{_rpad(prob_s, max_prob_w)}"
+            if prob_s:
+                cols["prob"] = (cursor + 2, cursor + 2 + max_prob_w)
+            cursor += 2 + max_prob_w
         if max_precip_w:
             line += f"  {pcolor}{_lpad(precip_s, max_precip_w)}"
+            if precip_s:
+                cols["precip"] = (cursor + 2, cursor + 2 + max_precip_w)
+            cursor += 2 + max_precip_w
         if max_wind_w:
             line += f"  {WIND_COLOR}{_lpad(wind_s, max_wind_w)}"
+            if wind_s:
+                cols["wind"] = (cursor + 2, cursor + 2 + max_wind_w)
+            cursor += 2 + max_wind_w
 
         lines.append(f"{line}{RESET}")
+        spans.append({"index": i, "cols": cols})
 
-    return lines
+    return lines, spans
+
+
+def fmt_precip_amount(amount, runtime):
+    """An amount of precipitation with its unit, as the daily rows show it."""
+    if runtime.metric:
+        return f"{amount:.1f}{_s('metric_unit_sep', runtime)}{runtime.precip_unit}"
+    unit = _s("precip_inch", runtime)
+    return f"{amount:.1f}{unit}" if amount >= 1 else f"{amount:.2f}{unit}"
 
 _theme.track_imports(globals(), "linecast._weather_style")

@@ -26,11 +26,13 @@ def _rebuild():
     global SUNSET_LABEL_RGB, TOOLTIP_BG_RGB, TOOLTIP_TEXT_RGB, MODAL_BG_RGB
     global MODAL_BORDER_RGB, LINK_RGB, TEXT, DIM, MUTED, PRECIP, PRECIP_RAIN
     global PRECIP_SNOW, PRECIP_MIX, PRECIP_STORM, ALERT_RED, ALERT_AMBER
-    global ALERT_YELLOW, ALERT_BLUE, WIND_COLOR, WIND_ARROWS, SEP
+    global ALERT_YELLOW, ALERT_BLUE, WIND_COLOR, WIND_ARROWS, SEP, CLOUD_RGB
     TEXT_RGB = ensure_contrast(_theme.theme_fg, _theme.theme_bg, minimum=4.5)
     DIM_RGB = ensure_contrast(neutral_tone(0.32), _theme.theme_bg, minimum=2.0)
     MUTED_RGB = ensure_contrast(neutral_tone(0.48), _theme.theme_bg, minimum=2.5)
     WIND_RGB = ensure_contrast(neutral_tone(0.68), _theme.theme_bg, minimum=3.0)
+    # Full cloud cover; the strip fades from the background to this.
+    CLOUD_RGB = ensure_contrast(neutral_tone(0.9), _theme.theme_bg, minimum=4.0)
 
     BLUE_RGB = best_contrast((_theme.theme_ansi[4], _theme.theme_ansi[12]), minimum=2.1)
     CYAN_RGB = best_contrast((_theme.theme_ansi[6], _theme.theme_ansi[14]), minimum=2.1)

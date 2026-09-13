@@ -15,7 +15,7 @@ from linecast._weather_alerts import (
     render_alerts,
     render_alerts_mapped,
 )
-from linecast._weather_daily import render_daily
+from linecast._weather_daily import fmt_precip_amount, render_daily, render_daily_mapped
 from linecast._braille import build_braille_curve as _build_braille_curve
 from linecast._graphics import fmt_hour as _fmt_hour, fmt_time_dt as _fmt_time
 from linecast._weather_hourly import (
@@ -67,12 +67,14 @@ from linecast._weather_style import (
     TEMP_COLORS,
     TEXT,
     TOOLTIP_BG_RGB,
+    CLOUD_RGB,
     TOOLTIP_TEXT_RGB,
     WIND_ARROWS,
     WIND_COLOR,
     _aqi_color,
     _colored_temp,
     _precip_color,
+    _precip_rgb,
     _precip_type,
     _temp_color,
 )
@@ -87,6 +89,8 @@ __all__ = [
     "render_alerts",
     "render_alerts_mapped",
     "render_daily",
+    "render_daily_mapped",
+    "fmt_precip_amount",
     "_build_braille_curve",
     "_fmt_hour",
     "_fmt_time",
@@ -134,12 +138,14 @@ __all__ = [
     "TEMP_COLORS",
     "TEXT",
     "TOOLTIP_BG_RGB",
+    "CLOUD_RGB",
     "TOOLTIP_TEXT_RGB",
     "WIND_ARROWS",
     "WIND_COLOR",
     "_aqi_color",
     "_colored_temp",
     "_precip_color",
+    "_precip_rgb",
     "_precip_type",
     "_temp_color",
 ]

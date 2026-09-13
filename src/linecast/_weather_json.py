@@ -82,6 +82,7 @@ def build_payload(data, location_name, country_code, runtime,
             "wind_speed": _at(hourly.get("wind_speed_10m"), i),
             "wind_direction": _at(hourly.get("wind_direction_10m"), i),
             "uv_index": _at(hourly.get("uv_index"), i),
+            "cloud_cover": _at(hourly.get("cloud_cover"), i),
         })
 
     # Daily: index 0 is yesterday, 1 is today — emit 1..7.

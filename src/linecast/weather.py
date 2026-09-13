@@ -20,8 +20,9 @@ Usage: weather [--print] [--oneline] [--json] [--location LAT,LNG | PLACE] [--se
 import sys
 import threading
 import time as _t
+from datetime import datetime
 
-from linecast import _live
+from linecast import _live, _theme
 from linecast._graphics import bg, fg, get_terminal_size
 from linecast._location import country_for_defaults, resolve_location
 from linecast._runtime import (
@@ -32,9 +33,11 @@ from linecast._weather_i18n import (
     WMO_NAMES,
     WMO_NAMES_I18N,
     _s,
+    has_string,
 )
 from linecast._weather_render import (
     ALERT_AMBER,
+    CLOUD_RGB,
     DIM,
     MUTED,
     RESET,
@@ -44,11 +47,14 @@ from linecast._weather_render import (
     WIND_ARROWS,
     _colored_temp,
     _fmt_time,
+    _precip_rgb,
+    _precip_type,
     _prepare_hourly_window,
     build_alert_modal,
+    fmt_precip_amount,
     narrative_lines,
     render_alerts_mapped,
-    render_daily,
+    render_daily_mapped,
     render_header,
     render_hourly,
 )
@@ -135,6 +141,9 @@ def _build_hover_tooltip(data, mouse_col, mouse_row, hourly_start, hourly_end, c
     wind_dir = window["wind_dirs"][idx] if idx < len(window["wind_dirs"]) else 0
     humidity = window["humidity"][idx] if idx < len(window.get("humidity", [])) else None
     dew = window["dew_points"][idx] if idx < len(window.get("dew_points", [])) else None
+    amount = window["precip_amount"][idx] if idx < len(window.get("precip_amount", [])) else 0
+    prob = window["precip"][idx] if idx < len(window.get("precip", [])) else 0
+    cloud = window["cloud"][idx] if idx < len(window.get("cloud", [])) else None
 
     TBG = bg(*TOOLTIP_BG_RGB)
     TFG = fg(*TOOLTIP_TEXT_RGB)
@@ -167,6 +176,21 @@ def _build_hover_tooltip(data, mouse_col, mouse_row, hourly_start, hourly_end, c
         elif humidity >= 70 or humidity <= 25:
             lines.append(f"{TBG}{TFG} {_s('humidity', runtime)} {humidity:.0f}% ")
 
+    # Precipitation: the hour's amount, and its chance in the very shade
+    # the bar below is drawn in, so the chip teaches what the fade means.
+    precip_parts = []
+    if amount and amount > 0:
+        precip_parts.append(f"{fg(*_precip_rgb(code))}{fmt_precip_amount(amount, runtime)}{TFG}")
+    if prob and prob >= 10:
+        precip_parts.append(_s("chance", runtime, p=f"{_precip_shade(code, prob)}{prob:.0f}%{TFG}"))
+    if precip_parts:
+        lines.append(f"{TBG}{TFG} {'  '.join(precip_parts)} ")
+
+    # Cloud cover, in the shade of the strip
+    if cloud is not None and cloud >= 10:
+        shaded = f"{_cloud_shade(cloud)}{cloud:.0f}%{TFG}"
+        lines.append(f"{TBG}{TFG} {_s('cloud', runtime, p=shaded)} ")
+
     # Wind (if notable)
     wind_threshold = 25 if runtime.metric else 15
     if wind > wind_threshold:
@@ -181,6 +205,147 @@ def _build_hover_tooltip(data, mouse_col, mouse_row, hourly_start, hourly_end, c
     snap_col = int(idx / max(1, total_hours) * (graph_w - 1)) + 1
 
     return _live.pointer_chip(lines, snap_col, mouse_row, cols, rows, pad_bg=TBG)
+
+
+def _precip_shade(code, prob):
+    """The precipitation bar's color for this chance: its type faded
+    toward the background, as _precip_columns draws it."""
+    return fg(*_theme.lerp_rgb(_theme.theme_bg, _precip_rgb(code), max(0.0, min(1.0, prob / 100))))
+
+
+def _cloud_shade(cover):
+    """The cloud strip's color for this cover, as _render_cloud_row draws it."""
+    return fg(*_theme.lerp_rgb(_theme.theme_bg, CLOUD_RGB, max(0.0, min(1.0, cover / 100))))
+
+
+def _precip_kind_lower(code, runtime):
+    """The precipitation type as a word mid-sentence: "rain", not "Rain",
+    where the language has the lowercase form, and the row label otherwise."""
+    kind = _precip_type(code)
+    return _s(kind.lower(), runtime) if has_string(kind.lower()) else _s(kind, runtime)
+
+
+def _build_daily_tooltip(data, mouse_col, mouse_row, daily_start, daily_spans, cols, rows,
+                         runtime):
+    """A chip for the part of a daily row under the pointer.
+
+    Each part of the row answers for itself: the day's name and icon give
+    the day and its weather, the bar the high and low and when they come,
+    the odds the chance of rain and roughly when, the amount the day's
+    total and its heaviest hour, the wind its speed and gusts.  Returns
+    cursor-positioned escapes, or "" when the pointer is elsewhere.
+    mouse_col/mouse_row are 1-based terminal coordinates; daily_start is
+    the 0-based line index of the first daily row.
+    """
+    k = mouse_row - 1 - daily_start
+    if not (0 <= k < len(daily_spans)):
+        return ""
+    span = daily_spans[k]
+    col = mouse_col - 1
+    field = next((name for name, (a, b) in span["cols"].items() if a <= col < b), None)
+    if field is None:
+        return ""
+
+    i = span["index"]
+    daily = data.get("daily", {})
+    hourly = data.get("hourly", {})
+
+    def day_value(key, default=None):
+        values = daily.get(key) or []
+        return values[i] if i < len(values) else default
+
+    date = day_value("time", "")
+    hours = [j for j, t in enumerate(hourly.get("time") or []) if str(t).startswith(str(date))]
+
+    def hour_values(key):
+        values = hourly.get(key) or []
+        return [(j, values[j]) for j in hours if j < len(values) and values[j] is not None]
+
+    def when(j):
+        try:
+            dt = datetime.fromisoformat(hourly["time"][j])
+        except (KeyError, IndexError, TypeError, ValueError):
+            return None
+        return _fmt_time(dt, use_24h=runtime.use_24h)
+
+    TBG = bg(*TOOLTIP_BG_RGB)
+    TFG = fg(*TOOLTIP_TEXT_RGB)
+    deg = "\u00b0"
+    code = day_value("weather_code", 0) or 0
+    lines = []
+
+    if field == "day":
+        now_local = _local_now_for_data(data)
+        if date == now_local.date().isoformat():
+            name = _s("today", runtime)
+        else:
+            try:
+                names = FULL_DAY_NAMES.get(runtime.lang, FULL_DAY_NAMES["en"])
+                name = names[datetime.fromisoformat(date).weekday()]
+            except (TypeError, ValueError):
+                name = str(date)
+        lines.append(f"{TBG}{TFG} {name} ")
+        wmo_name = WMO_NAMES_I18N.get(runtime.lang, {}).get(code) or WMO_NAMES.get(code, "")
+        if wmo_name:
+            lines.append(f"{TBG}{TFG} {wmo_name} ")
+
+    elif field == "bar":
+        temps = hour_values("temperature_2m")
+        for value, pick in ((day_value("temperature_2m_max"), max),
+                            (day_value("temperature_2m_min"), min)):
+            if value is None:
+                continue
+            line = f"{TBG} {_colored_temp(value, runtime, deg)}"
+            if temps:
+                j = pick(temps, key=lambda jv: jv[1])[0]
+                at = when(j)
+                if at:
+                    line += f" {TFG}{_s('around', runtime, time=at)}"
+            lines.append(f"{line} ")
+
+    elif field == "prob":
+        prob = day_value("precipitation_probability_max", 0) or 0
+        what = _precip_kind_lower(code, runtime)
+        # Full color here, unlike the hourly chip: the fade explains the
+        # bar it sits under, and the daily rows have no such bar.
+        colored = f"{fg(*_precip_rgb(code))}{prob:.0f}%{TFG}"
+        lines.append(f"{TBG}{TFG} {_s('chance_of', runtime, p=colored, what=what)} ")
+        wet = [j for j, v in hour_values("precipitation") if v > 0]
+        if wet:
+            first, last = when(wet[0]), when(wet[-1])
+            if first and last and first != last:
+                lines.append(f"{TBG}{TFG} {first} \u2013 {last} ")
+            elif first:
+                lines.append(f"{TBG}{TFG} {_s('around', runtime, time=first)} ")
+
+    elif field == "precip":
+        total = day_value("precipitation_sum", 0) or 0
+        what = _s(_precip_type(code), runtime)
+        lines.append(f"{TBG}{fg(*_precip_rgb(code))} {what} {fmt_precip_amount(total, runtime)} ")
+        amounts = hour_values("precipitation")
+        if amounts:
+            j, peak = max(amounts, key=lambda jv: jv[1])
+            at = when(j)
+            if peak > 0 and at:
+                lines.append(f"{TBG}{TFG} {_s('heaviest_around', runtime, time=at)} ")
+
+    elif field == "wind":
+        speed = day_value("wind_speed_10m_max")
+        gust = day_value("wind_gusts_10m_max")
+        if speed is not None:
+            lines.append(f"{TBG}{TFG} {_s('wind', runtime)} {speed:.0f}{runtime.wind_unit} ")
+        if gust is not None and speed is not None and gust > speed:
+            line = f"{TBG}{TFG} {_s('gusts', runtime)} {gust:.0f}{runtime.wind_unit}"
+            gusts = hour_values("wind_gusts_10m")
+            if gusts:
+                at = when(max(gusts, key=lambda jv: jv[1])[0])
+                if at:
+                    line += f" {_s('around', runtime, time=at)}"
+            lines.append(f"{line} ")
+
+    if not lines:
+        return ""
+    return _live.pointer_chip(lines, span["cols"][field][0] + 1, mouse_row, cols, rows, pad_bg=TBG)
 
 
 def forecast_notice(data, runtime, live=False, fetching=False, failed_at=None):
@@ -235,7 +400,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
         render_alerts_mapped(alerts, width=cols, runtime=runtime, tz_name=tz_name)
         if alerts else ([], []))
     narrative = narrative_lines(data, now_local, cols, runtime)
-    daily_lines_rendered = render_daily(data, cols, runtime, now=now_local)
+    daily_lines_rendered, daily_spans = render_daily_mapped(data, cols, runtime, now=now_local)
 
     hint = install_banner()
 
@@ -249,6 +414,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     has_uv_row = bool(all_uv) and max(all_uv) >= 6
     has_precip_graph = (bool(hourly.get("precipitation"))
                         and max(hourly.get("precipitation", [0])) > 0)
+    has_cloud_row = bool(hourly.get("cloud_cover"))
 
     # Count non-hourly lines precisely
     non_hourly = 2  # header + blank
@@ -275,6 +441,8 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
         hourly_floor += 1
     if has_precip_graph:
         hourly_floor += 1
+    if has_cloud_row:
+        hourly_floor += 1
 
     # A window too short for all of that would push the header off the top
     # of the screen, so give something up: the prose first, then the days
@@ -288,6 +456,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     if short > 0 and len(daily_lines_rendered) > MIN_DAILY_ROWS:
         dropped = min(short, len(daily_lines_rendered) - MIN_DAILY_ROWS)
         daily_lines_rendered = daily_lines_rendered[:-dropped]
+        daily_spans = daily_spans[:-dropped]
         non_hourly -= dropped
 
     # All remaining rows go to hourly section
@@ -297,6 +466,8 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     if has_wind_row:
         graph_budget -= 1
     if has_uv_row:
+        graph_budget -= 1
+    if has_cloud_row:
         graph_budget -= 1
 
     if has_precip_graph:
@@ -370,6 +541,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     lines.append("")
 
     # Daily
+    daily_start = len(lines)
     lines.extend(daily_lines_rendered)
 
     # Alerts — badges to a line, wrapping where they run out of room
@@ -407,6 +579,8 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
             hourly_start, hourly_end,
             cols, rows, runtime,
             offset_minutes=offset_minutes,
+        ) or _build_daily_tooltip(
+            data, mouse_col, mouse_row, daily_start, daily_spans, cols, rows, runtime,
         )
     output = _live.overlay(output, overlay)
 

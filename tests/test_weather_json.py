@@ -143,7 +143,7 @@ class TestHourly:
         assert set(entry.keys()) == {
             "time", "temperature", "feels_like", "precipitation_probability",
             "precipitation", "weather_code", "icon", "condition",
-            "wind_speed", "wind_direction", "uv_index",
+            "wind_speed", "wind_direction", "uv_index", "cloud_cover",
         }
         assert entry["condition"] is not None
         assert entry["icon"] is not None

@@ -11,9 +11,10 @@ from linecast._paths import cache_dir
 from linecast._runtime import WeatherRuntime, current_runtime, log_failure
 
 # The forecast, the air quality, and the geocoder are Open-Meteo's, and
-# its CC BY 4.0 terms ask for this line on screen. The alerts are the
-# national services'; the router below says whose. Both are proper names
-# and data credits: imported where shown, never retyped or translated.
+# its CC BY 4.0 terms ask for a line on screen. The alerts are the
+# national services', and the router below says whose. The names are
+# proper names, given as the service writes its own in each display
+# language it has one in; the phrase around them is translated.
 ATTRIBUTION = "Weather data by Open-Meteo"
 FORECAST_SOURCE = "Open-Meteo"
 
@@ -30,23 +31,43 @@ _ALERT_SOURCES = {
     "NZ": "MetService",
 }
 
+# A service's own name in a display language, where the two coincide.
+_ALERT_SOURCE_NAMES = {
+    ("CA", "fr"): "Environnement Canada",
+    ("DE", "de"): "Deutscher Wetterdienst",
+    ("NO", "no"): "Meteorologisk institutt",
+    ("JP", "ja"): "気象庁",
+    ("HK", "zh"): "香港天文台",
+    ("CN", "zh"): "中国气象局",
+}
 
-def alert_source(country_code: str) -> str | None:
+
+def alert_source(country_code: str, lang: str = "en") -> str | None:
     """Who issues the alerts shown for a country: its national service,
     MeteoAlarm across the rest of Europe, None where linecast has no feed.
     Mirrors _fetch_alerts_routed, which decides where the fetch goes."""
     country_code = (country_code or "").upper()
     if country_code in _ALERT_SOURCES:
-        return _ALERT_SOURCES[country_code]
+        return _ALERT_SOURCE_NAMES.get((country_code, lang), _ALERT_SOURCES[country_code])
     if country_code in _METEOALARM_SLUGS:
         return "MeteoAlarm"
     return None
 
 
-def alert_attribution(country_code: str) -> str | None:
-    """The alerts credit for a country, or None where none are fetched."""
-    source = alert_source(country_code)
-    return f"Alerts by {source}" if source else None
+def forecast_attribution(lang: str = "en") -> str:
+    """The forecast credit in the display language."""
+    from linecast._weather_i18n import _STRINGS
+    from linecast._i18n import lookup
+    return lookup(_STRINGS, "credit_forecast", lang, source=FORECAST_SOURCE)
+
+
+def alert_attribution(country_code: str, lang: str = "en") -> str | None:
+    """The alerts credit in the display language, or None where none
+    are fetched."""
+    from linecast._weather_i18n import _STRINGS
+    from linecast._i18n import lookup
+    source = alert_source(country_code, lang)
+    return lookup(_STRINGS, "credit_alerts", lang, source=source) if source else None
 
 
 def _local_now_for_data(data):

@@ -73,6 +73,18 @@ def paint_hint(fb, overlays, lang='en', rows=None):
     return False
 
 # Keys are the spellings a user types, not the live loop's decoded actions.
+# The gesture words among them are English here and translated by mark().
+GESTURES = {'wheel': 'key_wheel', 'space': 'key_space', 'hover': 'key_hover',
+            'click': 'key_click', 'drag': 'key_drag', 'enter': 'key_enter'}
+
+
+def mark(text, lang='en'):
+    """A key column entry in the display language: the gesture words
+    translated, the letters and arrows left as they are typed."""
+    return ' / '.join(hs(GESTURES[part], lang) if part in GESTURES else part
+                      for part in text.split(' / '))
+
+
 CONTROLS = {
     'weather': [('wheel / ←→', 'forecast'), ('space / n', 'now'),
                 ('hover', 'help_hover'), ('click', 'alert'), ('o', 'browser'),
@@ -145,22 +157,28 @@ def panel(content, cols, rows, lang='en', page=0):
     if cols < 16 or rows < 5:
         note = fit('? / esc', cols)
         return f'\033[1;1H{RESET}{note}', 1
+    content = [entry if entry is None else (mark(entry[0], lang), entry[1])
+               for entry in content]
     label_width = max((visible_len(entry[1]) for entry in content if entry), default=0)
-    width = min(cols - 4, max(47, label_width + 17))
-    key_width = 12 if width >= 36 else 0
+    # the key column is as wide as its widest entry: a translated
+    # gesture word can run past the dozen cells the English ones need
+    key_width = max([12, *(visible_len(entry[0]) + 1 for entry in content if entry)])
+    width = min(cols - 4, max(47, label_width + key_width + 5))
+    if width < key_width + 24:
+        key_width = 0
     laid_out = []
     for entry in content:
         if entry is None:
             laid_out.append(None)
             continue
-        mark, text = entry
-        if mark and key_width:
+        key, text = entry
+        if key and key_width:
             pieces = wrap(text, width - key_width - 3)
-            laid_out.extend((mark if i == 0 else ' ', line)
+            laid_out.extend((key if i == 0 else ' ', line)
                             for i, line in enumerate(pieces))
         else:
-            if mark:
-                laid_out.append(('', mark))
+            if key:
+                laid_out.append(('', key))
             laid_out.extend(('', line) for line in wrap(text, width - 2))
     budget = rows - 4
     if len(laid_out) > budget:
@@ -187,11 +205,11 @@ def panel(content, cols, rows, lang='en', page=0):
         if entry is None:
             body = ' ' * width
         else:
-            mark, text = entry
-            if mark:
-                mark = fit(mark, key_width)
+            key, text = entry
+            if key:
+                key = fit(key, key_width)
                 label = fit(text, width - key_width - 3)
-                body = (f' {fg(*key_ink)}{mark}' + ' ' * (key_width - visible_len(mark))
+                body = (f' {fg(*key_ink)}{key}' + ' ' * (key_width - visible_len(key))
                         + f' {fg(*ink)}{label}')
             else:
                 body = f' {fg(*dim)}{fit(text, width - 2)}'

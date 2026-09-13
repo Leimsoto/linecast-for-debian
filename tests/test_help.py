@@ -23,7 +23,7 @@ def test_every_view_has_translated_controls(view, lang):
     help_panel = _help.HelpPanel(view, lang)
     output = ''.join(lines(help_panel.render(160, 50)))
     for key, text in _help.entries(view, lang):
-        assert key in output and text in output
+        assert _help.mark(key, lang) in output and text in output
 
 
 @pytest.mark.parametrize('cols,rows', [(8, 3), (20, 8), (40, 12), (80, 24), (160, 50)])

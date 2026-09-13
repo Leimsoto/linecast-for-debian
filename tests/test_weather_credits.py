@@ -17,8 +17,10 @@ from linecast import _help, _weather_sources, weather
 from linecast._graphics import visible_len
 from linecast._runtime import WeatherRuntime
 from linecast._weather_json import build_payload
+from linecast._i18n import LANGUAGE_CODES
 from linecast._weather_sources import (
-    ATTRIBUTION, alert_attribution, alert_source, _METEOALARM_SLUGS)
+    ATTRIBUTION, alert_attribution, alert_source, forecast_attribution,
+    _METEOALARM_SLUGS)
 
 FIXTURES = Path(__file__).parent / "fixtures"
 FIXED_NOW = datetime(2026, 3, 5, 14, 30)
@@ -26,6 +28,11 @@ FIXED_NOW = datetime(2026, 3, 5, 14, 30)
 
 def plain(text):
     return re.sub(r'\033\[[0-9;]*[a-zA-Z]', '', text)
+
+
+def lines_of(panel):
+    return [re.sub(r'\033\[[^m]*m', '', row)
+            for row in re.split(r'\033\[\d+;\d+H', panel)[1:]]
 
 
 class TestSources:
@@ -46,6 +53,22 @@ class TestSources:
     def test_no_feed_means_no_credit(self):
         assert alert_source("AR") is None
         assert alert_attribution("") is None
+
+    def test_a_service_is_named_as_it_names_itself(self):
+        assert alert_attribution("JP", "ja") == "警報: 気象庁"
+        assert alert_attribution("JP", "fr") == "Alertes par Japan Meteorological Agency"
+        assert alert_attribution("DE", "de") == "Warnungen: Deutscher Wetterdienst"
+        assert alert_attribution("CA", "fr") == "Alertes par Environnement Canada"
+
+    @pytest.mark.parametrize("lang", LANGUAGE_CODES)
+    def test_every_language_phrases_the_credit(self, lang):
+        forecast = forecast_attribution(lang)
+        assert "Open-Meteo" in forecast and "{" not in forecast
+        alerts = alert_attribution("IE", lang)
+        assert "Met Éireann" in alerts and "{" not in alerts
+        if lang != "en":
+            assert forecast != ATTRIBUTION
+    assert forecast_attribution("en") == ATTRIBUTION
 
 
 class TestCreditRow:
@@ -97,6 +120,27 @@ class TestPanel:
         panel = plain(app.help_panel().render(160, 50))
         assert ATTRIBUTION in panel and 'Alerts by Met Éireann' in panel
 
+    def test_the_panel_speaks_the_display_language_in_both_columns(self):
+        with patch("time.monotonic", return_value=0.0):
+            app = weather.WeatherApp({"v": 1}, [], None, 35.7, 139.7, SimpleNamespace(lang="ja"),
+                                     location_name="新宿区", country="JP")
+        rows = lines_of(app.help_panel().render(160, 50))
+        assert any(row.startswith('│ ホイール / ←→  ') for row in rows)
+        assert any('クリック' in row for row in rows)
+        assert not any('wheel' in row or 'click' in row for row in rows)
+        assert any('気象データ提供: Open-Meteo' in row for row in rows)
+        assert any('警報: 気象庁' in row for row in rows)
+
+    @pytest.mark.parametrize("lang", LANGUAGE_CODES)
+    def test_the_key_column_fits_its_widest_gesture(self, lang):
+        # the key and its description never run together
+        for view in _help.CONTROLS:
+            rows = lines_of(_help.HelpPanel(view, lang).render(160, 50))
+            for key, text in _help.entries(view, lang):
+                shown = _help.mark(key, lang)
+                row = next(r for r in rows if shown in r and text in r)
+                assert re.search(re.escape(shown) + r' {2,}' + re.escape(text), row), row
+
 
 def _render(cols, rows, live=True, country_code="IE"):
     data = json.loads((FIXTURES / "open_meteo_forecast.json").read_text(encoding="utf-8"))
@@ -128,6 +172,19 @@ class TestLiveView:
         lines = _render(30, 24)
         assert not any('Open-Meteo' in line for line in lines)
         assert lines[-1].strip() == '? keys' and len(lines) == 24
+
+    def test_the_row_is_in_the_display_language(self):
+        data = json.loads((FIXTURES / "open_meteo_forecast.json").read_text(encoding="utf-8"))
+        runtime = WeatherRuntime(live=True, icons="emoji", lang="ja", oneline=False,
+                                 celsius=True, metric=True)
+        with patch("linecast.weather.get_terminal_size", return_value=(120, 40)), \
+             patch("linecast.weather._local_now_for_data", return_value=FIXED_NOW), \
+             patch("linecast._weather_hourly._local_now_for_data", return_value=FIXED_NOW):
+            output, _ = weather.render_from_data(data, alerts=[], runtime=runtime,
+                                                 location_name="新宿区", country_code="JP")
+        last = plain(output).split("\n")[-1]
+        assert last.startswith('気象データ提供: Open-Meteo · 警報: 気象庁')
+        assert last.endswith('  ? キー')
 
     def test_print_output_has_no_credit_row(self):
         lines = _render(160, 40, live=False)

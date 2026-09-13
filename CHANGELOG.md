@@ -21,7 +21,8 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 - Sky: Search finds a star by its designation as it is typed: "alpha cen", "alpha centauri", and "alpha crucis" all find the star, with or without the component number.
 - Sky, maps, and radar: Press `w`, `a`, `s`, or `d` to pan. In the sky each pan eases to rest, with smaller steps when zoomed in. In maps, daylight and directions move to `S` and `D`; in radar, wind and satellite move to `W` and `S` (Shift plus the letter).
 - Live views: A small `? keys` hint in the display language points to the controls, with room at the right edge so its last letter stays visible. The radar help now describes warning hover correctly.
-- Weather: The live view says where its data comes from. The bottom row credits Open-Meteo for the forecast and names the service the alerts come from, such as Met Éireann in Ireland, and the `?` panel lists both. `weather --json` names them in a `sources` field.
+- Weather: The live view says where its data comes from. The bottom row credits Open-Meteo for the forecast and names the service the alerts come from, such as Met Éireann in Ireland, and the `?` panel lists both. The credit is in the display language, and a service is named as it names itself: 気象庁 in Japanese, Deutscher Wetterdienst in German. `weather --json` names the sources in a `sources` field.
+- Help panel: The key column is in the display language too: wheel, space, hover, click, drag, and enter are translated, and the column widens to fit.
 - Sky: Zooming in stays responsive; constellation lines outside the view are no longer drawn.
 - Sky: The status text is drawn over the sky instead of on a solid footer, in ink that reads against both day and night.
 

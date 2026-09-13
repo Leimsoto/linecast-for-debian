@@ -54,7 +54,6 @@ from linecast._weather_render import (
 )
 from linecast._weather_historical import fetch_historical
 from linecast._weather_sources import (
-    ATTRIBUTION,
     _local_now_for_data,
     _reverse_geocode,
     _search_locations,
@@ -63,6 +62,7 @@ from linecast._weather_sources import (
     fetch_aqi,
     fetch_alerts,
     fetch_forecast,
+    forecast_attribution,
     forecast_date,
     forecast_is_todays,
 )
@@ -74,12 +74,12 @@ MIN_HOURLY_ROWS = 4
 MIN_DAILY_ROWS = 3
 
 
-def data_credits(country_code=""):
+def data_credits(country_code="", lang="en"):
     """The data credits, longest first: the forecast's with the alerts'
     when a service supplies them, then the forecast's alone."""
-    alerts = alert_attribution(country_code)
-    return ((f"{ATTRIBUTION} · {alerts}", ATTRIBUTION) if alerts
-            else (ATTRIBUTION,))
+    forecast = forecast_attribution(lang)
+    alerts = alert_attribution(country_code, lang)
+    return (f"{forecast} · {alerts}", forecast) if alerts else (forecast,)
 
 
 def credit_row(cols, lang, country_code=""):
@@ -90,7 +90,7 @@ def credit_row(cols, lang, country_code=""):
     from linecast import _help
     from linecast._graphics import visible_len
     hint = _help.hint(lang)
-    for credit in data_credits(country_code):
+    for credit in data_credits(country_code, lang):
         if visible_len(credit) + 2 + visible_len(hint) <= cols - 1:
             return _help.footer(f"{DIM}{credit}{RESET}", cols, lang)
     return _help.footer("", cols, lang)
@@ -519,7 +519,8 @@ class WeatherApp(_live.LiveApp):
         from linecast._help import HelpPanel, entries
         return HelpPanel('weather', self.runtime.lang, content=lambda cols, rows:
                          entries('weather', self.runtime.lang,
-                                 credits=(ATTRIBUTION, alert_attribution(self.country))))
+                                 credits=(forecast_attribution(self.runtime.lang),
+                                          alert_attribution(self.country, self.runtime.lang))))
 
     def on_open(self, idx):
         if 0 <= idx < len(self.alerts):

@@ -592,15 +592,29 @@ def _lit_fraction_at_limb(ux, uy, r, radius, sun):
     A span that overhangs the limb slides inside it, keeping its width:
     the anti-aliased edge already thins those pixels, and a sliver of
     lit ground should not fill the sliver of span that is left.
+
+    The pixel has width across the radius too, over which A changes by
+    the Sun's pull across the radius times the angle the pixel subtends.
+    Four spans across the pixel are averaged, so where the terminator
+    runs along a radius -- the equator of a quarter Moon meeting the
+    limb -- the pixel comes out half lit, and not wholly lit or dark on
+    the sign of a rounding error.
     """
     sun_x, sun_y, sun_z = sun
     if r <= 0.0:
         return 1.0 if sun_z > 0.0 else 0.0
     a = (ux * sun_x + uy * sun_y) / r
-    b = sun_z
+    t = (ux * sun_y - uy * sun_x) / r
     half = 0.5 / radius
     hi = min(1.0, r + half)
     lo = max(0.0, hi - 2.0 * half)
+    step = t * half / r
+    return sum(_radial_lit(a + s * step, sun_z, lo, hi)
+               for s in (-0.75, -0.25, 0.25, 0.75)) / 4.0
+
+
+def _radial_lit(a, b, lo, hi):
+    """The lit length of the radial span [lo, hi], as a share of the span."""
     if a >= 0.0 and b >= 0.0:
         return 1.0
     if a <= 0.0 and b <= 0.0:

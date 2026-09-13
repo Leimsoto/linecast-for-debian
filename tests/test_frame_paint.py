@@ -6,7 +6,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from linecast._live import _AUTOWRAP_OFF, _AUTOWRAP_ON, frame_body, print_frame
+from linecast._live import (_AUTOWRAP_OFF, _AUTOWRAP_ON, _SYNC_BEGIN, _SYNC_END,
+                            frame_body, frame_paint, print_frame)
 
 
 class _Stream(io.StringIO):
@@ -58,3 +59,20 @@ class TestPrintFrame:
         out = Mute()
         print_frame("frame", stream=out)
         assert out.getvalue() == "frame\n"
+
+
+class TestFramePaint:
+    def test_the_frame_is_one_synchronized_update(self):
+        # A terminal that honours mode 2026 holds the screen between the
+        # two sequences, so it never shows a half-written frame: rows from
+        # two frames at once, or a row cleared and drawn only partway.
+        out = frame_paint("a\nb")
+        assert out.startswith(_SYNC_BEGIN)
+        assert out.endswith(_SYNC_END)
+
+    def test_body_then_overlay_with_autowrap_off(self):
+        out = frame_paint("a", "\033[3;4Hchip")
+        inner = out[len(_SYNC_BEGIN):-len(_SYNC_END)]
+        assert inner.startswith(_AUTOWRAP_OFF + frame_body("a"))
+        assert inner.endswith(_AUTOWRAP_ON)
+        assert inner.index(frame_body("a")) < inner.index("\033[3;4Hchip")

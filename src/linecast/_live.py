@@ -37,6 +37,17 @@ from linecast import _term
 _AUTOWRAP_OFF = "\033[?7l"
 _AUTOWRAP_ON = "\033[?7h"
 
+# A frame goes out in one write, but the terminal may draw its screen
+# partway through reading it: rows above the read boundary from the new
+# frame, rows below from the old, and the row on the boundary cleared
+# and half drawn -- a blank stripe across a moon mid-drag.  Between
+# these two sequences a terminal that knows synchronized output (DEC
+# private mode 2026: Alacritty, kitty, foot, WezTerm, Ghostty, iTerm2,
+# Windows Terminal, tmux) holds the screen and shows the frame whole.
+# One that does not ignores them, as it ignores any unknown mode.
+_SYNC_BEGIN = "\033[?2026h"
+_SYNC_END = "\033[?2026l"
+
 
 def frame_body(text):
     r"""A frame with every row addressed, so no row can shift the ones below.
@@ -52,6 +63,20 @@ def frame_body(text):
     """
     return "".join(f"\033[{row};1H\033[K{line}"
                    for row, line in enumerate(text.split("\n"), 1))
+
+
+def frame_paint(body, floating=""):
+    r"""Everything the live loop writes for one frame, as one string.
+
+    Rows are addressed (frame_body) and drawn with the terminal's
+    autowrap off, so a row drawn wider than it measured cannot shift the
+    frame.  \033[J clears below the last row; `floating` -- the
+    cursor-addressed overlay -- draws on top.  The whole frame sits
+    inside a synchronized update so the terminal shows none of it until
+    it has all of it.
+    """
+    return (f"{_SYNC_BEGIN}{_AUTOWRAP_OFF}{frame_body(body)}"
+            f"\033[J\033[0m{floating}\033[0m{_AUTOWRAP_ON}{_SYNC_END}")
 
 
 def print_frame(text, stream=None):
@@ -654,12 +679,7 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
                 # restore it when the caller's overlay has not done so.
                 if "\033[?1003l" not in overlay:
                     overlay = "\033[?1003h" + overlay
-            # Rows are addressed (frame_body) and drawn with the
-            # terminal's autowrap off (_AUTOWRAP_OFF), so a row drawn
-            # wider than it measured cannot shift the frame.  \033[J
-            # clears below the last row; the overlay draws on top.
-            sys.stdout.write(f"{_AUTOWRAP_OFF}{frame_body(main_out)}"
-                             f"\033[J\033[0m{overlay}\033[0m{_AUTOWRAP_ON}")
+            sys.stdout.write(frame_paint(main_out, overlay))
             sys.stdout.flush()
 
             # Wait for input, resize, or timeout

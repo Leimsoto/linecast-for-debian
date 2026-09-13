@@ -11,6 +11,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 - Weather: The prose explains why the air feels warmer or cooler than the thermometer only when the two are six degrees Fahrenheit or three Celsius apart. A smaller gap goes unremarked.
 - Weather, tides, moon, sky, sunshine: The views use every column of the window. Text and graphs used to start one column in and stop one column short of the right edge; now they run edge to edge, and the help hint sits in the last column.
 - Moon: The calendar shades the unlit side of each day's Moon as darkly as the main view does.
+- Live views: A redraw no longer flickers on terminals that support synchronized output, such as Alacritty, kitty, Ghostty, iTerm2, WezTerm, foot and Windows Terminal. Dragging the Moon or hovering over a chart used to show a half-drawn row for an instant.
 - Moon: The unlit edge of the Moon no longer shows a faint rim. The new Moon is dark all the way round, a thin crescent tapers to nothing at its horns, and the full Moon runs bright to its edge.
 
 ## 2.4.0 — 2026-09-10

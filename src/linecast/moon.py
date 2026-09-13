@@ -561,6 +561,59 @@ def _ease_out_back(s):
     return 1.0 + (c1 + 1.0) * (s - 1.0) ** 3 + c1 * (s - 1.0) ** 2
 
 
+def _lit_fraction(ux, uy, uz, d, radius, sun):
+    """How much of the pixel at a unit-sphere point is in daylight.
+
+    *d* is the cosine of the Sun's elevation there. Its gradient across
+    the screen says how many pixels away the terminator is, and the
+    pixel is blended across that one-pixel band. Measured on the screen
+    rather than in the cosine, the band stays a pixel wide however
+    foreshortened the ground: softening the cosine itself lit half of
+    every limb pixel at new and full, a rim the Moon does not have.
+    """
+    sun_x, sun_y, sun_z = sun
+    gx = sun_x - sun_z * ux / uz
+    gy = sun_y - sun_z * uy / uz
+    grad = math.sqrt(gx * gx + gy * gy)
+    dist = d * radius / grad if grad > 1e-9 else (2.0 if d > 0.0 else -2.0)
+    return max(0.0, min(1.0, 0.5 + dist))
+
+
+def _lit_fraction_at_limb(ux, uy, r, radius, sun):
+    """The daylit share of a pixel at the limb.
+
+    At the limb the ground is seen edge-on and a straight-line estimate
+    fails: the terminator runs into the limb at a tangent, so a thin
+    crescent is a sliver a fraction of a pixel deep and a new Moon's is
+    nothing at all. Measured along the radius through the pixel, the
+    Sun's elevation is A*rho + B*sqrt(1 - rho^2) -- A the Sun's pull
+    along the radius, B its height over the disc -- which changes sign
+    at most once, so the lit length of the pixel's radial span is exact.
+    A span that overhangs the limb slides inside it, keeping its width:
+    the anti-aliased edge already thins those pixels, and a sliver of
+    lit ground should not fill the sliver of span that is left.
+    """
+    sun_x, sun_y, sun_z = sun
+    if r <= 0.0:
+        return 1.0 if sun_z > 0.0 else 0.0
+    a = (ux * sun_x + uy * sun_y) / r
+    b = sun_z
+    half = 0.5 / radius
+    hi = min(1.0, r + half)
+    lo = max(0.0, hi - 2.0 * half)
+    if a >= 0.0 and b >= 0.0:
+        return 1.0
+    if a <= 0.0 and b <= 0.0:
+        return 0.0
+    # Opposite signs: the elevation crosses zero once, at rho_t.
+    rho_t = math.sqrt(b * b / (a * a + b * b))
+    if a > 0.0:                       # lit beyond rho_t, toward the limb
+        lit = max(0.0, hi - max(lo, rho_t))
+    else:                             # lit inside rho_t, toward the centre
+        lit = max(0.0, min(hi, rho_t) - lo)
+    return lit / (hi - lo)
+
+
 def _draw_moon_disc(fb, cx, cy, radius, illum, limb_deg, axis_deg,
                     turn=None, night=None, lit=None, contrast=1.0,
                     earthshine=1.0, dusk=0.0):
@@ -581,9 +634,11 @@ def _draw_moon_disc(fb, cx, cy, radius, illum, limb_deg, axis_deg,
     comes round the limb in the daylight or the night it is really in.
 
     The terminator is the great circle square to the Sun. A point is lit
-    by the cosine of the Sun's elevation over it, softened across the
-    line; seen from the front that is the standard phase ellipse, the
-    whole disc at full, a straight edge at the quarters, nothing at new.
+    when the Sun is above its horizon; seen from the front that is the
+    standard phase ellipse, the whole disc at full, a straight edge at
+    the quarters, nothing at new. The edge is anti-aliased in screen
+    space, over one pixel, so a thin crescent tapers to nothing at the
+    poles and a new Moon shows no rim at all.
 
     The night side facing Earth is not quite black: earthshine lifts it
     by the Earth's own phase, which is the complement of the Moon's, so
@@ -605,7 +660,10 @@ def _draw_moon_disc(fb, cx, cy, radius, illum, limb_deg, axis_deg,
     if lit is None:
         lit = MOON_LIT_RGB
     edge = max(1.0 / radius, 0.04)   # anti-aliasing band, in unit radii
-    soft = 0.10                       # terminator softness, in unit radii
+    # Pixels this close to the limb see the ground edge-on, where the
+    # Sun's elevation changes too fast across a pixel for a straight-line
+    # estimate; they are measured along the radius instead.
+    band = (1.0 - 1.5 / radius) ** 2 if radius > 1.5 else 0.0
     earthshine = 0.20 * (1.0 - illum) * earthshine  # night-side lift, facing Earth square on
     scan = int(radius + 2)
     albedo = _load_albedo()
@@ -644,11 +702,14 @@ def _draw_moon_disc(fb, cx, cy, radius, illum, limb_deg, axis_deg,
             if cover <= 0.02:
                 continue
 
-            # How far into daylight: the cosine of the Sun's elevation
-            # over this point, softened across the terminator.
+            # The cosine of the Sun's elevation over this point, and how
+            # much of the pixel is in daylight.
             uz = math.sqrt(1.0 - rr) if rr < 1.0 else 0.0
             d = ux * sun_x + uy * sun_y + uz * sun_z
-            lit_alpha = max(0.0, min(1.0, (d + soft) / (2.0 * soft)))
+            if rr < band:
+                lit_alpha = _lit_fraction(ux, uy, uz, d, radius, sun)
+            else:
+                lit_alpha = _lit_fraction_at_limb(ux, uy, r, radius, sun)
 
             shade = 0.18 * rr  # limb falloff
             if albedo is not None:

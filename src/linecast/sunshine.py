@@ -562,7 +562,7 @@ def render(lat, lng, doy, now_hour, fullscreen=False, offset_minutes=0, runtime=
     cols, rows = get_terminal_size()
 
     # --- dimensions: fill the terminal ---
-    graph_w = max(30, cols - 2)
+    graph_w = max(30, cols)
     graph_h = max(6, rows - (1 if fullscreen else 6))
     total_spy = graph_h * 2
 
@@ -716,7 +716,7 @@ def render(lat, lng, doy, now_hour, fullscreen=False, offset_minutes=0, runtime=
     from linecast import _help
     from linecast._i18n import lang_of
     lang = lang_of(runtime)
-    info_width = cols - visible_len(_help.hint(lang, cols)) - 3 if fullscreen else cols
+    info_width = cols - visible_len(_help.hint(lang, cols)) - 2 if fullscreen else cols
     lines.append(
         _info_line(
             lat,
@@ -790,14 +790,14 @@ def _info_line(lat, lng, doy, sunrise, sunset, width, runtime, now_hour=None, of
     if now_hour is not None and not polar:
         sky = _sky_name(lat, lng, doy, now_hour, sunrise, sunset,
                         tz_offset_h, runtime)
-        if lw + cw + len(sky) + 3 + rw + 4 <= width:
+        if lw + cw + len(sky) + 3 + rw + 2 <= width:
             center += f" {dim}· {sky}"
             cw = visible_len(center)
 
-    total_gap = max(0, width - lw - cw - rw - 2)
+    total_gap = max(0, width - lw - cw - rw)
     left_gap = max(1, total_gap // 2)
     right_gap = max(1, total_gap - left_gap)
-    line = f" {left}{' ' * left_gap}{center}{' ' * right_gap}{right} "
+    line = f"{left}{' ' * left_gap}{center}{' ' * right_gap}{right}"
 
     return f"{RESET}{line}{RESET}"
 

@@ -77,12 +77,12 @@ class TestCreditRow:
     def test_credit_left_and_hint_right(self):
         out = plain(weather.credit_row(120, 'en', 'IE'))
         assert out.startswith(self.LONG)
-        assert out.endswith('  ? keys') and visible_len(out) == 119
+        assert out.endswith('  ? keys') and visible_len(out) == 120
 
     def test_a_narrower_window_keeps_the_short_credit(self):
         out = plain(weather.credit_row(50, 'en', 'IE'))
         assert out.startswith('Weather data by Open-Meteo') and 'Alerts' not in out
-        assert out.endswith('  ? keys') and visible_len(out) == 49
+        assert out.endswith('  ? keys') and visible_len(out) == 50
 
     def test_a_narrow_window_keeps_the_hint_alone(self):
         out = plain(weather.credit_row(30, 'en', 'IE'))
@@ -90,7 +90,7 @@ class TestCreditRow:
 
     def test_the_credit_never_shortens_the_hint(self):
         # room for the credit and a clipped hint, but not the whole one
-        out = plain(weather.credit_row(34, 'en', ''))
+        out = plain(weather.credit_row(33, 'en', ''))
         assert 'Open-Meteo' not in out and out.endswith('? keys')
 
     def test_the_credit_is_fainter_than_the_prose(self):
@@ -159,7 +159,7 @@ class TestLiveView:
     def test_the_last_row_credits_the_data_and_offers_help(self):
         lines = _render(160, 40)
         assert lines[-1].startswith('Weather data by Open-Meteo · Alerts by Met Éireann')
-        assert lines[-1].endswith('  ? keys') and visible_len(lines[-1]) <= 159
+        assert lines[-1].endswith('  ? keys') and visible_len(lines[-1]) == 160
         assert sum('? keys' in line for line in lines) == 1
         assert len(lines) == 40
 

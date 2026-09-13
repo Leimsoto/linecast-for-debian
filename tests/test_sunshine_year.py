@@ -238,33 +238,33 @@ class TestTooltip:
 
     def test_it_names_the_day_and_its_distance_from_today(self):
         now = datetime(2026, 3, 5, 14, 30, tzinfo=TORONTO)
-        x_today = int((_doy(now) - 0.5) / 365 * 98)
-        tip = self._tip(*TORONTO_LL, now, (x_today + 2, 10), tz=TORONTO)
+        x_today = int((_doy(now) - 0.5) / 365 * 100)
+        tip = self._tip(*TORONTO_LL, now, (x_today + 1, 10), tz=TORONTO)
         assert "Mar 5" in tip and "today" in tip
 
     def test_a_summer_day_is_reported_in_its_own_clock_and_named(self):
         """The chart is drawn in EST; a July day's times are EDT, and say so."""
         now = datetime(2026, 3, 5, 14, 30, tzinfo=TORONTO)
-        july_x = int(_doy(datetime(2026, 7, 15)) / 365 * 98)
-        tip = self._tip(*TORONTO_LL, now, (july_x + 2, 14), tz=TORONTO)
+        july_x = int(_doy(datetime(2026, 7, 15)) / 365 * 100)
+        tip = self._tip(*TORONTO_LL, now, (july_x + 1, 14), tz=TORONTO)
         assert "EDT" in tip
 
     def test_a_day_in_todays_own_zone_is_not_labelled(self):
         now = datetime(2026, 3, 5, 14, 30, tzinfo=TORONTO)
-        tip = self._tip(*TORONTO_LL, now, (20, 14), tz=TORONTO)
+        tip = self._tip(*TORONTO_LL, now, (15, 14), tz=TORONTO)
         assert "EST" not in tip and "EDT" not in tip
 
     def test_a_polar_day_replaces_the_rise_and_set_line(self):
         now = datetime(2026, 3, 5, 14, 30, tzinfo=OSLO)
-        june_x = int(_doy(datetime(2026, 6, 21)) / 365 * 98)
-        tip = self._tip(*SVALBARD, now, (june_x + 2, 14), tz=OSLO)
+        june_x = int(_doy(datetime(2026, 6, 21)) / 365 * 100)
+        tip = self._tip(*SVALBARD, now, (june_x + 1, 14), tz=OSLO)
         assert "midnight sun" in tip
         assert "24h 00m" in tip
 
     def test_a_polar_night_says_so(self):
         now = datetime(2026, 3, 5, 14, 30, tzinfo=OSLO)
-        dec_x = int(_doy(datetime(2026, 12, 15)) / 365 * 98)
-        tip = self._tip(*SVALBARD, now, (dec_x + 2, 14), tz=OSLO)
+        dec_x = int(_doy(datetime(2026, 12, 15)) / 365 * 100)
+        tip = self._tip(*SVALBARD, now, (dec_x + 1, 14), tz=OSLO)
         assert "polar night" in tip
         assert "0h 00m" in tip
 

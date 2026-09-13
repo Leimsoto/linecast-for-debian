@@ -118,7 +118,7 @@ def render_radar(lat, lon, location_name, zoom, play_frame=0, playing=True,
     cols, rows = get_terminal_size()
     from linecast import _help
     live = bool(getattr(runtime, 'live', False))
-    foot_width = cols - visible_len(_help.hint(lang, cols)) - 3 if live else cols
+    foot_width = cols - visible_len(_help.hint(lang, cols)) - 2 if live else cols
     graph_w = max(20, cols)
     height_cells = max(8, rows - 2)
 

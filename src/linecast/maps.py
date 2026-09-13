@@ -415,8 +415,8 @@ def _hover(layer, mouse_pos, pan_offset, lang):
     index = getattr(layer, "hover", None)
     if index is None or mouse_pos is None or pan_offset[0] or pan_offset[1]:
         return "", None, None
-    # the same 1-based frame the elevation probe reads: one column of
-    # left margin, one header row above the map
+    # the same frame the elevation probe reads: terminal columns and rows
+    # count from 1, and one header row sits above the map
     hit = index.at(mouse_pos[0] - 1, mouse_pos[1] - 2)
     if hit is None:
         return "", None, None
@@ -567,8 +567,8 @@ def _elev_readout(elev, mouse_pos, dx, dy, graph_w, height_cells, lang,
         return ""
     probe = None
     if mouse_pos is not None:
-        # the same 1-based frame the hover index reads: one column of
-        # left margin, one header row above the map
+        # the same frame the hover index reads: terminal columns and rows
+        # count from 1, and one header row sits above the map
         pcol, prow = mouse_pos[0] - 1 - dx, mouse_pos[1] - 2 - dy
         if 0 <= pcol < graph_w and 0 <= prow < height_cells:
             probe = elev[prow * 2][pcol]
@@ -661,7 +661,7 @@ def render_map(lat, lon, location_name, zoom, marker=None, runtime=None,
     header += " " * max(0, cols - visible_len(header))
     from linecast import _help
     live = bool(getattr(runtime, 'live', False))
-    foot_width = cols - visible_len(_help.hint(lang, cols)) - 3 if live else cols
+    foot_width = cols - visible_len(_help.hint(lang, cols)) - 2 if live else cols
 
     if err:
         key = 'streets_unavailable' if view == "street" else 'unavailable'

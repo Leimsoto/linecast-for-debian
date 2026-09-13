@@ -17,15 +17,11 @@ def hint(lang='en', width=80):
 
 
 def footer(line, width, lang='en'):
-    """Add help in the spare right margin without truncating the readout.
+    """Add help at the right of the row, through its last column, without truncating the readout.
 
     Callers with a dense footer budget for hint() before choosing their
     content. Trailing padding is expendable; text and credits are not.
     """
-    # live_loop clears from the cursor after each row. At the right
-    # margin a terminal can leave that cursor on the last printed cell,
-    # so that cell must be air, never the hint's final letter.
-    width = max(0, width - 1)
     line = re.sub(r' +(?=(?:\033\[[0-9;]*m)*$)', '', line)
     used = visible_len(line)
     label = hint(lang, width - used - 2)

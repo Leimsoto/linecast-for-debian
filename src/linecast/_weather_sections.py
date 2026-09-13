@@ -32,7 +32,7 @@ def render_header(data, width, location_name="", runtime=None, aqi_data=None, hi
     name = WMO_NAMES_I18N.get(runtime.lang, {}).get(wmo) or WMO_NAMES.get(wmo, "")
 
     deg = runtime.temp_unit
-    left_core = f" {TEXT}{icon} {name}  {_colored_temp(temp, runtime, deg)}"
+    left_core = f"{TEXT}{icon} {name}  {_colored_temp(temp, runtime, deg)}"
     left_feels = f"  {MUTED}{_s('feels', runtime)} {_colored_temp(feels, runtime, deg)}"
 
     # Historical comparison — subtle annotation after feels-like
@@ -109,7 +109,7 @@ def render_header(data, width, location_name="", runtime=None, aqi_data=None, hi
     def _assemble(left, right):
         if not right:
             return f"{left}{RESET}"
-        pad = width - visible_len(left) - visible_len(right) - 1
+        pad = width - visible_len(left) - visible_len(right)
         if pad >= 1:
             return f"{left}{' ' * pad}{right}{RESET}"
         return None  # doesn't fit
@@ -177,7 +177,7 @@ def render_header(data, width, location_name="", runtime=None, aqi_data=None, hi
 # ---------------------------------------------------------------------------
 def _muted(sentence):
     """A sentence as a dashboard line, or nothing when there is no sentence."""
-    return f" {MUTED}{sentence}{RESET}" if sentence else ""
+    return f"{MUTED}{sentence}{RESET}" if sentence else ""
 
 
 def narrative_lines(data, now, width, runtime=None):
@@ -205,7 +205,7 @@ def narrative_lines(data, now, width, runtime=None):
     join = _s("sentence_join", runtime)
     end = _s("sentence_end", runtime)
 
-    budget = max(1, width - 1)  # the line's leading space
+    budget = max(1, width)
     rows = [sentences[0]]
     for sentence in sentences[1:]:
         joined = rows[-1] + join + sentence

@@ -501,7 +501,7 @@ def _render_tide_braille_rows(braille_rows, col_daylight, midnight_cols,
                     else:
                         fg_chars[col] = (c, color)
 
-        line = " "
+        line = ""
         for ci, (ch, _height) in enumerate(row):
             if ci in fg_chars:
                 oc, oc_color = fg_chars[ci]
@@ -563,10 +563,10 @@ def _render_header_line(cols, station_name, runtime, offset_minutes=0):
         hint_text = _ts("space_to_now", runtime)
         hint = f"{DIM}{hint_text}{RESET}"
         right_w = visible_len(hint_text)
-        padding = max(1, cols - 1 - pill_w - right_w)
+        padding = max(1, cols - pill_w - right_w)
         return f"{pill}{' ' * padding}{hint}"
 
-    padding = max(1, cols - 1 - pill_w - moon_w)
+    padding = max(1, cols - pill_w - moon_w)
     return f"{pill}{' ' * padding}{moon_str}"
 
 
@@ -681,7 +681,7 @@ def render(station_id, station_name, station_meta=None, runtime=None,
     now_local = _station_now(station_meta)
     station_tz = _station_tzinfo(station_meta)
     cols, rows = get_terminal_size()
-    graph_w = max(30, cols - 2)
+    graph_w = max(30, cols)
 
     # --- build the window ---
     if predictions is not None:
@@ -744,7 +744,7 @@ def render(station_id, station_name, station_meta=None, runtime=None,
         mcol, mrow = mouse_pos
         mrow_idx = mrow - 1  # 1-based -> 0-based
         if chart_start <= mrow_idx < chart_end:
-            gc = mcol - 2  # 1-based terminal col -> 0-based graph col
+            gc = mcol - 1  # 1-based terminal col -> 0-based graph col
             if 0 <= gc < graph_w:
                 hover_graph_col = gc
 
@@ -802,7 +802,7 @@ def render(station_id, station_name, station_meta=None, runtime=None,
     marine_str = ""
     from linecast import _help
     from linecast._i18n import lang_of
-    foot_width = cols - visible_len(_help.hint(lang_of(runtime), cols)) - 3 if fullscreen else cols
+    foot_width = cols - visible_len(_help.hint(lang_of(runtime), cols)) - 2 if fullscreen else cols
     if marine_data is not None:
         try:
             marine = parse_marine_current(marine_data, now_local)
@@ -811,13 +811,13 @@ def render(station_id, station_name, station_meta=None, runtime=None,
             # Marine data is optional; never crash
             log_failure("marine/open-meteo", "marine line", exc, fallback="line omitted")
     dim = fg(*DIM_RGB)
-    pad = foot_width - 2 - visible_len(marine_str) - visible_len(provider.label)
+    pad = foot_width - visible_len(marine_str) - visible_len(provider.label)
     if marine_str and pad >= 2:
-        lines.append(f" {dim}{marine_str}{' ' * pad}{provider.label}{RESET}")
+        lines.append(f"{dim}{marine_str}{' ' * pad}{provider.label}{RESET}")
     elif marine_str:
-        lines.append(f" {dim}{marine_str}{RESET}")
+        lines.append(f"{dim}{marine_str}{RESET}")
     else:
-        lines.append(f" {dim}{provider.label}{RESET}")
+        lines.append(f"{dim}{provider.label}{RESET}")
     if fullscreen:
         lines[-1] = _help.footer(lines[-1], cols, lang_of(runtime))
 

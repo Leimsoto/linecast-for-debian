@@ -13,8 +13,7 @@ _ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def _canvas(line):
-    plain = _ANSI_RE.sub("", line)
-    return plain[1:] if plain.startswith(" ") else plain
+    return _ANSI_RE.sub("", line)
 
 
 def _first_tick_idx(canvas):

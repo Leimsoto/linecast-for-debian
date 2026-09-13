@@ -234,7 +234,7 @@ def render_tide_ticks(window_start, total_hours, graph_w, runtime, now_col=None,
     elif now_col is not None and 0 <= now_col < graph_w and canvas[now_col] == " ":
         canvas[now_col] = "\u2502"
 
-    return f" {DIM}{''.join(canvas)}{RESET}"
+    return f"{DIM}{''.join(canvas)}{RESET}"
 
 
 def render_day_label_line(midnight_day_names, graph_w, moon_labels=None):
@@ -354,7 +354,7 @@ def render_day_label_line(midnight_day_names, graph_w, moon_labels=None):
         line += canvas[i]
     if current_color is not None:
         line += muted
-    return f" {line}{RESET}"
+    return f"{line}{RESET}"
 
 
 def build_now_tooltip(now_col, now_info, chart_start, cols, graph_w):
@@ -379,8 +379,8 @@ def build_now_tooltip(now_col, now_info, chart_start, cols, graph_w):
         padded.append(f"{line}{' ' * pad}{RESET}")
 
     # Position: just to the right of the now column, at the top of the chart
-    # +2 for the 1-char left margin and 1-based terminal coords
-    snap_col = now_col + 2 + 1
+    # +1 for 1-based terminal coords, +1 to sit beside the column
+    snap_col = now_col + 1 + 1
     tooltip_col = snap_col
     tooltip_row = chart_start + 1  # 0-based line index -> 1-based terminal row
     tooltip_w = max_w
@@ -424,5 +424,5 @@ def build_tide_hover_tooltip(window, graph_col, mouse_row, chart_start, chart_en
         f"{tip_bg}{tip_fg} {h_display:.1f}{runtime.height_unit} ",
     ]
 
-    return _live.pointer_chip(tip_lines, graph_col + 2, mouse_row, cols, rows,
+    return _live.pointer_chip(tip_lines, graph_col + 1, mouse_row, cols, rows,
                               pad_bg=tip_bg)

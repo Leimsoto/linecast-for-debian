@@ -265,7 +265,7 @@ def render_calendar(now_local, lat, lng, runtime, month_offset=0,
     cols, rows = get_terminal_size()
     hint = install_banner()
     chrome = 1 if hint else 0
-    graph_w = max(16, cols - 2)
+    graph_w = max(16, cols)
     graph_h = max(9, rows - chrome - (0 if fullscreen else 2))
 
     # Two header rows (title, weekdays); the weeks split what remains,

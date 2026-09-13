@@ -70,7 +70,7 @@ def render_daily(data, width, runtime=None, now=None):
     lang = runtime.lang
     day_name_list = DAY_NAMES.get(lang, DAY_NAMES["en"])
     day_col_w = max(visible_len(n) for n in day_name_list + [_s("today_short", runtime)])
-    left_prefix_w = 1 + day_col_w + 2 + 2 + 2  # " day  ic  "
+    left_prefix_w = day_col_w + 2 + 2 + 2  # "day  ic  "
     # A window too narrow even for a bare bar has no room for these rows,
     # and a row wider than the window wraps and shifts the whole dashboard.
     if width < left_prefix_w + MIN_BAR_W:
@@ -260,7 +260,7 @@ def render_daily(data, width, runtime=None, now=None):
         bar = "".join(f"{prefix}{ch}{RESET}" for ch, prefix in cells)
 
         # Build the line with aligned right-side columns
-        line = f" {TEXT}{day_name}  {icon}  {bar}"
+        line = f"{TEXT}{day_name}  {icon}  {bar}"
 
         precip_s, prob_s, wind_s = day_details[i - 1]
         pcolor = _precip_color(wmo)

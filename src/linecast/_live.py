@@ -45,9 +45,12 @@ def frame_body(text):
     is: a row it draws wider than linecast measured wraps, and the row
     below lands one line down, taking the whole frame with it.  Addressed
     rows land where they belong whatever the row above did, and \033[K
-    clears whatever the last frame left on them.
+    clears whatever the last frame left on them.  The clear comes before
+    the row, not after: with autowrap off a row that reaches the last
+    column leaves the cursor on that cell, and a clear from there would
+    take the cell's glyph with it.
     """
-    return "".join(f"\033[{row};1H{line}\033[K"
+    return "".join(f"\033[{row};1H\033[K{line}"
                    for row, line in enumerate(text.split("\n"), 1))
 
 

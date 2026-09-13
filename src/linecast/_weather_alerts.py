@@ -96,10 +96,10 @@ def _pack_pills(pills, width):
     click can find the badge under the pointer.
     """
     lines, spans = [], []
-    row, row_spans, col = [], [], 1  # 1 for the leading space
+    row, row_spans, col = [], [], 0
 
     def flush():
-        lines.append(" " + " ".join(row))
+        lines.append(" ".join(row))
         spans.append(row_spans)
 
     for index, pill in pills:
@@ -107,7 +107,7 @@ def _pack_pills(pills, width):
         gap = 1 if row else 0
         if row and col + gap + pill_w > width:
             flush()
-            row, row_spans, col, gap = [], [], 1, 0
+            row, row_spans, col, gap = [], [], 0, 0
         row.append(pill)
         row_spans.append((col + gap, col + gap + pill_w - 1, index))
         col += gap + pill_w
@@ -127,11 +127,11 @@ def _render_single_alert(alert, width, max_lines=999, runtime=None, tz_name=""):
         until = _s("until", runtime) if runtime else "until"
         timing = f"{until} {expires}"
 
-    pill = _alert_pill(alert, max_width=width - 1)
+    pill = _alert_pill(alert, max_width=width)
 
     # Build the single line: pill + timing + truncated description
-    parts = [f" {pill}"]
-    used = 1 + visible_len(pill)  # leading space + pill
+    parts = [pill]
+    used = visible_len(pill)
 
     if timing:
         timing_str = f" {WIND_COLOR}{timing}{RESET}"
@@ -142,7 +142,7 @@ def _render_single_alert(alert, width, max_lines=999, runtime=None, tz_name=""):
     desc = alert.get("description", "").strip()
     if desc:
         flat = " ".join(desc.split())
-        remaining = width - used - 2  # 2 for " " prefix and trailing space
+        remaining = width - used - 1  # the space before the description
         if remaining > 10:
             truncated = truncate_display_width(flat, remaining)
             parts.append(f" {MUTED}{truncated}{RESET}")
@@ -189,7 +189,7 @@ def render_alerts_mapped(alerts, width=80, remaining_rows=None, runtime=None, tz
         else:
             # Multiple alerts share a description — pills on one line or
             # more, shared description underneath
-            pills = [(index, _alert_pill(alert, max_width=width - 1))
+            pills = [(index, _alert_pill(alert, max_width=width))
                      for index, alert in group]
             pill_lines, pill_spans = _pack_pills(pills, width)
             lines.extend(pill_lines)
@@ -198,10 +198,10 @@ def render_alerts_mapped(alerts, width=80, remaining_rows=None, runtime=None, tz
             desc = group[0][1].get("description", "").strip()
             if desc:
                 flat = " ".join(desc.split())
-                remaining = width - 2  # leading space + margin
+                remaining = width
                 if remaining > 10:
                     truncated = truncate_display_width(flat, remaining)
-                    lines.append(f" {MUTED}{truncated}{RESET}")
+                    lines.append(f"{MUTED}{truncated}{RESET}")
                     spans.append([(0, width - 1, first_index)])
 
     return lines, spans

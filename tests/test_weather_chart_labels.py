@@ -91,7 +91,7 @@ def _assert_labels_creep(pattern, row_index):
     for offset in _offsets(hours=24):
         current = _labels(_rows(offset)[row_index], pattern)
         for col, text in previous:
-            if col < 4 or col + len(text) + 4 > _WIDTH - 2:
+            if col < 4 or col + len(text) + 4 > _WIDTH:
                 continue
             near = [c for c, t in current if t == text and abs(c - col) <= 2]
             assert near, f"{text} at column {col} moved or vanished at offset {offset}"
@@ -136,10 +136,10 @@ class TestNowMarker:
         # the same column the divider formula gives.
         now = _T0 + timedelta(hours=20)
         tick = self._tick_line(now, offset_minutes=-600)
-        graph_w = _WIDTH - 2
+        graph_w = _WIDTH
         col = int(10 / 48 * (graph_w - 1))
-        assert tick[col + 1] == "│", f"no now marker at column {col}: {tick!r}"
-        assert tick[col + 2] == " "  # not a midnight "│00" label
+        assert tick[col] == "│", f"no now marker at column {col}: {tick!r}"
+        assert tick[col + 1] == " "  # not a midnight "│00" label
 
     def test_no_marker_once_now_is_behind_the_window(self):
         # Scrolled 10 hours ahead, now is left of the window; only the two

@@ -79,7 +79,7 @@ class Camera:
         self.az, self.alt, self.fov = az, alt, fov
         self.figures = figures
         self.focal = 40.0             # sub-pixels per unit, from the last frame
-        self.graph_w = 78
+        self.graph_w = 80
         self._drag_base = None        # (az, alt) at the press
         self._drag_trail = []         # (time, az, alt) through the drag
         self._coast = None            # (vaz, valt, last_time)
@@ -352,7 +352,7 @@ class SkyApp(LiveApp):
         view = self.camera.view()._replace(culture=self.culture)
         now = self.moment()
         cols, rows = get_terminal_size()
-        self.camera.graph_w = max(20, cols - 2)
+        self.camera.graph_w = max(20, cols)
         self.camera.focal = focal_length(self.camera.graph_w, view.fov)
         panel = self.search.open or self.picker.open
         frame = render(now, self.lat, self.lng, self.runtime, view, fullscreen=True,

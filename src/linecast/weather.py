@@ -91,7 +91,7 @@ def credit_row(cols, lang, country_code=""):
     from linecast._graphics import visible_len
     hint = _help.hint(lang)
     for credit in data_credits(country_code, lang):
-        if visible_len(credit) + 2 + visible_len(hint) <= cols - 1:
+        if visible_len(credit) + 2 + visible_len(hint) <= cols:
             return _help.footer(f"{DIM}{credit}{RESET}", cols, lang)
     return _help.footer("", cols, lang)
 
@@ -109,8 +109,8 @@ def _build_hover_tooltip(data, mouse_col, mouse_row, hourly_start, hourly_end, c
     if not (hourly_start <= line_idx < hourly_end):
         return ""
 
-    graph_w = max(10, cols - 2)
-    graph_col = mouse_col - 2  # 1-based terminal col → 0-based graph col (1 char margin)
+    graph_w = max(10, cols)
+    graph_col = mouse_col - 1  # 1-based terminal col → 0-based graph col
     if graph_col < 0 or graph_col >= graph_w:
         return ""
 
@@ -178,7 +178,7 @@ def _build_hover_tooltip(data, mouse_col, mouse_row, hourly_start, hourly_end, c
         return ""
 
     # Snapped hour column (1-based terminal col) — use int() to match midnight divider formula
-    snap_col = int(idx / max(1, total_hours) * (graph_w - 1)) + 2
+    snap_col = int(idx / max(1, total_hours) * (graph_w - 1)) + 1
 
     return _live.pointer_chip(lines, snap_col, mouse_row, cols, rows, pad_bg=TBG)
 
@@ -342,8 +342,8 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     if mouse_pos:
         mouse_row_idx = mouse_pos[1] - 1  # 1-based → 0-based
         if hourly_start <= mouse_row_idx < hourly_end:
-            graph_w = max(10, cols - 2)
-            mouse_col_raw = mouse_pos[0] - 2  # 1-based terminal col → 0-based graph col
+            graph_w = max(10, cols)
+            mouse_col_raw = mouse_pos[0] - 1  # 1-based terminal col → 0-based graph col
             if 0 <= mouse_col_raw < graph_w:
                 window = _prepare_hourly_window(hourly, now_local, graph_w,
                                                 offset_minutes=offset_minutes)

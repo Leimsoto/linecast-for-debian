@@ -9,6 +9,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 - Weather: The live view says where its data comes from. The bottom row credits Open-Meteo for the forecast and names the service the alerts come from, such as Met Éireann in Ireland, and the `?` panel lists both. The credit is in the display language, and a service is named as it names itself: 気象庁 in Japanese, Deutscher Wetterdienst in German. `weather --json` names the sources in a `sources` field.
 - Help panel: The key column is in the display language too: wheel, space, hover, click, drag, and enter are translated, and the column widens to fit.
 - Weather: The prose explains why the air feels warmer or cooler than the thermometer only when the two are six degrees Fahrenheit or three Celsius apart. A smaller gap goes unremarked.
+- Weather, tides, moon, sky, sunshine: The views use every column of the window. Text and graphs used to start one column in and stop one column short of the right edge; now they run edge to edge, and the help hint sits in the last column.
 
 ## 2.4.0 — 2026-09-10
 

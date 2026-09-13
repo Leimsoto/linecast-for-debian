@@ -1043,7 +1043,7 @@ def render(now_local, lat, lng, runtime, fullscreen=False, offset_minutes=0,
     hint = install_banner()
     # Track even a very narrow terminal rather than overflow it; the
     # floor only guards against a degenerate reported size.
-    graph_w = max(16, cols - 2)
+    graph_w = max(16, cols)
 
     # --- wide layout: the info as a column in the sky beside the disc ---
     T, D, A, P = PANEL_TEXT_RGB, PANEL_DIM_RGB, PANEL_AMBER_RGB, PANEL_PURPLE_RGB

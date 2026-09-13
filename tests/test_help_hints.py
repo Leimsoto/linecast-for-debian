@@ -27,14 +27,14 @@ def test_help_invitation_is_not_the_panels_self_reference():
 
 @pytest.mark.parametrize('lang', LANGUAGE_CODES)
 @pytest.mark.parametrize('width', [8, 20, 40, 80, 140])
-def test_footer_keeps_a_clear_terminal_margin(lang, width):
+def test_footer_fills_the_row_to_the_last_column(lang, width):
     text = '風' if lang == 'ja' else 'x'
     output = _help.footer(text + ' ' * (width - visible_len(text)), width, lang)
     shown = plain(output)
     assert shown.startswith(text)
     assert '?' in shown
-    assert visible_len(shown) <= width - 1
-    assert shown.endswith(_help.hint(lang, width - visible_len(text) - 3))
+    assert visible_len(shown) == width
+    assert shown.endswith(_help.hint(lang, width - visible_len(text) - 2))
 
 
 def test_full_footer_never_erases_a_credit_to_add_help():
@@ -132,7 +132,7 @@ def test_static_sky_does_not_advertise_inactive_controls(monkeypatch):
 @pytest.mark.parametrize('view', ['maps', 'radar'])
 @pytest.mark.parametrize('lang', ['en', 'ja', 'th'])
 @pytest.mark.parametrize('cols', [40, 80, 140])
-def test_map_and_radar_footer_hints_end_before_the_erase_column(monkeypatch, view, lang, cols):
+def test_map_and_radar_footer_hints_reach_the_last_column(monkeypatch, view, lang, cols):
     from types import SimpleNamespace
     from linecast import maps, radar
     runtime = RuntimeConfig(live=True, icons='plain', lang=lang, oneline=False)
@@ -154,10 +154,8 @@ def test_map_and_radar_footer_hints_end_before_the_erase_column(monkeypatch, vie
         monkeypatch.setattr(radar, 'has_radar', lambda *a: True)
         output = radar.render_radar(43.68, -70.32, 'Westbrook', 1, runtime=runtime)
     foot = plain(output).splitlines()[-1]
-    assert foot.endswith(_help.hint(lang) + ' ')
+    assert foot.endswith(_help.hint(lang))
     assert visible_len(foot) == cols
-    # Emulate the right-margin clear: only the padding cell is erased.
-    assert foot[:-1].endswith(_help.hint(lang))
 
 
 def test_radar_help_describes_warning_hover():

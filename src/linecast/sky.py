@@ -743,7 +743,7 @@ def render(now_local, lat, lng, runtime, view, fullscreen=False,
     """
     cols, rows = get_terminal_size()
     hint = install_banner()
-    graph_w = max(20, cols - 2)
+    graph_w = max(20, cols)
     reserve = (1 if hint else 0) + (0 if fullscreen else 3)
     graph_h = max(6, rows - reserve)
     total_spy = graph_h * 2
@@ -1058,7 +1058,7 @@ def _status_line(scene, now_local, runtime, view, width, location_label,
     right_short = f"{dim}{sky}"
 
     def fit(*parts):
-        used = sum(visible_len(p) for p in parts) + 2 * (len(parts) - 1) + 2
+        used = sum(visible_len(p) for p in parts) + 2 * (len(parts) - 1)
         return used <= width
 
     for candidate in ((left, center, right_full), (left, center, right_short),
@@ -1067,19 +1067,19 @@ def _status_line(scene, now_local, runtime, view, width, location_label,
             break
     if len(candidate) == 3:
         left, mid, right = candidate
-        gap = width - 2 - visible_len(left) - visible_len(mid) - visible_len(right)
-        line = (f" {left}{' ' * max(1, gap // 2)}{mid}"
-                f"{' ' * max(1, gap - gap // 2)}{right} ")
-        positions = [(1, left), (1 + visible_len(left) + max(1, gap // 2), mid),
-                     (width - 1 - visible_len(right), right)]
+        gap = width - visible_len(left) - visible_len(mid) - visible_len(right)
+        line = (f"{left}{' ' * max(1, gap // 2)}{mid}"
+                f"{' ' * max(1, gap - gap // 2)}{right}")
+        positions = [(0, left), (visible_len(left) + max(1, gap // 2), mid),
+                     (width - visible_len(right), right)]
     elif len(candidate) == 2:
         left, mid = candidate
-        gap = width - 2 - visible_len(left) - visible_len(mid)
-        line = f" {left}{' ' * max(1, gap)}{mid} "
-        positions = [(1, left), (width - 1 - visible_len(mid), mid)]
+        gap = width - visible_len(left) - visible_len(mid)
+        line = f"{left}{' ' * max(1, gap)}{mid}"
+        positions = [(0, left), (width - visible_len(mid), mid)]
     elif candidate:
-        line = f" {candidate[0]} "
-        positions = [(1, candidate[0])]
+        line = candidate[0]
+        positions = [(0, candidate[0])]
     else:
         line = ""
         positions = []
@@ -1115,7 +1115,7 @@ def easily_seen(mag, alt, scene):
 def _chip(mouse_pos, hits, scene, runtime, cols, rows, graph_w, graph_h, view):
     """The name of what the pointer rests on, floating beside it."""
     mcol, mrow = mouse_pos
-    px, prow = mcol - 2, mrow - 1   # the frame has a one-column margin
+    px, prow = mcol - 1, mrow - 1   # 1-based terminal cell to 0-based image cell
     if not (0 <= px < graph_w and 0 <= prow < graph_h):
         return ""
     best = None
@@ -1181,7 +1181,7 @@ def default_view(scene, cols, rows, facing=None, fov=FOV_DEFAULT, aim=None):
     else the Moon if it is up, else the brightest planet up in a dark
     sky, else south (north below the equator), with the horizon just
     above the bottom of the screen."""
-    graph_w, graph_h = max(20, cols - 2), max(6, rows - 3)
+    graph_w, graph_h = max(20, cols), max(6, rows - 3)
     f = focal_length(graph_w, fov)
     # The altitude at the top and bottom edges, looking level.
     half_v = math.degrees(2.0 * math.atan(graph_h / (2.0 * f)))

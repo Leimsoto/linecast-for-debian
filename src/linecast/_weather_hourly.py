@@ -111,7 +111,7 @@ def _build_precip_blocks(precip_probs, weather_codes, graph_w, n_rows=1, indicat
     # Build rows top-down (row 0 = top, row n_rows-1 = bottom)
     result = []
     for r in range(n_rows):
-        line = " "
+        line = ""
         row_bottom = (n_rows - 1 - r) * 8  # eighths at bottom of this row
         row_top = row_bottom + 8             # eighths at top of this row
         for x in range(graph_w):
@@ -456,9 +456,9 @@ def _render_today_line(width, chart_lo, chart_hi, midnight_day_names, sun_labels
     lang = lang_of(runtime)
     if window_dts and now and window_dts[0].date() != now.date():
         day_name = FULL_DAY_NAMES.get(lang, FULL_DAY_NAMES["en"])[window_dts[0].weekday()]
-        today_left = f" {TEXT}{day_name}"
+        today_left = f"{TEXT}{day_name}"
     else:
-        today_left = f" {TEXT}{_s('today', runtime)}"
+        today_left = f"{TEXT}{_s('today', runtime)}"
     if offset_minutes:
         hint_text = _s("space_to_now", runtime)
         today_right = f"{DIM}{hint_text}"
@@ -468,18 +468,18 @@ def _render_today_line(width, chart_lo, chart_hi, midnight_day_names, sun_labels
             f"{TEXT}\u2192 {_colored_temp(chart_hi, runtime, runtime.temp_unit)}"
         )
     if not (midnight_day_names or sun_labels):
-        pad = width - visible_len(today_left) - visible_len(today_right) - 2
-        return f"{today_left}{' ' * max(1, pad)}{today_right} {RESET}"
+        pad = width - visible_len(today_left) - visible_len(today_right)
+        return f"{today_left}{' ' * max(1, pad)}{today_right}{RESET}"
 
     label_start = visible_len(today_left)
 
     # Drop the "today" label if it would crowd out a midnight day name
     if midnight_day_names:
         first_col = min(midnight_day_names)
-        if first_col + 1 <= label_start:
-            today_left = " "
-            label_start = 1
-    right_len = visible_len(today_right) + 2
+        if first_col <= label_start:
+            today_left = ""
+            label_start = 0
+    right_len = visible_len(today_right)
     avail = width - right_len
     mid_w = max(0, avail - label_start)
 
@@ -487,7 +487,7 @@ def _render_today_line(width, chart_lo, chart_hi, midnight_day_names, sun_labels
     mid_colors = [None] * mid_w
 
     for col, name in sorted(midnight_day_names.items()):
-        pos = col + 1 - label_start
+        pos = col - label_start
         name_w = visible_len(name)
         if pos >= 0 and pos + name_w <= mid_w:
             cx = pos
@@ -508,7 +508,7 @@ def _render_today_line(width, chart_lo, chart_hi, midnight_day_names, sun_labels
                 cx += cw
 
     for col, (lbl, is_rise) in sorted(sun_labels.items()):
-        pos = max(0, col + 1 - label_start)
+        pos = max(0, col - label_start)
         lbl_w = visible_len(lbl)
         if pos + lbl_w > mid_w:
             continue
@@ -545,8 +545,8 @@ def _render_today_line(width, chart_lo, chart_hi, midnight_day_names, sun_labels
     if cur_color is not None:
         mid_str += f"{TEXT}"
 
-    pad = width - visible_len(today_left) - mid_w - visible_len(today_right) - 2
-    return f"{today_left}{mid_str}{' ' * max(0, pad)}{today_right} {RESET}"
+    pad = width - visible_len(today_left) - mid_w - visible_len(today_right)
+    return f"{today_left}{mid_str}{' ' * max(0, pad)}{today_right}{RESET}"
 
 
 def _render_extrema_line(extrema, graph_w, runtime, is_peak):
@@ -558,8 +558,8 @@ def _render_extrema_line(extrema, graph_w, runtime, is_peak):
     segments, cursor = [], 0
     for x, temp in points:
         label = f"{temp:.0f}\u00b0"
-        pos = max(cursor, x + 1 - len(label) // 2)
-        if pos + len(label) > graph_w + 1:
+        pos = max(cursor, x - len(label) // 2)
+        if pos + len(label) > graph_w:
             continue
         if pos > cursor:
             segments.append((" " * (pos - cursor), None))
@@ -644,7 +644,7 @@ def _render_braille_rows(braille_rows, col_daylight, midnight_cols, runtime,
                 if 0 <= col < len(row):
                     overlay_chars[col] = (c, color)
 
-        line = " "
+        line = ""
         for ci, (ch, temp) in enumerate(row):
             dl = col_daylight[ci] if ci < len(col_daylight) else 1.0
 
@@ -747,7 +747,7 @@ def _render_tick_labels(window_dts, total_hours, graph_w, runtime=None, hover_co
         canvas[hover_col] = "\u2502"
     elif now_col is not None and 0 <= now_col < graph_w and canvas[now_col] == " ":
         canvas[now_col] = "\u2502"
-    return f" {DIM}{''.join(canvas)}{RESET}"
+    return f"{DIM}{''.join(canvas)}{RESET}"
 
 
 def _place_labels(items, graph_w):
@@ -868,7 +868,7 @@ def _render_label_canvas(canvas, graph_w, color, midnight_cols=None, hover_col=N
     hover_fg = fg(*CHART_HOVER_RGB)
     now_fg = fg(*CHART_NOW_RGB)
     midnight_fg = DIM
-    parts = [" "]
+    parts = []
     in_label = False
     for x in range(graph_w):
         ch = canvas[x] if x < len(canvas) else " "
@@ -939,7 +939,7 @@ def _render_precip_rows(window_precip, window_codes, graph_w, n_precip_rows, ind
         color = _precip_color(wmo)
         idx = max(0, min(7, int(p / 100 * 7.99)))
         precip_chars.append(f"{color}{SPARKLINE[idx]}")
-    return [f" {''.join(precip_chars)}{RESET}"]
+    return [f"{''.join(precip_chars)}{RESET}"]
 
 
 def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runtime=None,
@@ -952,7 +952,7 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     if now is None:
         now = _local_now_for_data(data)
 
-    graph_w = max(10, width - 2)
+    graph_w = max(10, width)
     window = _prepare_hourly_window(data.get("hourly", {}), now, graph_w,
                                     offset_minutes=offset_minutes)
     if window is None:

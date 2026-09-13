@@ -198,7 +198,7 @@ class Framebuffer:
 
         lines = []
         for row in range(self.graph_h):
-            parts = [" "]  # left margin
+            parts = []
             for x in range(self.graph_w):
                 top = self.fb[row * 2][x]
                 bot = self.fb[row * 2 + 1][x]

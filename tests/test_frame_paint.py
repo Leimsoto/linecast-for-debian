@@ -20,17 +20,23 @@ class _Stream(io.StringIO):
 
 class TestFrameBody:
     def test_every_row_is_addressed_and_cleared(self):
-        assert frame_body("a\nb") == "\033[1;1Ha\033[K\033[2;1Hb\033[K"
+        assert frame_body("a\nb") == "\033[1;1H\033[Ka\033[2;1H\033[Kb"
 
     def test_a_row_too_wide_cannot_move_the_row_below_it(self):
         # The row below names its own line, so wherever the terminal left
         # the cursor after an over-wide row, the next row still lands on
         # the line it belongs to.
         body = frame_body("x" * 200 + "\nunder")
-        assert "\033[2;1Hunder" in body
+        assert "\033[2;1H\033[Kunder" in body
 
     def test_a_blank_frame_still_clears_its_row(self):
         assert frame_body("") == "\033[1;1H\033[K"
+
+    def test_a_row_may_use_the_last_column(self):
+        # The clear precedes the row, so a row drawn to the terminal's edge
+        # keeps its final cell.
+        body = frame_body("x" * 80)
+        assert body.endswith("x" * 80)
 
 
 class TestPrintFrame:

@@ -10,6 +10,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 - Help panel: The key column is in the display language too: wheel, space, hover, click, drag, and enter are translated, and the column widens to fit.
 - Weather: The prose explains why the air feels warmer or cooler than the thermometer only when the two are six degrees Fahrenheit or three Celsius apart. A smaller gap goes unremarked.
 - Weather, tides, moon, sky, sunshine: The views use every column of the window. Text and graphs used to start one column in and stop one column short of the right edge; now they run edge to edge, and the help hint sits in the last column.
+- Moon: The calendar shades the unlit side of each day's Moon as darkly as the main view does.
 
 ## 2.4.0 — 2026-09-10
 

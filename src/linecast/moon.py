@@ -145,7 +145,8 @@ def _rebuild():
     # The disc's night is darker than the sky around it, as it looks in
     # life, where the sky near the Moon is lit by the Moon and the night
     # side is lit by nothing but Earth; the halo outlines the disc. The
-    # calendar's small discs have no halo and keep the lighter shadow.
+    # calendar's discs use the same night, so a day reads as the same
+    # Moon at a smaller size.
     MOON_NIGHT_RGB = darken(SKY_RGB, 0.5)
     # The info sits in the sky in every layout, so its inks contrast
     # with the sky rather than the page.

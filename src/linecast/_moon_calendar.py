@@ -348,7 +348,8 @@ def render_calendar(now_local, lat, lng, runtime, month_offset=0,
             limb = 90.0 if waxing else 270.0
             if lat is not None and lat < 0:
                 limb = 360.0 - limb
-            _moon._draw_moon_disc(fb, cx, cy, radius, illum, limb, 0.0)
+            _moon._draw_moon_disc(fb, cx, cy, radius, illum, limb, 0.0,
+                                  night=_moon.MOON_NIGHT_RGB)
         else:
             # No room to draw: the phase glyph stands in for the disc.
             icon = moon_phase(noon, runtime)[2]

@@ -5,27 +5,25 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 ## Unreleased
 
 - Maps: With `--from` and `--to` and no `--location`, the map opens on the whole route instead of your own location.
-- Sky: A new view, `linecast sky`, draws the sky from where you stand: the stars for the moment, the constellation figures and their names, the planets, the Moon at its phase, the Sun, and the Milky Way once the sky is dark. Drag to look around, zoom with `+` and `-`, scroll through time, and press `p` to watch the night pass. `sky --json` and `sky --oneline` say what is up.
-- Sky: Press `/` to search the sky. Type a star, a planet, or a constellation and the view flies to it; if it is below the horizon the panel says when it rises and where, and you can press Enter to move the clock to that moment. `sky --at Orion` opens on one.
-- Sky: Press `t` for a list of twenty-two other traditions' constellations and star names, from the Chinese lunar mansions to the Hawaiian star lines and H. A. Rey's figures, and the sky redraws as you move through the list. `sky --culture hawaiian` opens on one and `linecast culture` saves one. Chinese comes with the language. CULTURES.md has the sources.
-- Sky: The Sun and the Moon are cut by the skyline as they rise and set.
-- Sky: With the Hawaiian culture the horizon shows the navigators' star compass, thirty-two houses from Hikina round to Komohana, and directions are given by house.
-- Sky: The status line and `linecast culture --help` name the sky culture in the display language, so a Chinese view no longer ends in "Chinese".
-- Sky: The constellations have their names in all eighteen languages now, and the stars have the names a chart in that language prints: Syriusz, シリウス, 天狼星, ดาวเหนือ. The pointer gives the IAU name beside them, and `/` finds a star by either.
-- Sky: The 107 Messier galaxies, nebulae, and clusters are placed, named, and searchable. The larger ones, such as Andromeda, appear as faint glows that grow as you zoom in.
-- Sky: Zooming in brings out fainter stars, nearly 117,000 in all, with their catalog designations under the pointer.
-- Press `?` in any live view for a help panel with its controls in the display language. The list follows the active view, and in a short window it can be paged.
-- Sky: Press `m` to turn toward the Moon when it is above the horizon.
-- Sky: Search finds the asterisms by name: the Big Dipper, the Summer Triangle, Orion's Belt, the Teapot, and others, in the display language where it has its own. It also knows the English names of a few constellations, such as the Southern Cross.
-- Sky: Fixed a bug where, after moving to another search result, Enter still moved the clock to the previous result's rising.
 - Sky: Search finds a star by its designation as it is typed: "alpha cen", "alpha centauri", and "alpha crucis" all find the star, with or without the component number.
-- Sky, maps, and radar: Press `w`, `a`, `s`, or `d` to pan. In the sky each pan eases to rest, with smaller steps when zoomed in. In maps, daylight and directions move to `S` and `D`; in radar, wind and satellite move to `W` and `S` (Shift plus the letter).
-- Live views: A small `? keys` hint in the display language points to the controls, with room at the right edge so its last letter stays visible. The radar help now describes warning hover correctly.
 - Weather: The live view says where its data comes from. The bottom row credits Open-Meteo for the forecast and names the service the alerts come from, such as Met Éireann in Ireland, and the `?` panel lists both. The credit is in the display language, and a service is named as it names itself: 気象庁 in Japanese, Deutscher Wetterdienst in German. `weather --json` names the sources in a `sources` field.
 - Help panel: The key column is in the display language too: wheel, space, hover, click, drag, and enter are translated, and the column widens to fit.
-- Sky: Zooming in stays responsive; constellation lines outside the view are no longer drawn.
-- Sky: The status text is drawn over the sky instead of on a solid footer, in ink that reads against both day and night.
 - Weather: The prose explains why the air feels warmer or cooler than the thermometer only when the two are six degrees Fahrenheit or three Celsius apart. A smaller gap goes unremarked.
+
+## 2.4.0 — 2026-09-10
+
+A new view, `linecast sky`, draws the night sky from where you stand and knows the constellations of twenty-two traditions. Every live view now has a `?` help panel, and `w` `a` `s` `d` pan.
+
+New this version:
+
+- Sky: `linecast sky` shows the sky above you: the stars, the constellation figures and their names, the planets, the Moon at its phase, the Sun, and the Milky Way once the sky is dark. Drag to look around, zoom with `+` and `-`, scroll through time, and press `p` to watch the night pass. `--json` and `--oneline` say what is up. Use `linecast sky --location "auckland"` to see the sky from another location.
+- Sky: `/` searches by name for a star, a planet, a constellation, or an asterism such as the Big Dipper or Orion's Belt, and the view flies to it. If it is below the horizon, the panel says when and where it rises, and Enter again moves the clock to that moment. `--at Orion` opens on one.
+- Sky: `t` chooses among the constellations and star names of twenty-two traditions, from the Chinese lunar mansions to the Hawaiian star lines and H. A. Rey's figures. `--culture` and `linecast culture` pick one to open on, and Chinese comes with the language. CULTURES.md lists the sources.
+- Sky: With the Hawaiian culture, the horizon carries the navigators' star compass, thirty-two houses from Hikina round to Komohana, and directions are given by house.
+- Sky: Zooming in reveals fainter stars, from a catalog of nearly 117,000, and the galaxies, nebulae and clusters of the Messier list as faint glows. The pointer names them, and `/` finds them.
+- Sky: `m` turns toward the Moon when it is up. The Sun and the Moon are cut by the skyline as they rise and set.
+- Every live view has a `?` help panel that lists its controls in the display language, and a `? keys` hint points to it.
+- Sky, maps and radar: `w` `a` `s` `d` pan the view. Maps moves daylight and directions to `S` and `D`; radar moves wind and satellite to `W` and `S`.
 
 ## 2.3.3 — 2026-09-07
 

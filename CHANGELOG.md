@@ -4,6 +4,8 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
+## 2.5.0 — 2026-09-14
+
 linecast speaks Ukrainian and Vietnamese, twenty languages in all, and the Moon keeps a Vietnamese calendar. The weather chart shows how much rain to expect and how cloudy it will be, and every view fills the window.
 
 New this version:

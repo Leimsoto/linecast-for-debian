@@ -90,7 +90,8 @@ class TestUkrainianWeather:
             "precipitation_probability": [0, 0, 0, 0, 0, 80],
             "weather_code": [0, 0, 0, 0, 0, 95],
         }
-        assert "Гроза, ймовірно, почнеться близько 17:00" in _precipitation_line(hourly, now, runtime)
+        line = _precipitation_line(hourly, now, runtime)
+        assert "Гроза, ймовірно, почнеться близько 17:00" in line
 
     def test_past_precipitation_takes_the_genitive(self):
         runtime = SimpleNamespace(lang="uk", metric=True, precip_unit="mm")

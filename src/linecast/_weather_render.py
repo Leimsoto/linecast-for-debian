@@ -27,7 +27,6 @@ from linecast._weather_hourly import (
     _find_temperature_extrema,
     _interpolate_columns,
     _parse_sun_events,
-    _precip_bar_full,
     _prepare_hourly_window,
     _render_braille_rows,
     _render_extrema_line,

@@ -37,6 +37,7 @@ from linecast._weather_i18n import (
     _wmo_icons,
     has_string,
 )
+from linecast._weather_hourly import _precip_bar_full
 from linecast._weather_render import (
     ALERT_AMBER,
     CLOUD_RGB,
@@ -51,7 +52,6 @@ from linecast._weather_render import (
     _PRECIP_CODES,
     _fmt_time,
     _precip_rgb,
-    _precip_bar_full,
     _precip_type,
     _prepare_hourly_window,
     build_alert_modal,

@@ -423,8 +423,9 @@ OVERRIDES = {
             "Variabilis Coronae": "",
         },
         "pt": {
-            "La Superba": "", "Mimosa": "", "Pearce's Star": "", "Plaskett's Star": "Estrela de Plaskett",
-            "Polaris": "Estrela Polar", "Sterope": "", "Variabilis Coronae": "",
+            "La Superba": "", "Mimosa": "", "Pearce's Star": "",
+            "Plaskett's Star": "Estrela de Plaskett", "Polaris": "Estrela Polar", "Sterope": "",
+            "Variabilis Coronae": "",
         },
         "sv": {
             "Acubens": "", "Ainalrami": "", "Akfa Farkadain": "", "Al Minlear al Asad": "",

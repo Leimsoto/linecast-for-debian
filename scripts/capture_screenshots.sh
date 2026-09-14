@@ -31,7 +31,7 @@ YEAR_PLACE=${LINECAST_CAPTURE_YEAR_PLACE:-Reykjavík}
 RADAR_PLACE=${LINECAST_CAPTURE_RADAR_PLACE:-auto}
 RADAR_LANG=${LINECAST_CAPTURE_RADAR_LANG:-}
 STREET_PLACE=${LINECAST_CAPTURE_STREET_PLACE:-Portland, Maine}
-TERRAIN_PLACE=${LINECAST_CAPTURE_TERRAIN_PLACE:-Innsbruck}
+TERRAIN_PLACE=${LINECAST_CAPTURE_TERRAIN_PLACE:--42.5,173.5}
 GLOBE_PLACE=${LINECAST_CAPTURE_GLOBE_PLACE:-auto}
 TIDE_STATION=${LINECAST_CAPTURE_TIDE_STATION:-8418150}
 ASTRO_LOCATION=${LINECAST_CAPTURE_ASTRO_LOCATION:-43.676,-70.371}
@@ -55,7 +55,8 @@ Targets:
              sky-hawaiian.png the same winter sky in the Hawaiian tradition
   tides      tides.png
   radar      radar.png and radar.gif, wherever the scout finds weather
-  maps       maps-street.png and maps-terrain.png
+  maps       maps-street.png, maps-terrain.png over New Zealand, and the
+             zoom series maps-zoom-blocks/streets/city/region/state.png
   globe      maps-globe.png, the planet in this hour's daylight, and
              maps-globe-clouds.png with this hour's clouds (differ every run)
   gallery    the frames GALLERY.md shows and the README does not, into
@@ -295,10 +296,26 @@ maps() {
         uv --directory "$REPO_DIR" run linecast maps --location "$STREET_PLACE" \
         --zoom 0.015
 
+    # Both islands with the seafloor around them: the Hikurangi Trough off
+    # the east coast and the Chatham Rise running out from Canterbury.
     printf 'Capturing terrain map…\n'
     "$CAPTURE_TOOL" -s 120x38 -w 15 --font "$CAPTURE_FONT" -o "$SHOT_DIR/maps-terrain.png" \
         uv --directory "$REPO_DIR" run linecast maps --view terrain \
-        --location "$TERRAIN_PLACE" --zoom 1.5
+        --location "$TERRAIN_PLACE" --zoom 12
+
+    # The same place at five zooms, a decade apart or so, to show what the
+    # map chooses to say at each: shop names at block level, neighbourhood
+    # names and street names next, the cove and the bridge at city scale,
+    # towns and islands at the region, only highways and towns at the state.
+    local zoom name spec
+    for spec in "0.004|blocks" "0.015|streets" "0.05|city" "0.2|region" "1|state"; do
+        IFS='|' read -r zoom name <<<"$spec"
+        printf 'Capturing street map at zoom %s…\n' "$zoom"
+        "$CAPTURE_TOOL" -s 120x38 -w 15 --font "$CAPTURE_FONT" \
+            -o "$SHOT_DIR/maps-zoom-$name.png" \
+            uv --directory "$REPO_DIR" run linecast maps --location "$STREET_PLACE" \
+            --zoom "$zoom"
+    done
 }
 
 globe() {
@@ -382,6 +399,32 @@ gallery() {
         uv --directory "$REPO_DIR" run python \
         "$REPO_DIR/scripts/capture_moment.py" \
         --at 2026-09-13T21:30 --location "$ASTRO_LOCATION" moon -- --grid
+
+    printf 'Capturing the Alps in terrain…\n'
+    "$CAPTURE_TOOL" -s 120x38 -w 15 --font "$CAPTURE_FONT" \
+        -o "$GALLERY_DIR/maps-innsbruck.png" \
+        uv --directory "$REPO_DIR" run linecast maps --view terrain \
+        --location Innsbruck --zoom 1.5
+    printf 'Capturing Cook Strait in terrain…\n'
+    "$CAPTURE_TOOL" -s 120x38 -w 15 --font "$CAPTURE_FONT" \
+        -o "$GALLERY_DIR/maps-cook-strait.png" \
+        uv --directory "$REPO_DIR" run linecast maps --view terrain \
+        --location -41.3,174.6 --zoom 7
+
+    # A continent under this hour's clouds, at a zoom between the street
+    # map and the globe, centred where it is mid-afternoon right now.
+    local afternoon
+    afternoon=$(python3 -c '
+import datetime
+now = datetime.datetime.now(datetime.timezone.utc)
+subsolar = -15 * (now.hour + now.minute / 60 - 12)
+lon = (subsolar - 20 + 180) % 360 - 180
+print(f"30,{lon:.0f}")')
+    printf 'Capturing clouds over a continent at %s…\n' "$afternoon"
+    "$CAPTURE_TOOL" -s 120x38 -w 40 --font "$CAPTURE_FONT" \
+        -o "$GALLERY_DIR/maps-clouds-continent.png" \
+        uv --directory "$REPO_DIR" run linecast maps --view now \
+        --location "$afternoon" --zoom 45
 
     printf 'Capturing a walking route…\n'
     "$CAPTURE_TOOL" -s 120x38 -w 25 --font "$CAPTURE_FONT" \

@@ -189,7 +189,15 @@ Press `/` to search for a place, or `D` to ask for directions, which open as a p
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-street.png" width="49%" alt="street map of Portland, Maine">
-  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-terrain.png" width="49%" alt="terrain map of the Alps around Innsbruck">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-terrain.png" width="49%" alt="terrain map of New Zealand, with the seafloor around it">
+</p>
+
+The map decides what to say at every zoom. At block level it names the shops; a step out, the neighbourhoods and the streets; at city scale the cove and the bridge; at the state, only the highways and the towns.
+
+<p>
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-zoom-blocks.png" width="32%" alt="Portland, Maine, at block level">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-zoom-city.png" width="32%" alt="Portland, Maine, at city scale">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-zoom-state.png" width="32%" alt="southern Maine">
 </p>
 
 Zoom all the way out and either view becomes a globe. Drag to rotate it, or press `r` to set it spinning. Press `S` to shade it into the daylight of this moment, with the terminator creeping and cities glowing on the night side, and `c` to lay the current cloud cover over it from live satellite imagery. `maps --view now` opens straight to the full picture.
@@ -202,8 +210,8 @@ Zoom all the way out and either view becomes a globe. Drag to rotate it, or pres
 ```sh
 # a street map, zoomed in
 linecast maps --location "Portland, Maine" --zoom 0.01
-# the fjords around Bergen
-linecast maps --view terrain --location 60.4,5.3 --zoom 8
+# New Zealand and the seafloor around it
+linecast maps --view terrain --location -42.5,173.5 --zoom 12
 # the globe as it is right now
 linecast maps --view now
 # walking directions
@@ -243,7 +251,7 @@ Every view command also takes `--metric` and `--imperial` for one run, and the o
 
 ### Language
 
-linecast speaks your terminal's language if it is one of the eighteen it knows, and English otherwise. To choose one yourself, for every run or for one:
+linecast speaks your terminal's language if it is one of the nineteen it knows, and English otherwise. To choose one yourself, for every run or for one:
 
 ```sh
 linecast language es        # use Spanish every time
@@ -251,7 +259,7 @@ linecast language auto      # follow the terminal again
 linecast radar --lang zh    # just this once
 ```
 
-The languages are English (`en`), French (`fr`), Spanish (`es`), German (`de`), Italian (`it`), Portuguese (`pt`), Dutch (`nl`), Polish (`pl`), Norwegian (`no`), Swedish (`sv`), Icelandic (`is`), Danish (`da`), Finnish (`fi`), Japanese (`ja`), Korean (`ko`), Chinese (`zh`), Thai (`th`), and Indonesian (`id`).
+The languages are English (`en`), French (`fr`), Spanish (`es`), German (`de`), Italian (`it`), Portuguese (`pt`), Dutch (`nl`), Polish (`pl`), Norwegian (`no`), Swedish (`sv`), Icelandic (`is`), Danish (`da`), Finnish (`fi`), Japanese (`ja`), Korean (`ko`), Chinese (`zh`), Thai (`th`), Indonesian (`id`), and Ukrainian (`uk`).
 
 In India, many alerts are published in the state language. Add `--lang hi`, `--lang te`, `--lang mr`, or another Indian language code to `weather` to read them in that language where it exists; the rest of the app stays in English.
 

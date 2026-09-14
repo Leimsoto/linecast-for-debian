@@ -90,10 +90,30 @@ The satellite layer, an hourly cloud mosaic, and the condition layers, a tempera
 
 ## Maps
 
+Portland, Maine, at five zooms. Each step out is a decision about what to leave off: shop names go first, then the small streets, then the neighbourhood names, until the state is highways and towns.
+
 <p>
-  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-street.png" width="49%" alt="street map of Portland, Maine">
-  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-terrain.png" width="49%" alt="terrain map of the Alps around Innsbruck">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-zoom-blocks.png" width="32%" alt="block level">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-zoom-streets.png" width="32%" alt="the streets">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-zoom-city.png" width="32%" alt="the city">
 </p>
+<p>
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-zoom-region.png" width="49%" alt="the region">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-zoom-state.png" width="49%" alt="the state">
+</p>
+
+Terrain: New Zealand whole, then Cook Strait, then the Alps around Innsbruck.
+
+![terrain map of New Zealand, with the seafloor around it](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-terrain.png)
+
+<p>
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/gallery/maps-cook-strait.png" width="49%" alt="Cook Strait in terrain">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/gallery/maps-innsbruck.png" width="49%" alt="the Alps around Innsbruck in terrain">
+</p>
+
+A continent under the hour's clouds, at a zoom between the street map and the globe.
+
+![a continent under this hour's clouds](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/gallery/maps-clouds-continent.png)
 
 A walking route from Portland to South Portland, across the bridge.
 

@@ -4,31 +4,31 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
-- Moon: The sunlit ground fades toward the terminator, as it does in a photograph, instead of stopping at a hard edge. The full Moon stays flat to the limb, and the new Moon stays dark.
-- Language: linecast speaks Vietnamese. `linecast language vi` or a Vietnamese terminal locale puts every view in Vietnamese, and the sky names its constellations and best-known stars in Vietnamese.
+linecast speaks Ukrainian and Vietnamese, twenty languages in all, and the Moon keeps a Vietnamese calendar. The weather chart shows how much rain to expect and how cloudy it will be, and every view fills the window.
+
+New this version:
+
+- Language: linecast speaks Ukrainian and Vietnamese. `linecast language uk` or `linecast language vi`, or a terminal locale in either, puts every view in that language, and the sky names its constellations and best-known stars in it.
 - Moon: A Vietnamese calendar. `linecast calendar vietnamese` reads the lunar date, solar term, and festivals at Vietnam's own meridian, so Tết falls on the day Vietnam keeps it. It is the default in Vietnamese.
-- Moon: The calendar opens the week on the day the country's printed calendars do, judged by your location rather than the display language: Monday in most of the world, Sunday in the United States, Canada, Japan, Korea, and others, Saturday in Egypt and the Gulf. `linecast week sunday` saves a preference, and `moon --week-start` sets it for one run.
-- Weather: The precipitation bar under the hourly chart is only as tall as the forecast's wettest hour can fill. A week of drizzle gets a one-row bar, and the temperature curve takes the rows it gives up.
-- Language: linecast speaks Ukrainian. `linecast language uk` or a Ukrainian terminal locale puts every view in Ukrainian, and the sky names its constellations and brightest stars in Ukrainian.
-- Weather: The daily rows drop the words "Rain" and "Wind" sooner as the window narrows, keeping the temperature bars wide. When no day has both notable rain and notable wind, the two share one column.
-- Maps: With `--from` and `--to` and no `--location`, the map opens on the whole route instead of your own location.
-- Sky: Search finds a star by its designation as it is typed: "alpha cen", "alpha centauri", and "alpha crucis" all find the star, with or without the component number.
-- Weather: The live view says where its data comes from. The bottom row credits Open-Meteo for the forecast and names the service the alerts come from, such as Met Éireann in Ireland, and the `?` panel lists both. The credit is in the display language, and a service is named as it names itself: 気象庁 in Japanese, Deutscher Wetterdienst in German. `weather --json` names the sources in a `sources` field.
-- Help panel: The key column is in the display language too: wheel, space, hover, click, drag, and enter are translated, and the column widens to fit.
-- Weather: The prose explains why the air feels warmer or cooler than the thermometer only when the two are six degrees Fahrenheit or three Celsius apart. A smaller gap goes unremarked.
-- Weather, tides, moon, sky, sunshine: The views use every column of the window. Text and graphs used to start one column in and stop one column short of the right edge; now they run edge to edge, and the help hint sits in the last column.
-- Moon: The calendar shades the unlit side of each day's Moon as darkly as the main view does.
-- Weather: In the morning the prose opens with how today compares to yesterday. From mid-afternoon it compares tomorrow to today, and that sentence follows the one about how the air feels now.
-- Live views: A redraw no longer flickers on terminals that support synchronized output, such as Alacritty, kitty, Ghostty, iTerm2, WezTerm, foot and Windows Terminal. Dragging the Moon or hovering over a chart used to show a half-drawn row for an instant.
-- Moon: The unlit edge of the Moon no longer shows a faint rim. The new Moon is dark all the way round, a thin crescent tapers to nothing at its horns, and the full Moon runs bright to its edge.
-- Weather: The precipitation bar below the hourly chart now shows how much rain to expect, not how likely it is. Likelihood shows as opacity: a faint bar means rain is unlikely that hour.
+- Moon: The calendar opens the week on the day the country's printed calendars do, judged by your location rather than the display language: Monday in most of the world, Sunday in the United States, Canada, Japan, Korea, and others, Saturday in Egypt and the Gulf. `linecast week sunday` saves a choice, and `moon --week-start` sets it for one run.
+- Moon: The sunlit ground fades toward the terminator, as it does in a photograph, instead of stopping at a hard edge, and the unlit limb no longer shows a faint rim. The new Moon is dark all the way round, a thin crescent tapers to nothing at its horns, and the full Moon runs bright to its edge.
+- Weather: The precipitation bar below the hourly chart shows how much rain to expect, not how likely it is. Likelihood shows as opacity: a faint bar means rain is unlikely that hour. The bar is only as tall as the wettest hour can fill, so a week of drizzle takes one row and the temperature curve gets the rest.
 - Weather: A strip of cloud cover sits above the precipitation bar.
-- Weather: Hover over the hourly chart for the hour's rain and cloud cover.
-- Weather: Hover over the daily chart, not just the hourly chart, for additional detail.
-- Weather: The prose under the chart is in the full text color.
-- Weather: The now and midnight lines run the full height of the hourly chart.
-- Weather: A short window gives up its spacing rows before anything else, and a tall one gets a blank row above the credit.
-- Weather: `weather --json` includes each hour's cloud cover.
+- Weather: Hover over the hourly chart for the hour's rain and cloud cover, and over the daily chart for the day's detail.
+- Weather: The live view says where its data comes from. The bottom row credits Open-Meteo for the forecast and names the service the alerts come from, such as Met Éireann in Ireland, and the `?` panel lists both. The credit is in the display language, and a service is named as it names itself: 気象庁 in Japanese, Deutscher Wetterdienst in German.
+- Weather: `weather --json` names the sources in a `sources` field and gives each hour's cloud cover.
+- Weather: In the morning the prose opens with how today compares to yesterday. From mid-afternoon it compares tomorrow to today, after the sentence about how the air feels now.
+- Weather: The dashboard fits a short or narrow window better. The daily rows drop the words "Rain" and "Wind" sooner as the window narrows, and share one column when no day has both. A short window gives up its spacing rows before anything else, and a tall one gets a blank row above the credit.
+- Weather: The prose under the chart is in the full text color, and the now and midnight lines run the full height of the hourly chart.
+- Sky: Search finds a star by its designation as it is typed: "alpha cen", "alpha centauri", and "alpha crucis" all find the star, with or without the component number.
+- Weather, tides, moon, sky, sunshine: The views use every column of the window. Text and graphs used to start one column in and stop one short of the right edge; now they run edge to edge, and the help hint sits in the last column.
+- Help panel: The key column is in the display language too: wheel, space, hover, click, drag, and enter are translated, and the column widens to fit.
+
+Fixes:
+
+- Moon: The calendar shades the unlit side of each day's Moon as darkly as the main view does.
+- Maps: With `--from` and `--to` and no `--location`, the map opens on the whole route instead of your own location.
+- Weather: The prose explains why the air feels warmer or cooler than the thermometer only when the two are six degrees Fahrenheit or three Celsius apart. A smaller gap goes unremarked.
 
 ## 2.4.0 — 2026-09-10
 

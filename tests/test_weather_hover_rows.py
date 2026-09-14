@@ -48,9 +48,10 @@ def test_cloud_strip_fades_with_cover():
     assert _distance(half, _theme.theme_bg) < _distance(full, _theme.theme_bg)
 
 
-def test_cloud_strip_carries_the_time_line():
+def test_cloud_strip_carries_the_hover_line():
     with patch.object(_color, "_COLOR_MODE", "truecolor"):
-        line = _render_cloud_row([0, 100, 100], 3, indicator_cols={0: (255, 0, 0), 2: (255, 0, 0)})
+        line = _render_cloud_row([0, 100, 100], 3, indicator_cols={0: (255, 0, 0), 2: (255, 0, 0)},
+                                 through_col=2)
     assert _plain(line) == "│▄▄"
     hair, plain_cell, tinted = _colors(line)
     assert hair == (255, 0, 0)
@@ -59,14 +60,37 @@ def test_cloud_strip_carries_the_time_line():
     assert _distance(tinted, (255, 0, 0)) < _distance(plain_cell, (255, 0, 0))
 
 
-def test_time_line_tints_its_way_through_the_bar():
+def test_fixed_time_lines_stop_behind_the_cloud():
+    # A now line or midnight divider draws where the sky is clear and goes
+    # behind the strip where there is cloud: a darker cell in a fixed
+    # column would read as less cloud.
+    with patch.object(_color, "_COLOR_MODE", "truecolor"):
+        line = _render_cloud_row([0, 100, 100], 3, indicator_cols={0: (255, 0, 0), 2: (255, 0, 0)})
+    assert _plain(line) == "│▄▄"
+    hair, plain_cell, behind = _colors(line)
+    assert hair == (255, 0, 0)
+    assert plain_cell == behind == tuple(CLOUD_RGB)
+
+
+def test_hover_line_tints_its_way_through_the_bar():
     with patch.object(_color, "_COLOR_MODE", "truecolor"):
         lines = _build_precip_blocks([5.0] * 3, [100] * 3, [61] * 3, 3, n_rows=1,
-                                     indicator_cols={1: (255, 255, 255)}, full=5.0)
+                                     indicator_cols={1: (255, 255, 255)}, full=5.0, through_col=1)
     assert _plain(lines[0]) == "███"
     left, middle, right = _colors(lines[0])
     assert left == right == tuple(PRECIP_RAIN_RGB)
     assert _distance(middle, (255, 255, 255)) < _distance(left, (255, 255, 255))
+
+
+def test_fixed_time_lines_stop_behind_the_bar():
+    with patch.object(_color, "_COLOR_MODE", "truecolor"):
+        lines = _build_precip_blocks([5.0, 0.0, 5.0], [100] * 3, [61] * 3, 3, n_rows=1,
+                                     indicator_cols={0: (255, 255, 255), 1: (255, 255, 255)},
+                                     full=5.0)
+    assert _plain(lines[0]) == "█│█"
+    left, hair, right = _colors(lines[0])
+    assert left == right == tuple(PRECIP_RAIN_RGB)
+    assert hair == (255, 255, 255)
 
 
 def test_indicator_row_is_only_the_lines():

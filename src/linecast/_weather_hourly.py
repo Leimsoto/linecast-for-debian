@@ -1054,8 +1054,11 @@ def _render_precip_rows(window_amount, window_precip, window_codes, graph_w, n_p
 
 
 def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runtime=None,
-                  hover_col=None, offset_minutes=0):
-    """Hourly forecast: braille temperature curve + precipitation graph."""
+                  hover_col=None, offset_minutes=0, show_cloud=True):
+    """Hourly forecast: braille temperature curve + precipitation graph.
+
+    show_cloud: draw the cloud strip when the data has cloud cover; the
+    dashboard turns it off in a window too short to spare the row."""
     if runtime is None:
         runtime = current_runtime(WeatherRuntime)
     daily = data.get("daily", {})
@@ -1206,7 +1209,8 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     elif has_global_uv:
         lines.append(_indicator_row(graph_w, indicators))
 
-    cloud_line = _render_cloud_row(window.get("cloud", []), graph_w, indicator_cols=indicators)
+    cloud_line = (_render_cloud_row(window.get("cloud", []), graph_w, indicator_cols=indicators)
+                  if show_cloud else None)
     if cloud_line:
         lines.append(cloud_line)
 

@@ -79,6 +79,7 @@ from linecast._weather_sources import (
 # -- and three days is still a forecast.
 MIN_HOURLY_ROWS = 4
 MIN_DAILY_ROWS = 3
+MIN_CURVE_ROWS_WITH_CLOUD = 4  # the cloud strip appears only above this
 
 
 def data_credits(country_code="", lang="en"):
@@ -428,7 +429,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     has_uv_row = bool(all_uv) and max(all_uv) >= 6
     has_precip_graph = (bool(hourly.get("precipitation"))
                         and max(hourly.get("precipitation", [0])) > 0)
-    has_cloud_row = bool(hourly.get("cloud_cover"))
+    has_cloud_data = bool(hourly.get("cloud_cover"))
 
     # Count non-hourly lines precisely
     non_hourly = 2  # header + blank
@@ -455,8 +456,6 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
         hourly_floor += 1
     if has_precip_graph:
         hourly_floor += 1
-    if has_cloud_row:
-        hourly_floor += 1
 
     # A window too short for all of that would push the header off the top
     # of the screen, so give something up: the prose first, then the days
@@ -481,8 +480,6 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
         graph_budget -= 1
     if has_uv_row:
         graph_budget -= 1
-    if has_cloud_row:
-        graph_budget -= 1
 
     if has_precip_graph:
         n_precip_braille = min(3, max(1, graph_budget // 6))
@@ -490,6 +487,13 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     else:
         n_precip_braille = 0
         remaining_for_temp = graph_budget
+
+    # The cloud strip is the first thing to go in a short window: it takes
+    # its row from the temperature curve only once the curve has more rows
+    # than it needs to read well.
+    has_cloud_row = has_cloud_data and remaining_for_temp >= MIN_CURVE_ROWS_WITH_CLOUD + 1
+    if has_cloud_row:
+        remaining_for_temp -= 1
 
     n_braille = max(2, remaining_for_temp)
 
@@ -507,6 +511,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     hourly_lines = render_hourly(
         data, cols, n_braille_rows=n_braille, n_precip_rows=n_precip_braille,
         now=now_local, runtime=runtime, offset_minutes=offset_minutes,
+        show_cloud=has_cloud_row,
     )
 
     # Adjust if hourly used more/fewer lines than budgeted (wind appeared,
@@ -518,6 +523,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
             hourly_lines = render_hourly(
                 data, cols, n_braille_rows=n_braille, n_precip_rows=n_precip_braille,
                 now=now_local, runtime=runtime, offset_minutes=offset_minutes,
+                show_cloud=has_cloud_row,
             )
 
     hourly_end = hourly_start + len(hourly_lines)
@@ -544,7 +550,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
         hourly_lines = render_hourly(
             data, cols, n_braille_rows=n_braille, n_precip_rows=n_precip_braille,
             now=now_local, runtime=runtime, hover_col=hover_graph_col,
-            offset_minutes=offset_minutes,
+            offset_minutes=offset_minutes, show_cloud=has_cloud_row,
         )
 
     lines.extend(hourly_lines)

@@ -18,6 +18,8 @@ _USE_BG_FILL = color_mode() != "none"
 # The temperature bar stops shrinking here; below it the row sheds its
 # detail columns instead.
 MIN_BAR_W = 10
+# A bar this wide has room to spell out "Rain" and "Wind" beside it.
+FULL_LABEL_BAR_W = 30
 
 
 def _lpad(s, w):
@@ -117,6 +119,10 @@ def render_daily_mapped(data, width, runtime=None, now=None):
         )
         day_raw.append((precip_amt, prob_s, wind_amt, ptype, wmo_i))
 
+    # Rain and wind share a column when no day shows both: the amount then
+    # sits where the wind would, and the row has one fewer column to fit.
+    shared = not any(p and w for p, _prob, w, _t, _c in day_raw)
+
     def _measure_details(compact, dropped=()):
         details = []
         mp, mpr, mw = 0, 0, 0
@@ -140,19 +146,23 @@ def render_daily_mapped(data, width, runtime=None, now=None):
                 mpr = max(mpr, visible_len(prob_s))
             if wind_s:
                 mw = max(mw, visible_len(wind_s))
+        if shared:
+            mp = mw = max(mp, mw)
         right_w = 0
         if mpr:
             right_w += 2 + mpr
         if mp:
             right_w += 2 + mp
-        if mw:
+        if mw and not shared:
             right_w += 2 + mw
         return details, mp, mpr, mw, right_w
 
-    # Try full labels first; switch to compact if bar would be too narrow
+    # The words "Rain" and "Wind" earn their place beside a bar with room
+    # to spare; when the bar would be squeezed under FULL_LABEL_BAR_W the
+    # colored amount and its unit carry the meaning on their own.
     day_details, max_precip_w, max_prob_w, max_wind_w, max_right_w = _measure_details(False)
     bar_w = max(MIN_BAR_W, width - left_prefix_w - max_right_w)
-    if bar_w < 20:
+    if bar_w < FULL_LABEL_BAR_W:
         day_details, max_precip_w, max_prob_w, max_wind_w, max_right_w = _measure_details(True)
         bar_w = max(MIN_BAR_W, width - left_prefix_w - max_right_w)
 
@@ -287,13 +297,17 @@ def render_daily_mapped(data, width, runtime=None, now=None):
                 rain.append((cursor + 2, cursor + 2 + max_prob_w))
             cursor += 2 + max_prob_w
         if max_precip_w:
-            line += f"  {pcolor}{_lpad(precip_s, max_precip_w)}"
-            if precip_s:
-                rain.append((cursor + 2, cursor + 2 + max_precip_w))
+            if shared and wind_s and not precip_s:
+                line += f"  {WIND_COLOR}{_lpad(wind_s, max_precip_w)}"
+                cols["wind"] = (cursor + 2, cursor + 2 + max_precip_w)
+            else:
+                line += f"  {pcolor}{_lpad(precip_s, max_precip_w)}"
+                if precip_s:
+                    rain.append((cursor + 2, cursor + 2 + max_precip_w))
             cursor += 2 + max_precip_w
         if rain:
             cols["rain"] = (rain[0][0], rain[-1][1])
-        if max_wind_w:
+        if max_wind_w and not shared:
             line += f"  {WIND_COLOR}{_lpad(wind_s, max_wind_w)}"
             if wind_s:
                 cols["wind"] = (cursor + 2, cursor + 2 + max_wind_w)

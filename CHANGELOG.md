@@ -4,6 +4,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
+- Weather: The daily rows drop the words "Rain" and "Wind" sooner as the window narrows, keeping the temperature bars wide. When no day has both notable rain and notable wind, the two share one column.
 - Maps: With `--from` and `--to` and no `--location`, the map opens on the whole route instead of your own location.
 - Sky: Search finds a star by its designation as it is typed: "alpha cen", "alpha centauri", and "alpha crucis" all find the star, with or without the component number.
 - Weather: The live view says where its data comes from. The bottom row credits Open-Meteo for the forecast and names the service the alerts come from, such as Met Éireann in Ireland, and the `?` panel lists both. The credit is in the display language, and a service is named as it names itself: 気象庁 in Japanese, Deutscher Wetterdienst in German. `weather --json` names the sources in a `sources` field.

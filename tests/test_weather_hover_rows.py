@@ -221,3 +221,46 @@ def test_hourly_chip_leaves_off_a_slim_chance():
 def test_prose_lines_are_in_the_text_color():
     assert _prose("Rain later.").startswith(TEXT)
     assert _prose("") == ""
+
+
+def _daily_data(wind_on_rain_day):
+    n = 8
+    wind = [5.0] * n
+    wind[2] = 18.0
+    if wind_on_rain_day:
+        wind[1] = 18.0
+    return {"daily": {
+        "time": [f"2026-09-{12 + i:02d}" for i in range(n)],
+        "temperature_2m_max": [66, 65, 68, 67, 80, 69, 76, 68],
+        "temperature_2m_min": [55, 55, 52, 46, 52, 58, 53, 51],
+        "precipitation_sum": [0, 0.22, 0, 0, 0, 0.19, 0, 0],
+        "precipitation_probability_max": [0, 74, 10, 10, 10, 32, 32, 30],
+        "weather_code": [3, 61, 3, 3, 3, 61, 3, 3],
+        "wind_speed_10m_max": wind,
+    }}
+
+
+def test_daily_rain_and_wind_share_a_column_when_no_day_has_both():
+    lines, spans = render_daily_mapped(_daily_data(False), 90, _runtime())
+    rain_row, wind_row = _plain(lines[0]), _plain(lines[1])
+    assert rain_row.endswith("Rain 0.22″")
+    assert wind_row.endswith("Wind 18mph")
+    assert visible_len(rain_row) == visible_len(wind_row)
+    assert spans[0]["cols"]["rain"][1] == spans[1]["cols"]["wind"][1]
+    assert "wind" not in spans[0]["cols"]
+    assert "rain" not in spans[1]["cols"]
+
+
+def test_daily_rain_and_wind_keep_their_columns_when_a_day_has_both():
+    lines, spans = render_daily_mapped(_daily_data(True), 90, _runtime())
+    assert _plain(lines[0]).endswith("Rain 0.22″  Wind 18mph")
+    assert spans[0]["cols"]["rain"][1] < spans[0]["cols"]["wind"][0]
+
+
+def test_daily_words_go_before_the_bar_is_squeezed():
+    wide, _ = render_daily_mapped(_daily_data(True), 70, _runtime())
+    tight, spans = render_daily_mapped(_daily_data(True), 62, _runtime())
+    assert "Rain" in _plain(wide[0]) and "Wind" in _plain(wide[0])
+    assert _plain(tight[0]).endswith("74%  0.22″  18mph")
+    a, b = spans[0]["cols"]["bar"]
+    assert b - a >= 30

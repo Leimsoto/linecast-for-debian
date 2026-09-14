@@ -7,3 +7,4 @@ build/
 .coverage
 .claude/worktrees/
 .DS_Store
+.obsidian/

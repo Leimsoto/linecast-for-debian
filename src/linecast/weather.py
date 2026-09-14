@@ -47,6 +47,7 @@ from linecast._weather_render import (
     TOOLTIP_TEXT_RGB,
     WIND_ARROWS,
     _colored_temp,
+    _PRECIP_CODES,
     _fmt_time,
     _precip_rgb,
     _precip_type,
@@ -169,7 +170,7 @@ def _build_hover_tooltip(data, mouse_col, mouse_row, hourly_start, hourly_end, c
     # Weather description
     wmo_name = WMO_NAMES_I18N.get(runtime.lang, {}).get(code) or WMO_NAMES.get(code, "")
     if wmo_name:
-        lines.append(f"{TBG}{TFG} {wmo_name} ")
+        lines.append(f"{TBG}{_conditions_ink(code, TFG)} {wmo_name} ")
 
     # Humidity / dew point (when notable)
     if humidity is not None and dew is not None:
@@ -210,6 +211,13 @@ def _build_hover_tooltip(data, mouse_col, mouse_row, hourly_start, hourly_end, c
     snap_col = int(idx / max(1, total_hours) * (graph_w - 1)) + 1
 
     return _live.pointer_chip(lines, snap_col, mouse_row, cols, rows, pad_bg=TBG)
+
+
+def _conditions_ink(code, text_fg):
+    """The color to name the weather in: the precipitation type's, so a
+    thunderstorm is in the bar's storm yellow and snow in its white, and
+    the plain text color for anything dry."""
+    return fg(*_precip_rgb(code)) if code in _PRECIP_CODES else text_fg
 
 
 def _precip_shade(code, prob):
@@ -295,7 +303,8 @@ def _build_daily_tooltip(data, mouse_col, mouse_row, daily_start, daily_spans, c
         wmo_name = WMO_NAMES_I18N.get(runtime.lang, {}).get(code) or WMO_NAMES.get(code, "")
         if wmo_name:
             icons = _wmo_icons(runtime)
-            lines.append(f"{TBG}{TFG} {icons.get(code, icons[0])}{TFG} {wmo_name} ")
+            ink = _conditions_ink(code, TFG)
+            lines.append(f"{TBG}{ink} {icons.get(code, icons[0])}{ink} {wmo_name} ")
 
     elif field == "bar":
         temps = hour_values("temperature_2m")

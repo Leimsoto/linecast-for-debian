@@ -354,7 +354,7 @@ def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0):
         "all_uv": uv_indices,
         "start_idx": start_idx,
         "end_idx": end_idx,
-        "all_temp_range": (all_temp_lo, all_temp_hi),
+        "all_temp_range": (all_temp_lo, all_temp_hi) if current_runtime().use_scaled_temp_graph else (-20, 40) if current_runtime().celsius else (-20, 100),
         "all_wind_max": all_wind_max,
         "all_uv_max": all_uv_max,
         "all_precip_max": all_precip_max,
@@ -1086,8 +1086,8 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     window_dts = window["dts"]
     total_hours = window["total_hours"]
     all_temp_range = window.get("all_temp_range")
-    chart_lo = min(window_temps)
-    chart_hi = max(window_temps)
+    chart_lo = all_temp_range[0]
+    chart_hi = all_temp_range[1]
 
     midnight_cols, _noon_cols, midnight_day_names = _compute_time_markers(
         window_dts, total_hours, graph_w, runtime

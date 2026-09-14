@@ -454,9 +454,9 @@ def weather_parser():
     p.add_argument("--celsius", action="store_true",
                     help="celsius temperatures only")
     p.add_argument("--fahrenheit", action="store_true",
-                    help="fahrenheit temperatures"),
+                    help="fahrenheit temperatures")
     p.add_argument("--relative", action="store_true",
-                   help="scale temperature graph to minimum and maximum values present"),
+                   help="scale temperature graph to minimum and maximum values present")
     p.add_argument("--no-shading", action="store_true",
                     help="disable daylight shading on hourly chart")
     p.add_argument("--json", dest="json_mode", action="store_true",

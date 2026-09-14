@@ -2,6 +2,15 @@
 
 The README shows each app once or twice. This page shows them in more of their states: other languages, other traditions, other layers, smaller windows. Every frame is a real terminal, captured by `scripts/capture_screenshots.sh`; the ones that depend on the weather or the hour are whatever the weather and the hour were.
 
+## In motion
+
+Two recordings driven by the mouse: the globe turned by hand, and the January sky panned to the southwest and back.
+
+<p>
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/gallery/globe-spin.gif" width="49%" alt="the globe spun by dragging">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/gallery/sky-pan.gif" width="49%" alt="the sky panned by dragging">
+</p>
+
 ## Weather
 
 <p>

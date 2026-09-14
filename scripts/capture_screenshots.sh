@@ -38,6 +38,8 @@ ASTRO_LOCATION=${LINECAST_CAPTURE_ASTRO_LOCATION:-43.676,-70.371}
 ARCTIC_PLACE=${LINECAST_CAPTURE_ARCTIC_PLACE:-Longyearbyen}
 ANTARCTIC_PLACE=${LINECAST_CAPTURE_ANTARCTIC_PLACE:-Vostok Station}
 OKINAWA_LOCATION=${LINECAST_CAPTURE_OKINAWA_LOCATION:-26.2124,127.6809}
+HERO_PLACE=${LINECAST_CAPTURE_HERO_PLACE:-Juneau, Alaska}
+HERO_LOCATION=${LINECAST_CAPTURE_HERO_LOCATION:-58.302,-134.420}
 
 usage() {
     cat <<'EOF'
@@ -63,7 +65,10 @@ Targets:
              screenshots/gallery: the radar in its fixed themes and its
              other layers, the sky in more traditions, the weather in a
              short window, the moon's month grid, a walking route
-  hero       hero.png — the four apps tiled live on one offscreen desktop
+  tours      globe-spin.gif and sky-pan.gif in screenshots/gallery, each
+             a recording driven by a mouse script in scripts/tours
+  hero       hero.png — five apps tiled on a desktop the size of this
+             screen, with the real bar pasted along the top
 
 Environment overrides:
   LINECAST_CAPTURE_TOOL
@@ -80,6 +85,8 @@ Environment overrides:
   LINECAST_CAPTURE_ARCTIC_PLACE
   LINECAST_CAPTURE_ANTARCTIC_PLACE
   LINECAST_CAPTURE_OKINAWA_LOCATION
+  LINECAST_CAPTURE_HERO_PLACE      the weather and sunshine place in the hero
+  LINECAST_CAPTURE_HERO_LOCATION   its LAT,LNG, for the astronomy panes
 EOF
 }
 
@@ -434,22 +441,48 @@ print(f"30,{lon:.0f}")')
 }
 
 hero() {
+    # One desktop the size of this screen: two panes above three, at two to
+    # one, with the real bar read off the real screen and pasted along the
+    # top, so the frame is the laptop as it looks. Weather and radar are
+    # live; the moon, the year, and the dusk are fixed moments, as in the
+    # single frames. The radar goes wherever the scout finds weather.
+    # capture_moment reads --at in this machine's zone, so these are
+    # Juneau's evening and its midday seen from US Eastern; moving the
+    # hero somewhere else means moving these too.
+    resolve_radar_place
     printf 'Capturing hero…\n'
-    # One real screenshot: four linecast apps tiled in termshot's private
-    # compositor, composed by its gaps, borders, and the desktop wallpaper.
-    # Pane order maps to dwindle's slots: big top-left, full-height right
-    # column, then the two bottom-left quarters.
-    "$CAPTURE_TOOL" --res 3840x2400 --font 'iA Writer Mono S:size=9' \
+    "$CAPTURE_TOOL" --bar --rows 2,3 --row-heights 2:1 --font "$CAPTURE_FONT" \
         -w 90 -o "$SHOT_DIR/hero.png" \
-        --pane "uv --directory $REPO_DIR run linecast weather --location '$WEATHER_PLACE'" \
-        --pane "uv --directory $REPO_DIR run linecast radar --location '$RADAR_PLACE'" \
-        --pane "uv --directory $REPO_DIR run linecast maps --location '$STREET_PLACE' --zoom 0.015" \
-        --pane "uv --directory $REPO_DIR run python $REPO_DIR/scripts/capture_moment.py --at 2026-06-21T13:30 --location '$ASTRO_LOCATION' sunshine"
+        --pane "uv --directory $REPO_DIR run linecast weather --location '$HERO_PLACE'" \
+        --pane "uv --directory $REPO_DIR run linecast radar --location '$RADAR_PLACE' ${RADAR_LANG_ARGS[*]}" \
+        --pane "uv --directory $REPO_DIR run python $REPO_DIR/scripts/capture_moment.py --at 2026-08-23T01:30 --location '$HERO_LOCATION' moon" \
+        --pane "uv --directory $REPO_DIR run python $REPO_DIR/scripts/capture_moment.py --at 2026-06-21T17:30 --location '$HERO_LOCATION' sunshine -- --year --location '$HERO_PLACE'" \
+        --pane "uv --directory $REPO_DIR run python $REPO_DIR/scripts/capture_moment.py --at 2026-06-22T02:00 --location '$HERO_LOCATION' sunshine -- --location '$HERO_PLACE'"
+}
+
+tours() {
+    # Recordings driven by the mouse, each scripted in scripts/tours.
+    printf 'Recording the globe spin…\n'
+    "$CAPTURE_TOOL" -s 100x30 -w 20 --font "$CAPTURE_FONT" \
+        --gif 7 --fps 10 --gif-width 700 \
+        --script "$REPO_DIR/scripts/tours/globe-spin.termshot" \
+        -o "$GALLERY_DIR/globe-spin.gif" \
+        uv --directory "$REPO_DIR" run linecast maps --view terrain --zoom 130 \
+        --location 20,-30
+    printf 'Recording the sky pan…\n'
+    "$CAPTURE_TOOL" -s 100x30 -w 6 --font "$CAPTURE_FONT" \
+        --gif 7 --fps 10 --gif-width 700 \
+        --script "$REPO_DIR/scripts/tours/sky-pan.termshot" \
+        -o "$GALLERY_DIR/sky-pan.gif" \
+        uv --directory "$REPO_DIR" run python \
+        "$REPO_DIR/scripts/capture_moment.py" \
+        --at 2026-01-15T21:00 --location "$ASTRO_LOCATION" sky -- \
+        --location "$ASTRO_LOCATION" --facing S
 }
 
 run_target() {
     case "$1" in
-        weather|sunshine|year|moon|sky|tides|radar|maps|globe|gallery|hero) "$1" ;;
+        weather|sunshine|year|moon|sky|tides|radar|maps|globe|gallery|tours|hero) "$1" ;;
         all)
             weather
             sunshine
@@ -461,6 +494,7 @@ run_target() {
             maps
             globe
             gallery
+            tours
             ;;
         *)
             printf 'capture_screenshots: unknown target: %s\n' "$1" >&2

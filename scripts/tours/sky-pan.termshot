@@ -1,0 +1,6 @@
+# Look around the January sky: pan east, then pull back to the south.
+sleep 1
+drag 70x14 30x14
+sleep 1.5
+drag 30x14 65x14
+sleep 1.5

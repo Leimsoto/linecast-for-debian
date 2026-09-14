@@ -1,0 +1,6 @@
+# Spin the globe by hand: two drags across the disc, a pause between.
+sleep 1
+drag 35x15 80x15
+sleep 1.5
+drag 80x15 40x15
+sleep 1.5

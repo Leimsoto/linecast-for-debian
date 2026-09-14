@@ -32,15 +32,9 @@ The sky target is three fixed nights over Westbrook: Orion on a January evening,
 
 The globe target is honestly unrepeatable by design: it makes two frames, the terrain planet with `S` pressed for this hour's daylight and city lights, and `--view now` with this hour's clouds as well. By default it centres the view 45° east of wherever the sun is overhead at capture time, so the sunset line always crosses the right half of the disk; which continents are in the frame depends on the hour, so pick one you like or set `LINECAST_CAPTURE_GLOBE_PLACE` to a fixed `LAT,LNG`. Read both frames back before committing.
 
-The current hero is not from the script at all: it is a hand-composed
-whole-laptop-screen screenshot — weather, dusk sunshine, tides, and radar
-tiled on the real desktop, bar and all — taken live and kept deliberately
-uncropped. For that reason `all` skips the hero. Running the `hero` target
-explicitly *overwrites* it with an auto-capture: four apps tiled by Hyprland
-in termshot's private compositor (its `--pane` mode), where the compositor's
-own gaps and borders do the alignment. Its long settle gives the full-height
-radar pane time to load all 18 animation frames — at that size
-"loading… n/18" lingers in its header well past a minute.
+The hero is a composed desktop the size of this laptop's screen: five apps tiled two above three by termshot's private compositor, with the real bar read off the real screen and pasted along the top, so the frame carries the real clock and workspace dots. Weather and radar are live and the radar goes wherever the scout finds weather; the moon, the year, and the dusk are fixed moments. `LINECAST_CAPTURE_HERO_PLACE` and `LINECAST_CAPTURE_HERO_LOCATION` move it; Juneau is the default. Because it composes rather than photographs, `all` still leaves it alone; run `hero` when the weather is worth it. A hand-taken whole-screen screenshot is still the alternative, and still welcome.
+
+The `tours` target records two GIFs for the gallery from mouse scripts in `scripts/tours`: the globe spun by dragging and the January sky panned. termshot reads the same words from a script file as it takes on the command line: `press`, `key`, `sleep`, `hover`, `click`, `drag`, `scroll`.
 
 The default places can be overridden without editing the script:
 

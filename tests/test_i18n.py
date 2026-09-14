@@ -73,6 +73,40 @@ class TestPolishWeather:
         assert _s("metric_unit_sep", runtime) == " "
 
 
+class TestUkrainianWeather:
+    def test_comparative_sentences_are_idiomatic(self):
+        runtime = SimpleNamespace(lang="uk", celsius=True)
+        now = datetime(2026, 8, 24, 15)
+        warmer = comparative_sentence({"temperature_2m_max": [20, 21, 24]}, now, runtime)
+        same = comparative_sentence({"temperature_2m_max": [20, 21, 22]}, now, runtime)
+        assert warmer == "Завтра буде трохи тепліше, ніж сьогодні"
+        assert same == "Завтра буде приблизно так само тепло, як сьогодні"
+
+    def test_precipitation_phrases_read_as_clock_times(self):
+        runtime = SimpleNamespace(lang="uk", use_24h=True)
+        now = datetime(2026, 8, 24, 12, 10)
+        hourly = {
+            "time": [f"2026-08-24T{h:02d}:00" for h in range(12, 18)],
+            "precipitation_probability": [0, 0, 0, 0, 0, 80],
+            "weather_code": [0, 0, 0, 0, 0, 95],
+        }
+        assert "Гроза, ймовірно, почнеться близько 17:00" in _precipitation_line(hourly, now, runtime)
+
+    def test_past_precipitation_takes_the_genitive(self):
+        runtime = SimpleNamespace(lang="uk", metric=True, precip_unit="mm")
+        now = datetime(2026, 8, 24, 12)
+        hourly = {"time": ["2026-08-24T11:00"], "precipitation": [4.0],
+                  "snowfall": [0], "weather_code": [63]}
+        assert "4.0 mm дощу за останні 24 год" in _past_precip_line(hourly, now, runtime)
+
+    def test_weekdays_use_standard_abbreviations(self):
+        assert DAY_NAMES["uk"] == ["пн", "вт", "ср", "чт", "пт", "сб", "нд"]
+
+    def test_historical_comparison_speaks_of_the_norm(self):
+        runtime = SimpleNamespace(lang="uk")
+        assert _s("hist_below_avg", runtime, diff="3°") == "3° нижче норми"
+
+
 class TestWeatherLocaleImprovements:
     def test_same_temperature_sentences_are_idiomatic(self):
         expected = {
@@ -190,6 +224,7 @@ class TestTwilightDirection:
             "de": ("bürgerliche Morgendämmerung",
                    "bürgerliche Abenddämmerung"),
             "zh": ("民用晨光", "民用昏影"),
+            "uk": ("цивільний світанок", "цивільні сутінки"),
         }
         for lang, (dawn, dusk) in expected.items():
             runtime = SimpleNamespace(lang=lang)
@@ -237,6 +272,17 @@ class TestRelativeDays:
             runtime = SimpleNamespace(lang=lang)
             assert relative_day(-1, runtime) == one
             assert relative_day(-3, runtime) == three
+
+
+    def test_ukrainian_counts_days_in_three_forms(self):
+        """1, 21 take one form; 2–4, 22–24 another; 5–20 and 11–14 a third."""
+        from linecast._sunshine_i18n import relative_day
+        runtime = SimpleNamespace(lang="uk")
+        expected = {1: "через 1 день", 2: "через 2 дні", 5: "через 5 днів",
+                    11: "через 11 днів", 21: "через 21 день", 24: "через 24 дні",
+                    -1: "1 день тому", -3: "3 дні тому", -12: "12 днів тому"}
+        for diff, text in expected.items():
+            assert relative_day(diff, runtime) == text, diff
 
 
 class TestMonthAxisLabels:

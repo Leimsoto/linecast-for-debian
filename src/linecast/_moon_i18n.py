@@ -344,6 +344,24 @@ _MOON_STRINGS = {
         "autumn_equinox": "Ekuinoks musim gugur",
         "winter_solstice": "Solstis musim dingin",
     },
+    "uk": {
+        "illuminated": "освітлено {pct}%",
+        "age": "день {age} з {total}",
+        "lunar_age": "вік Місяця {age} д",
+        "up_now": "Над обрієм",
+        "above_horizon": "{alt}° над обрієм",
+        "below_horizon": "Під обрієм",
+        "moonrise": "Схід Місяця",
+        "moonset": "Захід Місяця",
+        "in_days": "через {days} д",
+        "begins_at_sunset": "починається із заходом сонця",
+        "in_time": "через {dur}",
+        "year_day": "День {n} з {total}",
+        "spring_equinox": "Весняне рівнодення",
+        "summer_solstice": "Літнє сонцестояння",
+        "autumn_equinox": "Осіннє рівнодення",
+        "winter_solstice": "Зимове сонцестояння",
+    },
 }
 
 
@@ -378,6 +396,8 @@ MONTHS_I18N = {
             "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."],
     "id": ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
             "Jul", "Agu", "Sep", "Okt", "Nov", "Des"],
+    "uk": ["січ", "лют", "бер", "кві", "тра", "чер",
+           "лип", "сер", "вер", "жов", "лис", "гру"],
 }
 
 # Date order/format per language: {month} = abbreviated name from

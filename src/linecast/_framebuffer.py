@@ -53,13 +53,15 @@ def fmt_hour(h, use_24h=False):
 
 def fmt_hour_phrase(hour, use_24h=False, lang="en"):
     """Conversational hour: '3pm' (12h), '15h' (24h), '15時' (Japanese),
-    '15 น.' (Thai)."""
+    '15 น.' (Thai), '15:00' (Ukrainian)."""
     hour = hour % 24
     if use_24h:
         if lang == "ja":
             return f"{hour}時"
         if lang == "th":
             return f"{hour:02d} น."
+        if lang == "uk":
+            return f"{hour:02d}:00"
         return f"{hour:02d}h"
     h12 = hour % 12 or 12
     return f"{h12}{'am' if hour < 12 else 'pm'}"

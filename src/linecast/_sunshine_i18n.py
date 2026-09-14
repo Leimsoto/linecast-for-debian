@@ -354,6 +354,28 @@ _SUNSHINE_STRINGS = {
         "sunrise": "matahari terbit",
         "sunset": "matahari terbenam",
     },
+    "uk": {
+        "today": "сьогодні",
+        "in_day": "через {n} день",
+        "in_days_few": "через {n} дні",
+        "in_days": "через {n} днів",
+        "day_ago": "{n} день тому",
+        "days_ago_few": "{n} дні тому",
+        "days_ago": "{n} днів тому",
+        "sky_night": "ніч",
+        "sky_astronomical": "астрономічні сутінки",
+        "sky_nautical": "навігаційні сутінки",
+        "sky_civil": "цивільні сутінки",
+        "sky_astronomical_dawn": "астрономічний світанок",
+        "sky_nautical_dawn": "навігаційний світанок",
+        "sky_civil_dawn": "цивільний світанок",
+        "sky_day": "день",
+        "midnight_sun": "полярний день",
+        "polar_night": "полярна ніч",
+        "solar_noon": "сонячний полудень",
+        "sunrise": "схід сонця",
+        "sunset": "захід сонця",
+    },
 }
 
 # Month-axis labels where the first three letters of the MONTHS_I18N name
@@ -429,14 +451,31 @@ def polar_name(state, runtime):
     return ""
 
 
+def _slavic_form(n, one, few, many):
+    """The form a count takes in Ukrainian and its neighbours: 1, 21, 31
+    with `one`, 2–4 and 22–24 with `few`, the rest (11–14 among them)
+    with `many`."""
+    if n % 10 == 1 and n % 100 != 11:
+        return one
+    if n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14):
+        return few
+    return many
+
+
 def relative_day(diff, runtime):
-    """'today', 'in 3 days', '2 days ago' for a day offset from today."""
+    """'today', 'in 3 days', '2 days ago' for a day offset from today.
+
+    A language that counts the Slavic way carries `in_days_few` and
+    `days_ago_few` beside the plain keys, and the count picks among the
+    three; every other language has a singular and a plural.
+    """
     if diff == 0:
         return _ss("today", runtime)
     n = abs(diff)
-    if diff > 0:
-        return _ss("in_day" if n == 1 else "in_days", runtime, n=n)
-    return _ss("day_ago" if n == 1 else "days_ago", runtime, n=n)
+    one, many = ("in_day", "in_days") if diff > 0 else ("day_ago", "days_ago")
+    if many + "_few" in _SUNSHINE_STRINGS.get(lang_of(runtime), {}):
+        return _ss(_slavic_form(n, one, many + "_few", many), runtime, n=n)
+    return _ss(one if n == 1 else many, runtime, n=n)
 
 
 def axis_month_labels(runtime, narrow=False):

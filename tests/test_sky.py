@@ -320,6 +320,7 @@ class TestCatalogue:
         from linecast._i18n import LANGUAGE_CODES
         assert sky.star_names("ja")[0] == ("シリウス", "α CMa")
         assert sky.star_names("pl")[0] == ("Syriusz", "α CMa")
+        assert sky.star_names("uk")[0] == ("Сіріус", "α CMa")
         vega = next(i for i, (n, _d) in sky.star_names().items() if n == "Vega")
         assert sky.star_names("zh")[vega] == ("织女一", "α Lyr")
         assert sky.star_names("en") is sky.star_names()
@@ -342,6 +343,7 @@ class TestCatalogue:
             if code not in ("en", "id"):
                 assert sky.constellation_name(ursa, code) != ursa["name"], code
         assert sky.constellation_name(ursa, "pl") == "Wielka Niedźwiedzica"
+        assert sky.constellation_name(ursa, "uk") == "Велика Ведмедиця"
         assert sky.constellation_name(ursa, "en") == ursa["name"]
 
     def test_the_constellations(self):
@@ -893,6 +895,10 @@ class TestCultures:
         assert search("syriusz", pool)[0].label == "Syriusz · α CMa"
         assert search("sirius", pool)[0].label == "Syriusz · α CMa"
         assert search("wielki pies", pool)[0].kind == "constellation"
+        pool = targets(_runtime(lang="uk"))
+        assert search("сіріус", pool)[0].label == "Сіріус · α CMa"
+        assert search("полярна", pool)[0].label == "Полярна зоря · α UMi"
+        assert search("великий віз", pool)[0].kind == "asterism"
         pool = targets(_runtime(lang="ja"))
         assert search("シリウス", pool)[0].key == 0
 

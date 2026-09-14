@@ -237,6 +237,19 @@ _STRINGS = {
         "radar_unavailable": "radar tidak tersedia ({err})",
         "no_frames": "tidak ada citra radar",
     },
+    "uk": {
+        "loading": "завантаження…",
+        "hint": "пробіл відтворення/пауза · прокрутка/←→ крок · +/- масштаб · перетягнути / wasd · c темп · W вітер · t тема · S супутник · q вийти",
+        "theme": "тема",
+        "now": "зараз",
+        "near": "{dist} {unit} на {dir} від {name}",
+        "compass": "Пн ПнС С ПдС Пд ПдЗ З ПнЗ",
+        "forecast": "прогноз",
+        "echo_pct": "{pct}% відлуння",
+        "cloud_pct": "{pct}% хмар",
+        "radar_unavailable": "радар недоступний ({err})",
+        "no_frames": "немає кадрів радара",
+    },
 }
 
 

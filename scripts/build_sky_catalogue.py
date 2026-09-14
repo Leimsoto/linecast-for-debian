@@ -95,7 +95,7 @@ WIKIDATA = "https://query.wikidata.org/sparql"
 WIKIDATA_LANG = {
     "fr": "fr", "es": "es", "de": "de", "it": "it", "pt": "pt", "nl": "nl",
     "pl": "pl", "no": "nb", "sv": "sv", "is": "is", "da": "da", "fi": "fi",
-    "ja": "ja", "ko": "ko", "zh": "zh-hans", "th": "th", "id": "id",
+    "ja": "ja", "ko": "ko", "zh": "zh-hans", "th": "th", "id": "id", "uk": "uk",
 }
 
 GREEK = {
@@ -205,8 +205,14 @@ GREEK_WORDS = (
     "alpha", "alfa", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta",
     "iota", "kappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "rho", "sigma",
     "tau", "upsilon", "phi", "chi", "psi", "omega",
+    # The Cyrillic spellings, as Ukrainian titles its stars.
+    "альфа", "бета", "гамма", "дельта", "епсилон", "дзета", "зета", "ета", "тета",
+    "йота", "каппа", "лямбда", "мю", "ню", "ксі", "омікрон", "пі", "ро", "сигма",
+    "тау", "іпсилон", "упсилон", "фі", "хі", "псі", "омега",
 )
-GREEK_LETTERS = "αβγδεζηθικλμνξοπρστυφχψω"
+GREEK_LETTERS = "αβγδεζηθικλμνξοπρστυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"
+# A variable star's designation: one or two capitals before the genitive.
+VARIABLE_PREFIX = re.compile(r"^[A-Z]{1,2} ")
 CATALOGUE_PREFIX = re.compile(r"^(hd|hip|hr|gj|gliese|sao|bd|cd|lhs|wolf|ross|luyten)", re.I)
 
 
@@ -228,6 +234,8 @@ def chart_name(label, iau, genitives, component):
     if any(low == word or low.startswith(word + " ") for word in GREEK_WORDS):
         return None
     if any(ch in GREEK_LETTERS for ch in text) or CATALOGUE_PREFIX.match(text):
+        return None
+    if VARIABLE_PREFIX.match(text):
         return None
     return text
 
@@ -298,6 +306,7 @@ OVERRIDES = {
         },
         "de": {
             "Abt's Star": "", "Acrux": "", "Adhafera": "", "Algedi": "Algiedi", "Alnair": "",
+            "Imai": "", "Mimosa": "",
             "Alpherg": "", "Alrescha": "Alrischa", "Alshain": "Alschain", "Aludra": "",
             "Andrews' star": "", "Aspidiske": "", "Avior": "", "Becklin's Star": "",
             "Bidelman's Helium Variable Star": "", "Biham": "", "Double Double": "",
@@ -310,6 +319,7 @@ OVERRIDES = {
         },
         "es": {
             "Acrux": "Ácrux", "Alderamin": "", "Algedi": "Al Giedi", "Alkaphrah": "",
+            "Imai": "", "Mimosa": "",
             "Altair": "Altaír", "Andrews' star": "Estrella de Andrews",
             "Athebyne": "Aldhibain", "Bidelman's Helium Variable Star": "", "Brachium": "",
             "Castor": "Cástor", "Chara": "", "Copernicus": "Copérnico", "Double Double": "",
@@ -399,7 +409,7 @@ OVERRIDES = {
             "Zubanah": "주바나",
         },
         "nl": {
-            "Alula Borealis": "", "Asellus Secundus": "", "Diadem": "", "Fuyue": "",
+            "Alula Borealis": "", "Asellus Secundus": "", "Diadem": "", "Fuyue": "", "Mimosa": "",
             "Marsic": "", "Meissa": "", "Pearce's Star": "", "Plaskett's Star": "",
             "Polaris": "Poolster", "Rasalgethi": "", "Variabilis Coronae": "",
         },
@@ -412,7 +422,7 @@ OVERRIDES = {
             "Variabilis Coronae": "",
         },
         "pt": {
-            "La Superba": "", "Pearce's Star": "", "Plaskett's Star": "Estrela de Plaskett",
+            "La Superba": "", "Mimosa": "", "Pearce's Star": "", "Plaskett's Star": "Estrela de Plaskett",
             "Polaris": "Estrela Polar", "Sterope": "", "Variabilis Coronae": "",
         },
         "sv": {
@@ -433,6 +443,21 @@ OVERRIDES = {
             "Errai": "", "Fomalhaut": "ดาวโฟมัลฮอต", "Mintaka": "ดาวมินตากา",
             "Procyon": "ดาวโพรซิออน", "Regulus": "ดาวหัวใจสิงห์", "Sirius": "ดาวโจร",
             "Titawin": "",
+        },
+        "uk": {
+            "Albireo": "Альбірео", "Alderamin": "Альдерамін", "Algieba": "Альгейба",
+            "Alkaid": "Алькаїд", "Alnasl": "Альназль", "Alnitak": "Альнітак",
+            "Alpheratz": "Альферац", "Ankaa": "Анкаа", "Avior": "Авіор",
+            "Castor": "Кастор", "Cebalrai": "Цебальрай", "Chertan": "Чертан",
+            "Cor Caroli": "Серце Карла", "Dabih": "Дабіх", "Elnath": "Ельнат",
+            "Fomalhaut": "Фомальгаут", "Gacrux": "Гакрукс", "Gienah": "Гієна",
+            "Hadar": "Хадар", "Kochab": "Кохаб", "Lesath": "Лесат", "Markeb": "Маркеб",
+            "Matar": "Матар", "Menkalinan": "Менкалінан", "Merak": "Мерак",
+            "Miaplacidus": "Міаплацидус", "Mizar": "Міцар", "Muhlifain": "Мухліфайн",
+            "Muphrid": "Муфрід", "Sabik": "Сабік", "Seginus": "Сегінус",
+            "Shedar": "Шедар", "Sirius": "Сіріус", "Suhail": "Сухайль",
+            "Sulafat": "Сулафат", "Talitha": "Таліта", "Toliman": "Толіман",
+            "Zubenelgenubi": "Зубенельгенубі",
         },
         "zh": {
             "Abt's Star": "阿布特星", "Aldhibah": "紫微左垣四", "Alhiba": "天潢五",

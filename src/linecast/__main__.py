@@ -17,7 +17,7 @@ linecast {version} — weather, sunlight, the moon, the sky, tides, radar, and m
 
 Settings (run alone to show, give a value to set):
   linecast location    A fixed place, instead of the one your IP address suggests
-  linecast language    en, fr, es, de, it, pt, nl, pl, no, sv, is, da, fi, ja, ko, zh, th, or id
+  linecast language    en, fr, es, de, it, pt, nl, pl, no, sv, is, da, fi, ja, ko, zh, th, id, or uk
   linecast units       metric or imperial
   linecast clock       12-hour or 24-hour
   linecast icons       nerd, emoji, or plain

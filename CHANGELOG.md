@@ -4,6 +4,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
+- Language: linecast speaks Ukrainian. `linecast language uk` or a Ukrainian terminal locale puts every view in Ukrainian, and the sky names its constellations and brightest stars in Ukrainian.
 - Weather: The daily rows drop the words "Rain" and "Wind" sooner as the window narrows, keeping the temperature bars wide. When no day has both notable rain and notable wind, the two share one column.
 - Maps: With `--from` and `--to` and no `--location`, the map opens on the whole route instead of your own location.
 - Sky: Search finds a star by its designation as it is typed: "alpha cen", "alpha centauri", and "alpha crucis" all find the star, with or without the component number.

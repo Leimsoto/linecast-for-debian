@@ -93,6 +93,11 @@ _TIDES_STRINGS = {
         "waves": "Gelombang",
         "swell": "Alun",
     },
+    "uk": {
+        "space_to_now": "пробіл, щоб повернутися до тепер",
+        "waves": "Хвилі",
+        "swell": "Зиб",
+    },
 }
 
 
@@ -133,6 +138,8 @@ MOON_NAMES_I18N = {
             "จันทร์เต็มดวง", "จันทร์ค่อนดวงข้างแรม", "จันทร์ครึ่งดวงข้างแรม", "จันทร์เสี้ยวข้างแรม"],
     "id": ["Bulan Baru", "Sabit Awal", "Kuarter Pertama", "Cembung Awal",
             "Bulan Purnama", "Cembung Akhir", "Kuarter Akhir", "Sabit Akhir"],
+    "uk": ["Новий Місяць", "Зростаючий серп", "Перша чверть", "Зростаючий Місяць",
+           "Повний Місяць", "Спадний Місяць", "Остання чверть", "Спадний серп"],
 }
 
 

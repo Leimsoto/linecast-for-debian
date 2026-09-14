@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Run an astronomy view at a fixed local moment for documentation captures.
 
+sunshine and moon take their place from --location here; sky resolves its own,
+so pass it --location after the -- as well.
+
 This is deliberately capture-only: the public CLI continues to show the real
 sky.  Freezing the clock here makes the README's midday, dusk, and Moon frames
 repeatable no matter when the screenshot pipeline runs.
@@ -26,7 +29,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="run sunshine or moon at a fixed local moment",
     )
-    parser.add_argument("app", choices=("sunshine", "moon"))
+    parser.add_argument("app", choices=("sunshine", "moon", "sky"))
     parser.add_argument("--at", required=True, help="local ISO time")
     parser.add_argument(
         "--location",

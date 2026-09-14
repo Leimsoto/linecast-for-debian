@@ -17,26 +17,18 @@ scripts/capture_screenshots.sh all
 Individual targets are also available:
 
 ```sh
-scripts/capture_screenshots.sh weather sunshine moon tides radar maps globe hero
+scripts/capture_screenshots.sh weather sunshine year moon sky tides radar maps globe hero
 ```
 
-Weather, tides, radar, and maps use current public data. Sunshine and Moon use
-fixed local moments through `scripts/capture_moment.py`, keeping those frames
-repeatable at any time of day. The year target adds the pointer: termshot moves
-it onto the December solstice so the hover tooltip is in the frame, and the
-two polar frames are Longyearbyen and Vostok Station, at 78° either side of
-the equator.
+Weather, tides, radar, and maps use current public data. Sunshine, Moon, and sky use fixed local moments through `scripts/capture_moment.py`, keeping those frames repeatable at any time of day. The weather target makes three frames: Dublin at 110×34, where the dashboard is at its densest, and two smaller ones, Reykjavík in Icelandic and Kyoto in Japanese, both metric. The year target adds the pointer: termshot moves it onto the December solstice so the hover tooltip is in the frame. Its main frame is Reykjavík, in Icelandic, and the two polar frames are Longyearbyen and Vostok Station, at 78° either side of the equator.
 The moon target also captures Okinawa in Japanese on the evening after the
 mid-autumn full moon of 2026, once as the disc (the night named 十六夜) and
 once after pressing `v`, with the pointer on the 25th so the calendar's hover
 chip reads 十五夜.
 
-The globe target is honestly unrepeatable by design: it opens the terrain
-planet and presses `s`, so the frame carries the terminator and night city
-lights as they are at capture time — but not the clouds, which read as noise
-at gallery size. Pick an hour when the terminator crosses the visible disk
-(mid-afternoon or late evening US Eastern works for the default mid-Atlantic
-centre) and read the frame back before committing.
+The sky target is three fixed nights over Westbrook: Orion on a January evening, framed by `--at Orion`; the whole August sky at once at the widest field of view; and the same January sky in the Hawaiian tradition.
+
+The globe target is honestly unrepeatable by design: it makes two frames, the terrain planet with `S` pressed for this hour's daylight and city lights, and `--view now` with this hour's clouds as well. By default it centres the view 45° east of wherever the sun is overhead at capture time, so the sunset line always crosses the right half of the disk; which continents are in the frame depends on the hour, so pick one you like or set `LINECAST_CAPTURE_GLOBE_PLACE` to a fixed `LAT,LNG`. Read both frames back before committing.
 
 The current hero is not from the script at all: it is a hand-composed
 whole-laptop-screen screenshot — weather, dusk sunshine, tides, and radar
@@ -58,10 +50,7 @@ LINECAST_CAPTURE_TERRAIN_PLACE="Chamonix" \
   scripts/capture_screenshots.sh maps
 ```
 
-Other overrides are listed by `scripts/capture_screenshots.sh --help`. Radar is
-the one frame worth art-directing each time: choose somewhere with active echo,
-then read every PNG and the GIF back before committing. A completed command is
-not proof that the captured frame finished loading.
+Other overrides are listed by `scripts/capture_screenshots.sh --help`. Radar is the one frame that depends on the weather: by default the target asks `scripts/scout_radar.py` which of some sixty candidate cities inside real radar coverage has the most echo on it right now, and shoots there in that city's language. Run the scout on its own for the ranked table, or name a place with `LINECAST_CAPTURE_RADAR_PLACE`. Either way, read every PNG and the GIF back before committing. A completed command is not proof that the captured frame finished loading.
 
 The radar GIF capture oversamples the live terminal, removes repeated screen
 states, and keeps one complete pass through LibreWXR's 18-frame window. The

@@ -73,6 +73,19 @@ class TestFramePaint:
     def test_body_then_overlay_with_autowrap_off(self):
         out = frame_paint("a", "\033[3;4Hchip")
         inner = out[len(_SYNC_BEGIN):-len(_SYNC_END)]
-        assert inner.startswith(_AUTOWRAP_OFF + frame_body("a"))
+        assert inner.startswith(_AUTOWRAP_OFF)
+        assert frame_body("a") in inner
         assert inner.endswith(_AUTOWRAP_ON)
         assert inner.index(frame_body("a")) < inner.index("\033[3;4Hchip")
+
+    def test_the_clear_below_comes_before_the_body(self):
+        # A row that reaches the last column leaves the cursor on that
+        # cell, and a clear-to-end-of-screen from there would take the
+        # cell's glyph: the last letter of "? keys".  So the space below
+        # the frame is cleared first, from the row after the last, and
+        # the body is drawn after it.
+        out = frame_paint("a\nb\nc")
+        assert "\033[4;1H\033[J" in out
+        assert out.index("\033[J") < out.index(frame_body("a\nb\nc"))
+        assert out.count("\033[J") == 1
+        assert "\033[J" not in out[out.index(frame_body("a\nb\nc")):]

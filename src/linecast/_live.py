@@ -74,9 +74,17 @@ def frame_paint(body, floating=""):
     cursor-addressed overlay -- draws on top.  The whole frame sits
     inside a synchronized update so the terminal shows none of it until
     it has all of it.
+
+    The clear below comes first, from the row after the last, not after
+    the body from wherever it ended: a row that reaches the last column
+    leaves the cursor on that cell, and \033[J from there erases the
+    cell's glyph -- the last letter of the help hint.  When the frame
+    fills the screen the row after the last is the last, which the
+    clear empties and the body then draws.
     """
-    return (f"{_SYNC_BEGIN}{_AUTOWRAP_OFF}{frame_body(body)}"
-            f"\033[J\033[0m{floating}\033[0m{_AUTOWRAP_ON}{_SYNC_END}")
+    rows = body.count("\n") + 1
+    return (f"{_SYNC_BEGIN}{_AUTOWRAP_OFF}\033[{rows + 1};1H\033[J{frame_body(body)}"
+            f"\033[0m{floating}\033[0m{_AUTOWRAP_ON}{_SYNC_END}")
 
 
 def print_frame(text, stream=None):

@@ -4,6 +4,8 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
+- Live views: The last letter of the `? keys` hint is back. A row that reached the last column lost its final character to the clear that follows each frame, so the weather view's hint read "? key" since 2.5.0.
+
 ## 2.5.0 — 2026-09-14
 
 linecast speaks Ukrainian and Vietnamese, twenty languages in all, and the Moon keeps a Vietnamese calendar. The weather chart shows how much rain to expect and how cloudy it will be, and every view fills the window.

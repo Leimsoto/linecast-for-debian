@@ -22,6 +22,7 @@ set -euo pipefail
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_DIR=$(cd -- "$SCRIPT_DIR/.." && pwd)
 SHOT_DIR="$REPO_DIR/screenshots"
+GALLERY_DIR="$SHOT_DIR/gallery"
 CAPTURE_TOOL=${LINECAST_CAPTURE_TOOL:-termshot}
 CAPTURE_FONT=${LINECAST_CAPTURE_FONT:-MonaspiceNe Nerd Font:size=11}
 
@@ -57,6 +58,10 @@ Targets:
   maps       maps-street.png and maps-terrain.png
   globe      maps-globe.png, the planet in this hour's daylight, and
              maps-globe-clouds.png with this hour's clouds (differ every run)
+  gallery    the frames GALLERY.md shows and the README does not, into
+             screenshots/gallery: the radar in its fixed themes and its
+             other layers, the sky in more traditions, the weather in a
+             short window, the moon's month grid, a walking route
   hero       hero.png — the four apps tiled live on one offscreen desktop
 
 Environment overrides:
@@ -83,7 +88,7 @@ if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
 fi
 
 cd "$REPO_DIR"
-mkdir -p "$SHOT_DIR"
+mkdir -p "$SHOT_DIR" "$GALLERY_DIR"
 
 exec 9>/tmp/linecast-capture-screenshots.lock
 if ! flock -n 9; then
@@ -215,23 +220,29 @@ tides() {
         uv --directory "$REPO_DIR" run linecast tides --station "$TIDE_STATION"
 }
 
-radar() {
-    require ffmpeg
-    # A radar frame is only worth taking where something is happening, and
-    # that moves: "auto" asks scout_radar.py which candidate city has the
-    # most weather on it right now, inside real radar coverage, and the
-    # frame then speaks that city's language.
-    local radar_lang=()
-    [ -n "$RADAR_LANG" ] && radar_lang=(--lang "$RADAR_LANG")
+# A radar frame is only worth taking where something is happening, and
+# that moves: "auto" asks scout_radar.py which candidate city has the most
+# weather on it right now, inside real radar coverage, and the frame then
+# speaks that city's language. Resolved once; the radar and gallery targets
+# share the answer.
+RADAR_LANG_ARGS=()
+resolve_radar_place() {
+    [ -n "$RADAR_LANG" ] && RADAR_LANG_ARGS=(--lang "$RADAR_LANG")
     if [ "$RADAR_PLACE" = auto ]; then
         printf 'Scouting for weather…\n'
         local pick
         pick=$(uv --directory "$REPO_DIR" run python \
             "$REPO_DIR/scripts/scout_radar.py" --best)
         RADAR_PLACE=${pick%%$'\t'*}
-        radar_lang=(--lang "${pick##*$'\t'}")
-        printf 'Radar over %s, in %s\n' "$RADAR_PLACE" "${radar_lang[1]}"
+        RADAR_LANG_ARGS=(--lang "${pick##*$'\t'}")
+        printf 'Radar over %s, in %s\n' "$RADAR_PLACE" "${RADAR_LANG_ARGS[1]}"
     fi
+}
+
+radar() {
+    require ffmpeg
+    resolve_radar_place
+    local radar_lang=("${RADAR_LANG_ARGS[@]}")
     printf 'Capturing radar still…\n'
     # No window padding: the radar frame is shot without the border.
     "$CAPTURE_TOOL" -s 120x36 -w 15 --pad 0 --font "$CAPTURE_FONT" \
@@ -325,6 +336,60 @@ print(f"20,{lon:.0f}")')
         --location "$GLOBE_PLACE"
 }
 
+gallery() {
+    # The states the README leaves out. Smaller windows than the README
+    # frames: these sit three abreast on the gallery page.
+    resolve_radar_place
+    local theme
+    for theme in dusk ember ink marangai; do
+        printf 'Capturing radar in %s…\n' "$theme"
+        "$CAPTURE_TOOL" -s 100x30 -w 15 --pad 0 --font "$CAPTURE_FONT" \
+            -o "$GALLERY_DIR/radar-$theme.png" \
+            uv --directory "$REPO_DIR" run linecast radar --location "$RADAR_PLACE" \
+            --theme "$theme" "${RADAR_LANG_ARGS[@]}"
+    done
+    printf 'Capturing radar satellite layer…\n'
+    "$CAPTURE_TOOL" -s 100x30 -w 20 --pad 0 --font "$CAPTURE_FONT" \
+        -o "$GALLERY_DIR/radar-satellite.png" \
+        uv --directory "$REPO_DIR" run linecast radar --location "$RADAR_PLACE" \
+        --layer satellite "${RADAR_LANG_ARGS[@]}"
+    printf 'Capturing radar with temperature and wind…\n'
+    "$CAPTURE_TOOL" -s 100x30 -w 20 --pad 0 --font "$CAPTURE_FONT" \
+        -o "$GALLERY_DIR/radar-layers.png" \
+        uv --directory "$REPO_DIR" run linecast radar --location "$RADAR_PLACE" \
+        --layers temp,wind "${RADAR_LANG_ARGS[@]}"
+
+    # The same January sky as the README's, in three more traditions.
+    local culture
+    for culture in chinese norse rey; do
+        printf 'Capturing sky in the %s tradition…\n' "$culture"
+        "$CAPTURE_TOOL" -s 120x40 -w 6 --font "$CAPTURE_FONT" \
+            -o "$GALLERY_DIR/sky-$culture.png" \
+            uv --directory "$REPO_DIR" run python \
+            "$REPO_DIR/scripts/capture_moment.py" \
+            --at 2026-01-15T21:00 --location "$ASTRO_LOCATION" sky -- \
+            --location "$ASTRO_LOCATION" --facing S --culture "$culture"
+    done
+
+    printf 'Capturing weather in a short window…\n'
+    "$CAPTURE_TOOL" -s 90x22 -w 10 --font "$CAPTURE_FONT" \
+        -o "$GALLERY_DIR/weather-short.png" \
+        uv --directory "$REPO_DIR" run linecast weather --location "$WEATHER_PLACE"
+
+    printf 'Capturing the moon month grid…\n'
+    "$CAPTURE_TOOL" -s 120x40 -w 4 --font "$CAPTURE_FONT" \
+        -o "$GALLERY_DIR/moon-grid.png" \
+        uv --directory "$REPO_DIR" run python \
+        "$REPO_DIR/scripts/capture_moment.py" \
+        --at 2026-09-13T21:30 --location "$ASTRO_LOCATION" moon -- --grid
+
+    printf 'Capturing a walking route…\n'
+    "$CAPTURE_TOOL" -s 120x38 -w 25 --font "$CAPTURE_FONT" \
+        -o "$GALLERY_DIR/maps-route.png" \
+        uv --directory "$REPO_DIR" run linecast maps --from "Portland, Maine" \
+        --to "South Portland, Maine" --profile foot
+}
+
 hero() {
     printf 'Capturing hero…\n'
     # One real screenshot: four linecast apps tiled in termshot's private
@@ -341,7 +406,7 @@ hero() {
 
 run_target() {
     case "$1" in
-        weather|sunshine|year|moon|sky|tides|radar|maps|globe|hero) "$1" ;;
+        weather|sunshine|year|moon|sky|tides|radar|maps|globe|gallery|hero) "$1" ;;
         all)
             weather
             sunshine
@@ -352,6 +417,7 @@ run_target() {
             radar
             maps
             globe
+            gallery
             ;;
         *)
             printf 'capture_screenshots: unknown target: %s\n' "$1" >&2

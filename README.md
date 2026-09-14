@@ -90,6 +90,8 @@ Add `--print` for one static frame instead of a live view. Weather, sunshine, mo
 
 ## A closer look
 
+The frames below show each app once or twice. [GALLERY.md](GALLERY.md) shows them in more of their states: other languages and traditions, the radar's themes and layers, a short window, a walking route.
+
 ### Weather
 
 `weather` shows current conditions, a scrollable chart of hourly temperatures shaded by daylight, precipitation, daily highs and lows, air quality, and a line on how today compares with a normal day. Official alerts cover 45 countries. Click one to read it in full, or press `o` to open it in your browser. If the forecast service can't be reached, you get the last forecast it fetched, with a line saying how old it is.

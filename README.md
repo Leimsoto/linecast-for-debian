@@ -133,7 +133,7 @@ Near the poles the same chart turns into polar night and midnight sun. These are
 
 Press `v` for a calendar of the month, or open on it with `moon --grid`. Each day shows its phase as a small disc, with today, the full and new moons, and the quarters marked. Scroll through the months, hover a day for its phase, moonrise, and moonset, and click one to open the moon on that day.
 
-The moon can also show the date in a traditional calendar beside the phase, with a countdown to its next festival or observance: the Chinese, Japanese, and Korean lunisolar calendars, the Thai lunar calendar, the Hawaiian Kaulana Mahina, the Samoan, Chamorro, and Refaluwasch calendars of the Pacific, the Islamic and Hebrew calendars, and the Old Farmer's Almanac. `moon --calendar hebrew` opens on one and `linecast calendar` saves one. [CALENDARS.md](CALENDARS.md) describes each of them and how it is checked. Here it is over Okinawa the evening after the mid-autumn full moon, in Japanese, and the month around it, with 十五夜 on the 25th.
+The moon can also show the date in a traditional calendar beside the phase, with a countdown to its next festival or observance: the Chinese, Japanese, Korean, and Vietnamese lunisolar calendars, the Thai lunar calendar, the Hawaiian Kaulana Mahina, the Samoan, Chamorro, and Refaluwasch calendars of the Pacific, the Islamic and Hebrew calendars, and the Old Farmer's Almanac. `moon --calendar hebrew` opens on one and `linecast calendar` saves one. [CALENDARS.md](CALENDARS.md) describes each of them and how it is checked. Here it is over Okinawa the evening after the mid-autumn full moon, in Japanese, and the month around it, with 十五夜 on the 25th.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/moon-okinawa.png" width="49%" alt="the moon over Okinawa in Japanese: 十六夜, the sixteenth night of the eighth month">
@@ -255,7 +255,7 @@ The moon's calendar opens the week on Monday, or on Sunday in the United States,
 
 ### Language
 
-linecast speaks your terminal's language if it is one of the nineteen it knows, and English otherwise. To choose one yourself, for every run or for one:
+linecast speaks your terminal's language if it is one of the twenty it knows, and English otherwise. To choose one yourself, for every run or for one:
 
 ```sh
 linecast language es        # use Spanish every time
@@ -263,13 +263,13 @@ linecast language auto      # follow the terminal again
 linecast radar --lang zh    # just this once
 ```
 
-The languages are English (`en`), French (`fr`), Spanish (`es`), German (`de`), Italian (`it`), Portuguese (`pt`), Dutch (`nl`), Polish (`pl`), Norwegian (`no`), Swedish (`sv`), Icelandic (`is`), Danish (`da`), Finnish (`fi`), Japanese (`ja`), Korean (`ko`), Chinese (`zh`), Thai (`th`), Indonesian (`id`), and Ukrainian (`uk`).
+The languages are English (`en`), French (`fr`), Spanish (`es`), German (`de`), Italian (`it`), Portuguese (`pt`), Dutch (`nl`), Polish (`pl`), Norwegian (`no`), Swedish (`sv`), Icelandic (`is`), Danish (`da`), Finnish (`fi`), Japanese (`ja`), Korean (`ko`), Chinese (`zh`), Thai (`th`), Indonesian (`id`), Ukrainian (`uk`), and Vietnamese (`vi`).
 
 In India, many alerts are published in the state language. Add `--lang hi`, `--lang te`, `--lang mr`, or another Indian language code to `weather` to read them in that language where it exists; the rest of the app stays in English.
 
 ### Calendar
 
-Run `moon` in Chinese, Japanese, Korean, or Thai and it uses that language's traditional calendar. To choose one yourself, for every run or for one:
+Run `moon` in Chinese, Japanese, Korean, Vietnamese, or Thai and it uses that language's traditional calendar. To choose one yourself, for every run or for one:
 
 ```sh
 linecast calendar hebrew            # use the Hebrew calendar every time
@@ -278,7 +278,7 @@ linecast calendar auto              # follow the language again
 linecast moon --calendar hawaiian   # just this once
 ```
 
-The calendars are `chinese`, `japanese`, `korean`, `thai`, `hawaiian`, `samoan`, `chamorro`, `refaluwasch`, `islamic`, `hebrew`, and `almanac`. There's more about each in [CALENDARS.md](CALENDARS.md).
+The calendars are `chinese`, `japanese`, `korean`, `vietnamese`, `thai`, `hawaiian`, `samoan`, `chamorro`, `refaluwasch`, `islamic`, `hebrew`, and `almanac`. There's more about each in [CALENDARS.md](CALENDARS.md).
 
 ### Culture
 

@@ -130,6 +130,14 @@ class TestCalendars:
         assert "十五夜" in text     # the 25th
         assert "2026年9月" in body[0]
 
+    def test_vietnamese_month_start_and_mid_autumn(self):
+        now = datetime(2026, 9, 1, 14, 30, tzinfo=timezone(timedelta(hours=7)))
+        body, _chip = _render(100, 32, lang="vi", now=now, lat=21.03, lng=105.85)
+        text = "\n".join(body)
+        assert "Tháng 9 năm 2026" in body[0]
+        assert "thg 8" in text        # tháng 8 âm lịch opens on the 11th
+        assert "Tết Trung" in text    # the 25th, clipped to its cell
+
     def test_chinese_day_names_and_festival(self):
         now = datetime(2026, 9, 1, 14, 30, tzinfo=timezone(timedelta(hours=8)))
         body, _chip = _render(100, 32, lang="zh", calendar="chinese", now=now)

@@ -55,11 +55,15 @@ class Target:
     "alpha cent", but not to "centauri", which is the constellation.
     """
 
-    __slots__ = ("kind", "label", "key", "names", "exact", "rank", "spread")
+    __slots__ = ("kind", "label", "key", "names", "folded", "exact", "rank", "spread")
 
     def __init__(self, kind, label, key, names, rank, spread=0.0, exact=()):
         self.kind, self.label, self.key = kind, label, key
         self.names = [n.lower() for n in names if n]
+        # Each name without its accents too, so "thien lang" finds Sao
+        # Thiên Lang and "etoile polaire" the Étoile polaire: a terminal
+        # search is typed faster than an accent is.
+        self.folded = [f for f in map(_fold, self.names) if f not in self.names]
         self.exact = [n.lower() for n in exact if n]
         self.rank = rank            # brighter or grander first, on ties
         self.spread = spread
@@ -206,17 +210,38 @@ def genitive_names(desig, genitives):
     return [f"{first} {second}" for first in _letters(letter) for second in cons]
 
 
+# Letters no decomposition reduces: the Vietnamese đ, the Polish ł, the
+# Norwegian and Danish ø.
+_BARRED = str.maketrans("đĐłŁøØ", "dDlLoO")
+
+
 def _fold(text):
     """*text* without its accents."""
     return "".join(ch for ch in unicodedata.normalize("NFKD", text)
-                   if not unicodedata.combining(ch))
+                   if not unicodedata.combining(ch)).translate(_BARRED)
+
+
+def _score(name, q):
+    """How well *name* answers *q*: 0 whole, 1 from the start, 2 from a
+    word's start, 3 anywhere inside; None if it does not."""
+    if name == q:
+        return 0
+    if name.startswith(q):
+        return 1
+    if any(word.startswith(q) for word in name.split()):
+        return 2
+    if q in name:
+        return 3
+    return None
 
 
 def search(query, pool, limit=MAX_ROWS):
     """The targets matching *query*: whole-name matches first, then those
     a name begins with, then those a word begins with, then any that
     contain it; the brightest or grandest first within each. A target's
-    `exact` names take only the first two."""
+    `exact` names take only the first two, and a match on a name
+    stripped of its accents counts one step behind the same match on
+    the name itself."""
     q = query.strip().lower()
     if not q:
         return []
@@ -228,18 +253,13 @@ def search(query, pool, limit=MAX_ROWS):
                 best = 0
             elif name.startswith(q) and best is None:
                 best = 1
-        for name in t.names:
-            if name == q:
-                score = 0
-            elif name.startswith(q):
-                score = 1
-            elif any(word.startswith(q) for word in name.split()):
-                score = 2
-            elif q in name:
-                score = 3
-            else:
-                continue
-            best = score if best is None else min(best, score)
+        for names, penalty in ((t.names, 0), (t.folded, 1)):
+            for name in names:
+                score = _score(name, q)
+                if score is None:
+                    continue
+                score = min(3, score + penalty)
+                best = score if best is None else min(best, score)
         if best is not None:
             scored.append((best, t.rank, t.label, t))
     scored.sort(key=lambda s: (s[0], s[1], s[2]))

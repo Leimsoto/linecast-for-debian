@@ -98,6 +98,11 @@ _TIDES_STRINGS = {
         "waves": "Хвилі",
         "swell": "Зиб",
     },
+    "vi": {
+        "space_to_now": "phím cách để về hiện tại",
+        "waves": "Sóng",
+        "swell": "Sóng lừng",
+    },
 }
 
 
@@ -140,6 +145,8 @@ MOON_NAMES_I18N = {
             "Bulan Purnama", "Cembung Akhir", "Kuarter Akhir", "Sabit Akhir"],
     "uk": ["Новий Місяць", "Зростаючий серп", "Перша чверть", "Зростаючий Місяць",
            "Повний Місяць", "Спадний Місяць", "Остання чверть", "Спадний серп"],
+    "vi": ["Trăng non", "Trăng lưỡi liềm đầu tháng", "Trăng thượng huyền", "Trăng khuyết đầu tháng",
+           "Trăng tròn", "Trăng khuyết cuối tháng", "Trăng hạ huyền", "Trăng lưỡi liềm cuối tháng"],
 }
 
 

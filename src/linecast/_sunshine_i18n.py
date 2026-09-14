@@ -376,11 +376,35 @@ _SUNSHINE_STRINGS = {
         "sunrise": "схід сонця",
         "sunset": "захід сонця",
     },
+    "vi": {
+        "today": "hôm nay",
+        "in_day": "{n} ngày nữa",
+        "in_days": "{n} ngày nữa",
+        "day_ago": "{n} ngày trước",
+        "days_ago": "{n} ngày trước",
+        "sky_night": "đêm",
+        "sky_astronomical": "chạng vạng thiên văn",
+        "sky_nautical": "chạng vạng hàng hải",
+        "sky_civil": "chạng vạng dân dụng",
+        "sky_astronomical_dawn": "bình minh thiên văn",
+        "sky_nautical_dawn": "bình minh hàng hải",
+        "sky_civil_dawn": "bình minh dân dụng",
+        "sky_astronomical_dusk": "hoàng hôn thiên văn",
+        "sky_nautical_dusk": "hoàng hôn hàng hải",
+        "sky_civil_dusk": "hoàng hôn dân dụng",
+        "sky_day": "ban ngày",
+        "midnight_sun": "mặt trời nửa đêm",
+        "polar_night": "đêm vùng cực",
+        "solar_noon": "chính ngọ",
+        "sunrise": "mặt trời mọc",
+        "sunset": "mặt trời lặn",
+    },
 }
 
 # Month-axis labels where the first three letters of the MONTHS_I18N name
-# won't do: CJK dates are numeric, Finnish months are long words, and
-# French juin and juillet share their first three letters.
+# won't do: CJK and Vietnamese dates are numeric, Finnish months are
+# long words, and French juin and juillet share their first three
+# letters.
 # Everything else takes the first letters of the MONTHS_I18N name.
 _AXIS_MONTHS = {
     "fi": ["tam", "hel", "maa", "huh", "tou", "kes",
@@ -395,8 +419,10 @@ _AXIS_MONTHS = {
     # space is tight.
     "th": ["มค", "กพ", "มีค", "เมย", "พค", "มิย",
            "กค", "สค", "กย", "ตค", "พย", "ธค"],
+    # T1 … T12, as Vietnamese charts letter their months.
+    "vi": [f"T{m}" for m in range(1, 13)],
 }
-_NUMERIC_AXIS_LANGS = frozenset({"ja", "ko", "zh"})
+_NUMERIC_AXIS_LANGS = frozenset({"ja", "ko", "zh", "vi"})
 
 
 def _ss(key, runtime, **kwargs):

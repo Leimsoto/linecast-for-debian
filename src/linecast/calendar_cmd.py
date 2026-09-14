@@ -5,14 +5,15 @@ this package as a script never shadows the standard library's calendar
 module; the command is still `linecast calendar`, via __main__'s map.
 
 Usage: linecast calendar [show]
-       linecast calendar chinese | japanese | korean | thai | almanac
+       linecast calendar chinese | japanese | korean | vietnamese | thai
+       linecast calendar almanac
        linecast calendar hawaiian | samoan | chamorro | refaluwasch
        linecast calendar islamic | hebrew
        linecast calendar none
        linecast calendar auto
 
 Precedence: moon's --calendar flag > this setting > the calendar
-native to the UI language (--lang zh, ja, ko, or th) > none.
+native to the UI language (--lang zh, ja, ko, vi, or th) > none.
 """
 
 import argparse
@@ -23,7 +24,7 @@ from linecast._config import (
 from linecast._runtime import VersionAction
 
 _NATURAL = ("chinese with --lang zh, japanese with ja, "
-            "korean with ko, thai with th; none otherwise")
+            "korean with ko, vietnamese with vi, thai with th; none otherwise")
 
 
 def _cmd_show():
@@ -37,7 +38,8 @@ def _cmd_show():
     else:
         print(f"auto  [{_NATURAL}]")
         print("Run 'linecast calendar chinese', 'japanese', 'korean', "
-              "'thai', 'hawaiian', 'samoan', 'chamorro', 'refaluwasch', "
+              "'vietnamese', 'thai', 'hawaiian', 'samoan', 'chamorro', "
+              "'refaluwasch', "
               "'islamic', 'hebrew', or 'almanac' to fix one.")
 
 
@@ -101,6 +103,7 @@ def main():
     sub.add_parser("chinese", help="农历 — months from new moons at UTC+8")
     sub.add_parser("japanese", help="旧暦 — the same rules at UTC+9")
     sub.add_parser("korean", help="음력 — the same rules at UTC+9")
+    sub.add_parser("vietnamese", help="âm lịch — the same rules at UTC+7")
     sub.add_parser("thai",
                    help="จันทรคติไทย — the Suriyayart arithmetic, with "
                         "วันพระ and festivals")

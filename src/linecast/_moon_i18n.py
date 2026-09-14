@@ -362,6 +362,24 @@ _MOON_STRINGS = {
         "autumn_equinox": "Осіннє рівнодення",
         "winter_solstice": "Зимове сонцестояння",
     },
+    "vi": {
+        "illuminated": "độ sáng {pct}%",
+        "age": "ngày {age} trên {total}",
+        "lunar_age": "tuổi trăng {age} ngày",
+        "up_now": "Đang trên bầu trời",
+        "above_horizon": "{alt}° trên chân trời",
+        "below_horizon": "Dưới chân trời",
+        "moonrise": "Trăng mọc",
+        "moonset": "Trăng lặn",
+        "in_days": "còn {days} ngày",
+        "begins_at_sunset": "bắt đầu lúc mặt trời lặn",
+        "in_time": "còn {dur}",
+        "year_day": "Ngày {n} trên {total}",
+        "spring_equinox": "Xuân phân",
+        "summer_solstice": "Hạ chí",
+        "autumn_equinox": "Thu phân",
+        "winter_solstice": "Đông chí",
+    },
 }
 
 
@@ -398,6 +416,8 @@ MONTHS_I18N = {
             "Jul", "Agu", "Sep", "Okt", "Nov", "Des"],
     "uk": ["січ", "лют", "бер", "кві", "тра", "чер",
            "лип", "сер", "вер", "жов", "лис", "гру"],
+    # Vietnamese months are numbered; CLDR's short form.
+    "vi": [f"thg {m}" for m in range(1, 13)],
 }
 
 # Date order/format per language: {month} = abbreviated name from
@@ -421,13 +441,14 @@ def _ms(key, runtime, **kwargs):
 # Season names for the four events (March equinox, June solstice,
 # September equinox, December solstice), by hemisphere.  East Asian
 # solar terms (春分, 夏至, …) name the event itself, not the local
-# season, and Thai's Sanskrit terms (วสันตวิษุวัต, …) likewise, so
-# those languages keep the northern mapping everywhere.
+# season — Vietnamese Xuân phân and Hạ chí are the same terms — and
+# Thai's Sanskrit terms (วสันตวิษุวัต, …) likewise, so those languages
+# keep the northern mapping everywhere.
 _SEASON_KEYS_NORTH = ("spring_equinox", "summer_solstice",
                       "autumn_equinox", "winter_solstice")
 _SEASON_KEYS_SOUTH = ("autumn_equinox", "winter_solstice",
                       "spring_equinox", "summer_solstice")
-_SEASON_ABSOLUTE_LANGS = frozenset({"ja", "ko", "zh", "th"})
+_SEASON_ABSOLUTE_LANGS = frozenset({"ja", "ko", "zh", "vi", "th"})
 
 
 def _season_label(event, lat, runtime):
@@ -460,7 +481,7 @@ def _day_abbrev(dt, runtime):
 
 # Solar terms in longitude order, index 0 at the March equinox — the
 # indexing current_term() and next_term() use. The terms are common to
-# all three calendars; only the writing differs.
+# all four calendars; only the writing differs.
 SOLAR_TERMS_I18N = {
     "en": ["Spring Equinox", "Clear and Bright", "Grain Rain",
            "Start of Summer", "Grain Buds", "Grain in Ear",
@@ -482,12 +503,18 @@ SOLAR_TERMS_I18N = {
            "하지", "소서", "대서", "입추", "처서", "백로",
            "추분", "한로", "상강", "입동", "소설", "대설",
            "동지", "소한", "대한", "입춘", "우수", "경칩"],
+    "vi": ["Xuân phân", "Thanh minh", "Cốc vũ", "Lập hạ", "Tiểu mãn", "Mang chủng",
+           "Hạ chí", "Tiểu thử", "Đại thử", "Lập thu", "Xử thử", "Bạch lộ",
+           "Thu phân", "Hàn lộ", "Sương giáng", "Lập đông", "Tiểu tuyết", "Đại tuyết",
+           "Đông chí", "Tiểu hàn", "Đại hàn", "Lập xuân", "Vũ thủy", "Kinh trập"],
 }
 
 # Festivals dated by the lunar calendar, (month, day) → (native name,
 # English name), per calendar. Japan moved its festivals to Gregorian
 # dates in 1873; the two moon-viewing nights are what remains on the
-# old calendar.
+# old calendar. Vietnam's are the public holidays and the days every
+# household keeps: the Hùng Kings' day is a holiday by law, and the
+# Kitchen Gods' departure a week before Tết opens the new year's rites.
 _FESTIVALS = {
     "chinese": {
         (1, 1): ("春节", "Chinese New Year"),
@@ -506,6 +533,15 @@ _FESTIVALS = {
         (1, 15): ("정월대보름", "Daeboreum"),
         (5, 5): ("단오", "Dano"),
         (8, 15): ("추석", "Chuseok"),
+    },
+    "vietnamese": {
+        (1, 1): ("Tết Nguyên Đán", "Tết"),
+        (1, 15): ("Rằm tháng Giêng", "Tết Nguyên Tiêu"),
+        (3, 10): ("Giỗ Tổ Hùng Vương", "Hùng Kings' Day"),
+        (5, 5): ("Tết Đoan Ngọ", "Tết Đoan Ngọ"),
+        (7, 15): ("Lễ Vu Lan", "Vu Lan"),
+        (8, 15): ("Tết Trung Thu", "Mid-Autumn Festival"),
+        (12, 23): ("Ông Táo về trời", "Kitchen Gods' Day"),
     },
 }
 
@@ -539,8 +575,31 @@ def _zh_day_name(day):
     return "三十"
 
 
+# Vietnamese months are numbered but for the first and the last, tháng
+# Giêng and tháng Chạp; a leap month takes nhuận after its number. The
+# first ten days are mùng, the fifteenth is rằm, the full-moon day.
+_VI_MONTHS = {1: "Giêng", 12: "Chạp"}
+
+
+def vi_month_label(month, leap, short=False):
+    """tháng Giêng, tháng 8, tháng 6 nhuận, tháng Chạp — or, for the
+    grid's cells, the printed calendars' thg 8."""
+    name = _VI_MONTHS.get(month, str(month))
+    word = "thg" if short and name.isdigit() else "tháng"
+    label = name if short and not name.isdigit() else f"{word} {name}"
+    return f"{label} nhuận" if leap else label
+
+
 def lunar_date_label(month, day, leap, lang):
     """The lunar date as its own calendar writes it, English otherwise."""
+    if lang == "vi":
+        if day <= 10:
+            day_name = f"mùng {day}"
+        elif day == 15:
+            day_name = "rằm"
+        else:
+            day_name = f"ngày {day}"
+        return f"{day_name} {vi_month_label(month, leap)} âm lịch"
     if lang == "zh":
         leap_mark = "闰" if leap else ""
         return f"农历{leap_mark}{_ZH_MONTHS[month - 1]}{_zh_day_name(day)}"

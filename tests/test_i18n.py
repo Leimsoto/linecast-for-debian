@@ -107,6 +107,37 @@ class TestUkrainianWeather:
         assert _s("hist_below_avg", runtime, diff="3°") == "3° нижче норми"
 
 
+class TestVietnameseWeather:
+    def test_comparative_sentences_are_idiomatic(self):
+        runtime = SimpleNamespace(lang="vi", celsius=True)
+        now = datetime(2026, 8, 24, 15)
+        warmer = comparative_sentence({"temperature_2m_max": [20, 21, 24]}, now, runtime)
+        same = comparative_sentence({"temperature_2m_max": [20, 21, 22]}, now, runtime)
+        assert warmer == "Ngày mai sẽ ấm hơn hôm nay một chút"
+        assert same == "Ngày mai sẽ có nhiệt độ gần bằng hôm nay"
+
+    def test_precipitation_phrases_read_as_vietnamese_clock_times(self):
+        # 17h is how Vietnamese writes five in the afternoon.
+        runtime = SimpleNamespace(lang="vi", use_24h=True)
+        now = datetime(2026, 8, 24, 12, 10)
+        hourly = {
+            "time": [f"2026-08-24T{h:02d}:00" for h in range(12, 18)],
+            "precipitation_probability": [0, 0, 0, 0, 0, 80],
+            "weather_code": [0, 0, 0, 0, 0, 95],
+        }
+        assert "Mưa dông có thể bắt đầu vào khoảng 17h" in _precipitation_line(hourly, now, runtime)
+
+    def test_past_precipitation_sets_the_unit_off_with_a_space(self):
+        runtime = SimpleNamespace(lang="vi", metric=True, precip_unit="mm")
+        now = datetime(2026, 8, 24, 12)
+        hourly = {"time": ["2026-08-24T11:00"], "precipitation": [4.0],
+                  "snowfall": [0], "weather_code": [63]}
+        assert "4.0 mm mưa trong 24 giờ qua" in _past_precip_line(hourly, now, runtime)
+
+    def test_weekdays_are_numbered_from_monday_as_the_second_day(self):
+        assert DAY_NAMES["vi"] == ["T2", "T3", "T4", "T5", "T6", "T7", "CN"]
+
+
 class TestWeatherLocaleImprovements:
     def test_same_temperature_sentences_are_idiomatic(self):
         expected = {
@@ -225,6 +256,7 @@ class TestTwilightDirection:
                    "bürgerliche Abenddämmerung"),
             "zh": ("民用晨光", "民用昏影"),
             "uk": ("цивільний світанок", "цивільні сутінки"),
+            "vi": ("bình minh dân dụng", "hoàng hôn dân dụng"),
         }
         for lang, (dawn, dusk) in expected.items():
             runtime = SimpleNamespace(lang=lang)

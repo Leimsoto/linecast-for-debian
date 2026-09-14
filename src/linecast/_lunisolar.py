@@ -1,14 +1,15 @@
 """The traditional lunisolar calendar, worked out from the ephemeris.
 
-The rules are the Chinese ones, which the Korean and Japanese
-traditional calendars also follow, each at its own meridian: a month
+The rules are the Chinese ones, which the Korean, Japanese, and
+Vietnamese calendars also follow, each at its own meridian: a month
 runs new moon to new moon and begins on the civil day of the new moon
 at the calendar's meridian — UTC+8 for China, UTC+9 for Korea and
-Japan, which is why 설날 or the kyūreki occasionally sit a day or a
-month from the Chinese date. Month numbers anchor at the December
-solstice, whose month is month 11; a suì (solstice to solstice) of
-thirteen months takes its leap month at the first one containing no
-major solar term — the no-zhōngqì rule.
+Japan, UTC+7 for Vietnam — which is why 설날, the kyūreki, or Tết
+occasionally sit a day or a month from the Chinese date: Tết fell a
+day before 春节 in 2007 and a month before it in 1985. Month numbers
+anchor at the December solstice, whose month is month 11; a suì
+(solstice to solstice) of thirteen months takes its leap month at the
+first one containing no major solar term — the no-zhōngqì rule.
 
 The solar terms are the 24 points where the Sun's ecliptic longitude
 is a multiple of 15°, the even multiples of 30° being the major terms.
@@ -25,15 +26,18 @@ from functools import lru_cache
 
 from linecast._ephemeris import _sun_ecliptic, next_moon_phase_utc
 
-# The three calendars, each computed at its own meridian (hours east
+# The four calendars, each computed at its own meridian (hours east
 # of UTC), and the language each is native to. Any UI language can ask
 # for any of them with --calendar; these defaults just pick the natural
-# one for readers who already live on it. The Thai calendar is also
+# one for readers who already live on it. Vietnam has kept its
+# calendar at UTC+7 since 1968 (the whole country since 1975); the
+# years before that were reckoned at UTC+8. The Thai calendar is also
 # native to its language but is arithmetic, not astronomical — it
 # lives in _thai_lunar and needs no meridian.
-CALENDAR_MERIDIAN_HOURS = {"chinese": 8, "japanese": 9, "korean": 9}
+CALENDAR_MERIDIAN_HOURS = {"chinese": 8, "japanese": 9, "korean": 9,
+                           "vietnamese": 7}
 CALENDAR_OF_LANG = {"zh": "chinese", "ja": "japanese", "ko": "korean",
-                    "th": "thai"}
+                    "vi": "vietnamese", "th": "thai"}
 CALENDAR_NATIVE_LANG = {cal: lang for lang, cal in CALENDAR_OF_LANG.items()}
 
 

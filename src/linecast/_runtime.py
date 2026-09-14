@@ -414,7 +414,7 @@ def _base_parser(prog, description):
                     help="use standard emoji icons (same as --icons emoji)")
     p.add_argument("--lang", default=None,
                     help="language code (en, fr, es, de, it, pt, nl, pl, "
-                         "no, sv, is, da, fi, ja, ko, zh, th, id, or uk); "
+                         "no, sv, is, da, fi, ja, ko, zh, th, id, uk, or vi); "
                          "'linecast language' saves one")
     p.add_argument("--classic-colors", action="store_true",
                     help="use pre-theme fixed color palette")
@@ -510,14 +510,15 @@ def moon_parser():
                     help="open on the month view: a calendar of the "
                          "month's phases (v flips between the views)")
     p.add_argument("--calendar",
-                    choices=("chinese", "japanese", "korean", "thai",
-                             "hawaiian", "samoan", "chamorro", "refaluwasch",
-                             "islamic", "hebrew", "almanac", "none"),
+                    choices=("chinese", "japanese", "korean", "vietnamese",
+                             "thai", "hawaiian", "samoan", "chamorro",
+                             "refaluwasch", "islamic", "hebrew", "almanac",
+                             "none"),
                     default=None,
                     help="read the moon by a traditional calendar: the "
                          "lunar date, solar term, and festival (chinese, "
-                         "japanese, korean); the waxing/waning day, wan "
-                         "phra, and festival (thai); the named night "
+                         "japanese, korean, vietnamese); the waxing/waning "
+                         "day, wan phra, and festival (thai); the named night "
                          "(hawaiian, with its anahulu and counsel; samoan; "
                          "chamorro; refaluwasch, the CNMI calendar's "
                          "CHamoru and Refaluwasch names); the Hijri date, "
@@ -526,7 +527,7 @@ def moon_parser():
                          "month, and holiday (hebrew); or the Old Farmer's "
                          "gardening rule and solunar periods (almanac). "
                          "Default: the calendar native to "
-                         "--lang zh, ja, ko, or th; none otherwise")
+                         "--lang zh, ja, ko, vi, or th; none otherwise")
     _add_clock_flags(p)
     p.add_argument("--week-start", choices=WEEK_STARTS, default=None,
                     help="the day the calendar's week opens on (default: "

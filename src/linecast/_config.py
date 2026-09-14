@@ -85,17 +85,17 @@ def saved_language() -> str | None:
     return None
 
 
-CALENDAR_CHOICES = ("chinese", "japanese", "korean", "thai", "hawaiian",
-                    "samoan", "chamorro", "refaluwasch", "islamic", "hebrew",
-                    "almanac", "none")
+CALENDAR_CHOICES = ("chinese", "japanese", "korean", "vietnamese", "thai",
+                    "hawaiian", "samoan", "chamorro", "refaluwasch",
+                    "islamic", "hebrew", "almanac", "none")
 
 
 def saved_calendar() -> str | None:
     """Return the calendar saved via `linecast calendar`, or None.
 
-    A calendar name — 'chinese', 'japanese', 'korean', 'thai',
-    'hawaiian', 'samoan', 'chamorro', 'refaluwasch', 'islamic',
-    'hebrew', or 'almanac' —
+    A calendar name — 'chinese', 'japanese', 'korean', 'vietnamese',
+    'thai', 'hawaiian', 'samoan', 'chamorro', 'refaluwasch',
+    'islamic', 'hebrew', or 'almanac' —
     pins that calendar in every language; 'none' turns the calendar
     lines off even where the language would show them.
     """

@@ -96,6 +96,7 @@ WIKIDATA_LANG = {
     "fr": "fr", "es": "es", "de": "de", "it": "it", "pt": "pt", "nl": "nl",
     "pl": "pl", "no": "nb", "sv": "sv", "is": "is", "da": "da", "fi": "fi",
     "ja": "ja", "ko": "ko", "zh": "zh-hans", "th": "th", "id": "id", "uk": "uk",
+    "vi": "vi",
 }
 
 GREEK = {
@@ -458,6 +459,15 @@ OVERRIDES = {
             "Shedar": "Шедар", "Sirius": "Сіріус", "Suhail": "Сухайль",
             "Sulafat": "Сулафат", "Talitha": "Таліта", "Toliman": "Толіман",
             "Zubenelgenubi": "Зубенельгенубі",
+        },
+        # Vietnamese charts print the Latin names; these few have
+        # Sino-Vietnamese names in everyday use, as Vietnamese
+        # Wikipedia titles them. Wikidata files Deneb as "Sao Deneb".
+        "vi": {
+            "Altair": "Sao Ngưu Lang", "Arcturus": "Sao Đại Giác",
+            "Canopus": "Sao Lão Nhân", "Deneb": "Sao Thiên Tân",
+            "Polaris": "Sao Bắc Cực", "Sirius": "Sao Thiên Lang",
+            "Vega": "Sao Chức Nữ",
         },
         "zh": {
             "Abt's Star": "阿布特星", "Aldhibah": "紫微左垣四", "Alhiba": "天潢五",

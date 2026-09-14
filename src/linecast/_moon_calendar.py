@@ -40,7 +40,7 @@ from linecast._moon_i18n import (
     hijri_lang, hijri_month_name, hijri_observance_name, ja_night_name, lunar_date_label,
     pacific_night_label, pacific_night_name, rosh_chodesh_label,
     thai_festival_name, thai_lunar_label, thai_month_label,
-    wan_phra_label,
+    vi_month_label, wan_phra_label,
 )
 from linecast._pacific import PACIFIC_CALENDARS, pacific_night
 from linecast._thai_lunar import (
@@ -82,6 +82,8 @@ def _month_title(year, month, lang):
         return f"{year}년 {month}월"
     if lang == "fi":
         return f"{month}/{year}"
+    if lang == "vi":
+        return f"Tháng {month} năm {year}"
     months = MONTHS_I18N.get(lang, MONTHS_I18N["en"])
     if lang == "th":
         # Thai calendars year themselves in the Buddhist Era.
@@ -196,6 +198,8 @@ def _cell_label(day, cal, native, fest, lang="en", israel=False):
             return f"{m}月", False
         if cal == "korean" and native:
             return f"{m}월", False
+        if cal == "vietnamese" and native:
+            return vi_month_label(m, leap, short=True), False
         return f"m{m}", False
     return None
 

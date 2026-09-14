@@ -250,6 +250,19 @@ _STRINGS = {
         "radar_unavailable": "радар недоступний ({err})",
         "no_frames": "немає кадрів радара",
     },
+    "vi": {
+        "loading": "đang tải…",
+        "hint": "phím cách phát/dừng · cuộn/←→ từng khung · +/- thu phóng · kéo / wasd · c nhiệt độ · W gió · t chủ đề · S vệ tinh · q thoát",
+        "theme": "chủ đề",
+        "now": "hiện tại",
+        "near": "cách {name} {dist} {unit} về phía {dir}",
+        "compass": "B ĐB Đ ĐN N TN T TB",
+        "forecast": "dự báo",
+        "echo_pct": "{pct}% phản hồi",
+        "cloud_pct": "{pct}% mây",
+        "radar_unavailable": "không có radar ({err})",
+        "no_frames": "không có khung hình radar",
+    },
 }
 
 

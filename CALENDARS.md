@@ -4,15 +4,15 @@
 
 ## Choosing one
 
-In Chinese, Japanese, Korean, and Thai the calendar follows the language. You can choose any calendar in any language: `linecast moon --calendar hebrew` for one run, or `linecast calendar hebrew` to save it for every run. `linecast calendar none` turns it off, and `linecast calendar auto` goes back to following the language. The names are `chinese`, `japanese`, `korean`, `thai`, `hawaiian`, `samoan`, `chamorro`, `refaluwasch`, `islamic`, `hebrew`, and `almanac`.
+In Chinese, Japanese, Korean, Vietnamese, and Thai the calendar follows the language. You can choose any calendar in any language: `linecast moon --calendar hebrew` for one run, or `linecast calendar hebrew` to save it for every run. `linecast calendar none` turns it off, and `linecast calendar auto` goes back to following the language. The names are `chinese`, `japanese`, `korean`, `vietnamese`, `thai`, `hawaiian`, `samoan`, `chamorro`, `refaluwasch`, `islamic`, `hebrew`, and `almanac`.
 
 Whichever calendar is active, the month grid (press `v`, or open on it with `linecast moon --grid`) uses it too: the calendar's months in the title, each day's date in the corner of its cell, the month starts and observances marked, and the full date in the hover chip. Click a day and the disc view opens on it.
 
-## Chinese, Japanese, and Korean
+## Chinese, Japanese, Korean, and Vietnamese
 
-The lunar date is shown beside the phase name, with the solar term in progress and a countdown to the next festival: 中秋节, 추석, or 十五夜. In Japanese the night is also called by its own name: 十六夜, 居待月, 更待月. When the app is in another language the same reading is written with the customary English names ("End of Heat · White Dew Sep 7", "Mid-Autumn Festival Sep 25").
+The lunar date is shown beside the phase name, with the solar term in progress and a countdown to the next festival: 中秋节, 추석, 十五夜, or Tết Trung Thu. In Japanese the night is also called by its own name: 十六夜, 居待月, 更待月. In Vietnamese the date reads as the wall calendars print it, mùng 1 tháng Giêng or rằm tháng 8 âm lịch, and the festivals are the ones the year turns on: Tết, Rằm tháng Giêng, Giỗ Tổ Hùng Vương, Tết Đoan Ngọ, Vu Lan, Tết Trung Thu, and ông Táo về trời. When the app is in another language the same reading is written with the customary English names ("End of Heat · White Dew Sep 7", "Mid-Autumn Festival Sep 25").
 
-The months, leap months, and solar terms are computed from the ephemeris at each calendar's own meridian. Nothing is looked up in a table.
+The months, leap months, and solar terms are computed from the ephemeris at each calendar's own meridian: UTC+8 for China, UTC+9 for Japan and Korea, UTC+7 for Vietnam, which has kept its calendar there since 1968. Nothing is looked up in a table. The meridian matters: a new moon or a solstice close to midnight falls on different days in Hanoi and Beijing, which is why Tết came on 17 February 2007, a day before 春节, and on 21 January 1985, a month before it. Both are checked.
 
 ## Thai
 

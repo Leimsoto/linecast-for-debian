@@ -1,8 +1,8 @@
 """The lunisolar calendar against published dates.
 
 Anchors are festival and leap-month dates as the official calendars
-print them — the Chinese calendar at UTC+8, the Korean at UTC+9 — plus
-solar-term days. The engine derives everything from the ephemeris, so
+print them — the Chinese calendar at UTC+8, the Korean at UTC+9, the
+Vietnamese at UTC+7 — plus solar-term days. The engine derives everything from the ephemeris, so
 these are end-to-end checks of the month, day, and leap arithmetic.
 """
 
@@ -47,6 +47,25 @@ class TestLunisolarDate:
     def test_chuseok_2025_at_the_korean_meridian(self):
         assert lunisolar_date(date(2025, 10, 6), 9) == (8, 15, False)
 
+    def test_tet_2007_came_a_day_before_the_chinese_new_year(self):
+        # The new moon of 17 February 2007 fell at 16:14 UTC: 23:14 in
+        # Hanoi, 00:14 the next day in Beijing.
+        assert lunisolar_date(date(2007, 2, 17), 7) == (1, 1, False)
+        assert lunisolar_date(date(2007, 2, 17), 8) == (12, 30, False)
+        assert lunisolar_date(date(2007, 2, 18), 8) == (1, 1, False)
+
+    def test_tet_1985_came_a_month_before_the_chinese_new_year(self):
+        # The December 1984 solstice fell at 16:23 UTC, on the 21st in
+        # Hanoi and the 22nd in Beijing, the day of a new moon: the
+        # month that began that day held the solstice at UTC+8 and
+        # was month 11 there, and month 12 at UTC+7.
+        assert lunisolar_date(date(1985, 1, 21), 7) == (1, 1, False)
+        assert lunisolar_date(date(1985, 1, 21), 8) == (12, 1, False)
+        assert lunisolar_date(date(1985, 2, 20), 8) == (1, 1, False)
+
+    def test_hung_kings_day_2026(self):
+        assert lunisolar_date(date(2026, 4, 26), 7) == (3, 10, False)
+
     def test_consecutive_days_stay_consecutive(self):
         prev = lunisolar_date(date(2026, 1, 1), 8)
         for offset in range(1, 400):
@@ -64,7 +83,7 @@ class TestLunisolarDate:
         # day that holds the conjunction at the calendar's own meridian.
         # The consecutive-days sweep above would not notice a month
         # starting a day either side of one.
-        for meridian in (8, 9):
+        for meridian in (7, 8, 9):
             tz = timezone(timedelta(hours=meridian))
             first = date(2020, 1, 1)
             for offset in range(1100):
@@ -98,6 +117,7 @@ class TestSolarTerms:
         assert term_label(18, "zh") == "冬至"
         assert term_label(18, "ja") == "冬至"
         assert term_label(18, "ko") == "동지"
+        assert term_label(18, "vi") == "Đông chí"
 
 
 class TestFestivals:
@@ -115,6 +135,18 @@ class TestFestivals:
         got = next_lunar_event(date(2026, 1, 1), 9,
                                festival_table("korean", native=True))
         assert got == (date(2026, 2, 17), "설날")
+
+    def test_vietnamese_festivals(self):
+        # A week before Tết the Kitchen Gods leave for heaven.
+        got = next_lunar_event(date(2026, 1, 1), 7,
+                               festival_table("vietnamese", native=True))
+        assert got == (date(2026, 2, 10), "Ông Táo về trời")
+        got = next_lunar_event(date(2026, 2, 11), 7,
+                               festival_table("vietnamese", native=True))
+        assert got == (date(2026, 2, 17), "Tết Nguyên Đán")
+        got = next_lunar_event(date(2026, 4, 1), 7,
+                               festival_table("vietnamese", native=False))
+        assert got == (date(2026, 4, 26), "Hùng Kings' Day")
 
     def test_a_festival_today_still_shows(self):
         got = next_lunar_event(date(2026, 9, 25), 8,
@@ -144,6 +176,20 @@ class TestLabels:
         assert lunar_date_label(7, 20, False, "ko") == "음력 7월 20일"
         assert lunar_date_label(7, 20, True, "ko") == "음력 윤7월 20일"
 
+    def test_vietnamese_reads_as_the_wall_calendars_print_it(self):
+        assert lunar_date_label(1, 1, False, "vi") == "mùng 1 tháng Giêng âm lịch"
+        assert lunar_date_label(8, 15, False, "vi") == "rằm tháng 8 âm lịch"
+        assert lunar_date_label(7, 20, False, "vi") == "ngày 20 tháng 7 âm lịch"
+        assert lunar_date_label(6, 5, True, "vi") == "mùng 5 tháng 6 nhuận âm lịch"
+        assert lunar_date_label(12, 23, False, "vi") == "ngày 23 tháng Chạp âm lịch"
+
+    def test_vietnamese_month_marks_for_the_grid(self):
+        from linecast._moon_i18n import vi_month_label
+        assert vi_month_label(1, False, short=True) == "Giêng"
+        assert vi_month_label(8, False, short=True) == "thg 8"
+        assert vi_month_label(6, True, short=True) == "thg 6 nhuận"
+        assert vi_month_label(12, False, short=True) == "Chạp"
+
     def test_english_serves_every_other_language(self):
         assert lunar_date_label(7, 20, False, "en") == "month 7 day 20"
         assert lunar_date_label(6, 5, True, "fr") == "leap month 6 day 5"
@@ -170,6 +216,7 @@ class TestResolveCalendar:
         try:
             assert resolve_calendar(None, "en") is None
             assert resolve_calendar(None, "zh") == "chinese"
+            assert resolve_calendar(None, "vi") == "vietnamese"
             assert resolve_calendar("korean", "zh") == "korean"
             assert resolve_calendar("none", "zh") is None
 

@@ -44,3 +44,33 @@ def test_a_short_window_gives_up_the_spacing_rows_first():
 def test_the_window_is_never_overrun():
     for rows in (12, 16, 20, 24, 30, 50):
         assert len(_rows(rows)) <= rows
+
+
+def _rows_with_peak_rain(rows, peak_inches):
+    data = json.loads(FIXTURE.read_text())
+    amounts = data["hourly"]["precipitation"]
+    scale = peak_inches / max(amounts)
+    data["hourly"]["precipitation"] = [a * scale for a in amounts]
+    runtime = WeatherRuntime(live=True, icons="nerd", lang="en", oneline=False, metric=False)
+    with patch.object(weather, "get_terminal_size", lambda: (100, rows)), \
+            patch.object(weather, "install_banner", lambda: None):
+        output, _ = weather.render_from_data(data, [], runtime, "Test")
+    return [_ANSI.sub("", line).rstrip() for line in output.split("\n")]
+
+
+def _curve_rows(lines):
+    return sum(1 for line in lines if any("⠀" <= ch <= "⣿" for ch in line))
+
+
+def test_a_drizzle_gives_its_bar_rows_to_the_curve():
+    downpour = _rows_with_peak_rain(40, 1.0)
+    shower = _rows_with_peak_rain(40, 0.1)
+    drizzle = _rows_with_peak_rain(40, 0.01)
+    assert len(downpour) <= 40 and len(drizzle) <= 40
+    assert _curve_rows(shower) == _curve_rows(downpour) + 1
+    assert _curve_rows(drizzle) == _curve_rows(downpour) + 2
+
+
+def test_a_short_window_still_keeps_one_bar_row():
+    assert len(_rows_with_peak_rain(14, 1.0)) <= 14
+    assert len(_rows_with_peak_rain(14, 0.01)) <= 14

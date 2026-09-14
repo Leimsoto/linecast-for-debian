@@ -17,6 +17,7 @@ Usage: weather [--print] [--oneline] [--json] [--location LAT,LNG | PLACE] [--se
                [--no-shading] [--lang fr] [--classic-colors]
 """
 
+import math
 import sys
 import threading
 import time as _t
@@ -50,6 +51,7 @@ from linecast._weather_render import (
     _PRECIP_CODES,
     _fmt_time,
     _precip_rgb,
+    _precip_bar_full,
     _precip_type,
     _prepare_hourly_window,
     build_alert_modal,
@@ -82,6 +84,7 @@ MIN_HOURLY_ROWS = 4
 MIN_DAILY_ROWS = 3
 MIN_CURVE_ROWS_WITH_CLOUD = 4  # the cloud strip appears only above this
 CURVE_ROWS_COMFORTABLE = 6     # below this the spacing rows give way
+MAX_PRECIP_ROWS = 3            # the precipitation bar at its tallest
 
 
 def data_credits(country_code="", lang="en"):
@@ -504,7 +507,13 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
         graph_budget -= 1
 
     if has_precip_graph:
-        n_precip_braille = min(3, max(1, graph_budget // 6))
+        # The bar fills at a fixed hourly amount, so a forecast whose wettest
+        # hour comes nowhere near it would leave most of a tall bar empty.
+        # The bar takes only the rows its peak can reach, one per third of
+        # the scale, and the temperature curve has the rest.
+        peak = max(hourly["precipitation"]) / _precip_bar_full(data, runtime)
+        reach = max(1, math.ceil(peak * MAX_PRECIP_ROWS))
+        n_precip_braille = min(MAX_PRECIP_ROWS, max(1, graph_budget // 6), reach)
         remaining_for_temp = graph_budget - n_precip_braille
     else:
         n_precip_braille = 0

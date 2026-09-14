@@ -4,6 +4,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
+- Moon: The sunlit ground fades toward the terminator, as it does in a photograph, instead of stopping at a hard edge. The full Moon stays flat to the limb, and the new Moon stays dark.
 - Language: linecast speaks Vietnamese. `linecast language vi` or a Vietnamese terminal locale puts every view in Vietnamese, and the sky names its constellations and best-known stars in Vietnamese.
 - Moon: A Vietnamese calendar. `linecast calendar vietnamese` reads the lunar date, solar term, and festivals at Vietnam's own meridian, so Tết falls on the day Vietnam keeps it. It is the default in Vietnamese.
 - Moon: The calendar opens the week on the day the country's printed calendars do, judged by your location rather than the display language: Monday in most of the world, Sunday in the United States, Canada, Japan, Korea, and others, Saturday in Egypt and the Gulf. `linecast week sunday` saves a preference, and `moon --week-start` sets it for one run.

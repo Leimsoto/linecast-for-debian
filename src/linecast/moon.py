@@ -553,6 +553,12 @@ class Turn:
 
 
 _IDENTITY = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)
+# The daylit ground's brightness, from the photometric law in
+# _draw_moon_disc, is raised to this before it colours a pixel: the eye
+# and a camera compress the Moon's range, and the terminator of a
+# quarter Moon in a photograph is a grade over the last fifth or so of
+# the daylit ground, not the half that the law alone would make it.
+SUNLIT_GAMMA = 0.65
 
 
 def _ease_out_back(s):
@@ -599,33 +605,46 @@ def _lit_fraction_at_limb(ux, uy, r, radius, sun):
     runs along a radius -- the equator of a quarter Moon meeting the
     limb -- the pixel comes out half lit, and not wholly lit or dark on
     the sign of a rounding error.
+
+    The Sun's elevation and the viewer's, at the middle of the lit part
+    of the span, come back with the share: they are what the lit
+    ground's brightness is read from, and at the limb the pixel's
+    centre may lie in the dark of a sliver that is lit.
     """
     sun_x, sun_y, sun_z = sun
     if r <= 0.0:
-        return 1.0 if sun_z > 0.0 else 0.0
+        return (1.0, sun_z, 1.0) if sun_z > 0.0 else (0.0, 0.0, 1.0)
     a = (ux * sun_x + uy * sun_y) / r
     t = (ux * sun_y - uy * sun_x) / r
     half = 0.5 / radius
     hi = min(1.0, r + half)
     lo = max(0.0, hi - 2.0 * half)
     step = t * half / r
-    return sum(_radial_lit(a + s * step, sun_z, lo, hi)
-               for s in (-0.75, -0.25, 0.25, 0.75)) / 4.0
+    share = sum(_radial_lit(a + s * step, sun_z, lo, hi)[0]
+                for s in (-0.75, -0.25, 0.25, 0.75)) / 4.0
+    _, lit_lo, lit_hi = _radial_lit(a, sun_z, lo, hi)
+    rho = 0.5 * (lit_lo + lit_hi)
+    up = math.sqrt(max(0.0, 1.0 - rho * rho))
+    return share, a * rho + sun_z * up, up
 
 
 def _radial_lit(a, b, lo, hi):
-    """The lit length of the radial span [lo, hi], as a share of the span."""
+    """The lit part of the radial span [lo, hi].
+
+    Returns its length as a share of the span, and where it starts and
+    ends along the radius.
+    """
     if a >= 0.0 and b >= 0.0:
-        return 1.0
+        return 1.0, lo, hi
     if a <= 0.0 and b <= 0.0:
-        return 0.0
+        return 0.0, lo, lo
     # Opposite signs: the elevation crosses zero once, at rho_t.
     rho_t = math.sqrt(b * b / (a * a + b * b))
     if a > 0.0:                       # lit beyond rho_t, toward the limb
-        lit = max(0.0, hi - max(lo, rho_t))
+        lit_lo, lit_hi = min(hi, max(lo, rho_t)), hi
     else:                             # lit inside rho_t, toward the centre
-        lit = max(0.0, min(hi, rho_t) - lo)
-    return lit / (hi - lo)
+        lit_lo, lit_hi = lo, max(lo, min(hi, rho_t))
+    return (lit_hi - lit_lo) / (hi - lo), lit_lo, lit_hi
 
 
 def _draw_moon_disc(fb, cx, cy, radius, illum, limb_deg, axis_deg,
@@ -652,7 +671,10 @@ def _draw_moon_disc(fb, cx, cy, radius, illum, limb_deg, axis_deg,
     standard phase ellipse, the whole disc at full, a straight edge at
     the quarters, nothing at new. The edge is anti-aliased in screen
     space, over one pixel, so a thin crescent tapers to nothing at the
-    poles and a new Moon shows no rim at all.
+    poles and a new Moon shows no rim at all. The daylit ground is not
+    one brightness, though: it fades toward the terminator, where the
+    Sun is low over it, so the edge itself is the dark end of a
+    gradient, as it is in a photograph.
 
     The night side facing Earth is not quite black: earthshine lifts it
     by the Earth's own phase, which is the complement of the Moon's, so
@@ -722,8 +744,22 @@ def _draw_moon_disc(fb, cx, cy, radius, illum, limb_deg, axis_deg,
             d = ux * sun_x + uy * sun_y + uz * sun_z
             if rr < band:
                 lit_alpha = _lit_fraction(ux, uy, uz, d, radius, sun)
+                sun_up, view_up = d, uz
             else:
-                lit_alpha = _lit_fraction_at_limb(ux, uy, r, radius, sun)
+                lit_alpha, sun_up, view_up = _lit_fraction_at_limb(
+                    ux, uy, r, radius, sun)
+            # How bright the daylit ground is. Moon dust throws light
+            # back the way it came, so the surface brightens not with
+            # the Sun's elevation alone but with its share of the Sun's
+            # and the viewer's together (Lommel-Seeliger): the full Moon
+            # is flat to the limb, while a quarter fades from its bright
+            # limb to darkness at the terminator, where the Sun is on
+            # the horizon and every crater is in its own shadow. The
+            # root is the eye's compression of the range.
+            if lit_alpha > 0.0 and sun_up > 0.0:
+                lit_alpha *= min(1.0, 2.0 * sun_up / (sun_up + view_up)) ** SUNLIT_GAMMA
+            else:
+                lit_alpha = 0.0
 
             shade = 0.18 * rr  # limb falloff
             if albedo is not None:

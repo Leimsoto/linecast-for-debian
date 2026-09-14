@@ -1,6 +1,7 @@
-# Spin the globe by hand: two drags across the disc, a pause between.
+# Turn the globe by hand: tip it up to see Antarctica, then roll it round
+# to Africa and Asia.
 sleep 1
-drag 35x15 80x15
-sleep 1.5
-drag 80x15 40x15
+drag 50x22 60x8
+sleep 1.2
+drag 60x8 30x18
 sleep 1.5

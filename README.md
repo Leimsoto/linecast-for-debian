@@ -90,13 +90,15 @@ Add `--print` for one static frame instead of a live view. Weather, sunshine, mo
 
 ## A closer look
 
-The frames below show each app once or twice. [GALLERY.md](GALLERY.md) shows them in more of their states: other languages and traditions, the radar's themes and layers, a short window, a walking route.
+The frames below show each app once or twice. [GALLERY.md](GALLERY.md) shows them in more of their states: a whole day of sunshine, other languages and traditions, the radar's themes and layers, a short window, a walking route, and the globe and the sky turned by hand.
 
 ### Weather
 
 `weather` shows current conditions, a scrollable chart of hourly temperatures shaded by daylight, precipitation, daily highs and lows, air quality, and a line on how today compares with a normal day. Official alerts cover 45 countries. Click one to read it in full, or press `o` to open it in your browser. If the forecast service can't be reached, you get the last forecast it fetched, with a line saying how old it is.
 
 ![weather dashboard](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/weather.png)
+
+The dashboard speaks eighteen languages, and its units follow the place or your own setting. Reykjavík in Icelandic and Kyoto in Japanese, both metric:
 
 <p>
   <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/weather-reykjavik.png" width="49%" alt="the weather in Reykjavík, in Icelandic">
@@ -105,14 +107,14 @@ The frames below show each app once or twice. [GALLERY.md](GALLERY.md) shows the
 
 ### Sunshine
 
-`sunshine`'s default view is inspired by the Apple Watch Solar Graph face. The sun moves along its arc and the sky changes through dawn, day, dusk, and night. The day length says how much longer or shorter today is than yesterday.
+`sunshine`'s default view is inspired by the Apple Watch Solar Graph face. The sun moves along its arc and the sky changes through dawn, day, dusk, and night. The day length says how much longer or shorter today is than yesterday. Dawn and dusk on the June solstice over Westbrook, Maine; the gallery has the rest of that day, and a January noon beside it.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sunshine-day.png" width="49%" alt="sunshine at midday">
-  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sunshine-dusk.png" width="49%" alt="sunshine at dusk">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sunshine-dawn.png" width="49%" alt="sunshine at dawn on the June solstice">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sunshine-dusk.png" width="49%" alt="sunshine at dusk on the June solstice">
 </p>
 
-`sunshine --year` draws the whole year. Each column is a day, midnight to midnight, colored by the sky at each hour. Hover the graph for the sunrise, sunset, and day length of any day. Press `v` to switch between the day and the year. Add `--dst` to keep each day on its own clock, so the daylight saving changes show as a harsh step.
+`sunshine --year` draws the whole year. Each column is a day, midnight to midnight, colored by the sky at each hour. Hover the graph for the sunrise, sunset, and day length of any day. Press `v` to switch between the day and the year. Add `--dst` to keep each day on its own clock, so the daylight saving changes show as a harsh step. This is Reykjavík, in Icelandic, with the pointer on the December solstice.
 
 ![the year view for Reykjavík, in Icelandic, with the pointer on the December solstice](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sunshine-year.png)
 
@@ -131,7 +133,7 @@ Near the poles the same chart turns into polar night and midnight sun. These are
 
 Press `v` for a calendar of the month, or open on it with `moon --grid`. Each day shows its phase as a small disc, with today, the full and new moons, and the quarters marked. Scroll through the months, hover a day for its phase, moonrise, and moonset, and click one to open the moon on that day.
 
-The moon can also show the date in a traditional calendar beside the phase, with a countdown to its next festival or observance: the Chinese, Japanese, and Korean lunisolar calendars, the Thai lunar calendar, the Hawaiian Kaulana Mahina, the Samoan, Chamorro, and Refaluwasch calendars of the Pacific, the Islamic and Hebrew calendars, and the Old Farmer's Almanac. `moon --calendar hebrew` opens on one and `linecast calendar` saves one. [CALENDARS.md](CALENDARS.md) describes each of them and how it is checked.
+The moon can also show the date in a traditional calendar beside the phase, with a countdown to its next festival or observance: the Chinese, Japanese, and Korean lunisolar calendars, the Thai lunar calendar, the Hawaiian Kaulana Mahina, the Samoan, Chamorro, and Refaluwasch calendars of the Pacific, the Islamic and Hebrew calendars, and the Old Farmer's Almanac. `moon --calendar hebrew` opens on one and `linecast calendar` saves one. [CALENDARS.md](CALENDARS.md) describes each of them and how it is checked. Here it is over Okinawa the evening after the mid-autumn full moon, in Japanese, and the month around it, with 十五夜 on the 25th.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/moon-okinawa.png" width="49%" alt="the moon over Okinawa in Japanese: 十六夜, the sixteenth night of the eighth month">
@@ -140,7 +142,7 @@ The moon can also show the date in a traditional calendar beside the phase, with
 
 ### Sky
 
-`sky` draws the sky from where you stand. The horizon runs along the bottom with the compass points under it, and above it are the real stars for the moment, the constellation figures drawn faintly through them with their names, the planets from Mercury to Neptune marked and named, the Moon at its phase and tilt, and the Milky Way once the sky is dark enough. By day the sky is blue and holds only the Sun, and perhaps Venus. Scroll into the evening and the sky goes through its twilight colors while the stars come out one by one, brightest first.
+`sky` draws the sky from where you stand. The horizon runs along the bottom with the compass points under it, and above it are the real stars for the moment, the constellation figures drawn faintly through them with their names, the planets from Mercury to Neptune marked and named, the Moon at its phase and tilt, and the Milky Way once the sky is dark enough. By day the sky is blue and holds only the Sun, and perhaps Venus. Scroll into the evening and the sky goes through its twilight colors while the stars come out one by one, brightest first. This is a January evening over Westbrook, Maine, opened with `--at Orion`, with Jupiter in Gemini.
 
 ![Orion on a January evening over Westbrook, Maine, with Jupiter in Gemini](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sky.png)
 
@@ -148,7 +150,7 @@ Drag to look around. The sky opens with the 8,404 stars the naked eye can see. Z
 
 Press `/` and type the name of a star, a planet, a constellation, or an asterism like the Big Dipper, and the view flies to it. If it is below the horizon the panel says when it rises and where, and you can press Enter to move the clock to that moment. `sky --at Jupiter` opens on it.
 
-The sky has been drawn many ways. Press `t` for a list of twenty-two traditions besides the IAU's, each with its own figures and star names, and the sky redraws as you move through the list: the Chinese Three Enclosures and Twenty-Eight Mansions, the Hawaiian star lines, the Boorong sky of Victoria, the Norse, Sami, Māori, Tongan, Mongolian, Romanian, Belarusian, and Indian Vedic skies, H. A. Rey's stick figures, and more. `sky --culture hawaiian` opens on one and `linecast culture` saves one. The Hawaiian sky replaces the compass points with the navigators' star compass, thirty-two houses from Hikina round to Komohana. [CULTURES.md](CULTURES.md) lists them with their sources.
+The sky has been drawn many ways. Press `t` for a list of twenty-two traditions besides the IAU's, each with its own figures and star names, and the sky redraws as you move through the list: the Chinese Three Enclosures and Twenty-Eight Mansions, the Hawaiian star lines, the Boorong sky of Victoria, the Norse, Sami, Māori, Tongan, Mongolian, Romanian, Belarusian, and Indian Vedic skies, H. A. Rey's stick figures, and more. `sky --culture hawaiian` opens on one and `linecast culture` saves one. The Hawaiian sky replaces the compass points with the navigators' star compass, thirty-two houses from Hikina round to Komohana. [CULTURES.md](CULTURES.md) lists them with their sources. The whole August sky at once, and the same January evening drawn the Hawaiian way:
 
 <p>
   <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sky-allsky.png" width="49%" alt="the whole August sky at once, the horizon closed into a circle, the Milky Way across it">
@@ -177,7 +179,7 @@ linecast radar --layers temp,wind   # add temperature and wind
 linecast radar --layer satellite    # open on satellite imagery
 ```
 
-Add `--source librewxr`, `--source rainviewer`, or `--source iem` to pin the radar to one source, if you want to compare what each shows over the same spot.
+Add `--source librewxr`, `--source rainviewer`, or `--source iem` to pin the radar to one source, if you want to compare what each shows over the same spot. The recording below is wherever the weather was when the gallery was last refreshed.
 
 ![animated radar forecast](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/radar.gif)
 
@@ -185,7 +187,7 @@ Add `--source librewxr`, `--source rainviewer`, or `--source iem` to pin the rad
 
 `maps` draws streets in braille over water, land, parks, and buildings in solid color. `maps --view terrain` shades the land by height and lights it from one side, like a relief map, with coastlines, borders, water, and cities in braille over it. Press `v` to switch between the two.
 
-Press `/` to search for a place, or `D` to ask for directions, which open as a panel of turn-by-turn steps. Arrow or click through them and the map flies along the route.
+Press `/` to search for a place, or `D` to ask for directions, which open as a panel of turn-by-turn steps. Arrow or click through them and the map flies along the route. Portland, Maine, in streets, and New Zealand in terrain, with the seafloor around it:
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-street.png" width="49%" alt="street map of Portland, Maine">
@@ -200,7 +202,7 @@ The map decides what to say at every zoom. At block level it names the shops; a 
   <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-zoom-state.png" width="32%" alt="southern Maine">
 </p>
 
-Zoom all the way out and either view becomes a globe. Drag to rotate it, or press `r` to set it spinning. Press `S` to shade it into the daylight of this moment, with the terminator creeping and cities glowing on the night side, and `c` to lay the current cloud cover over it from live satellite imagery. `maps --view now` opens straight to the full picture.
+Zoom all the way out and either view becomes a globe. Drag to rotate it, or press `r` to set it spinning. Press `S` to shade it into the daylight of this moment, with the terminator creeping and cities glowing on the night side, and `c` to lay the current cloud cover over it from live satellite imagery. `maps --view now` opens straight to the full picture. The globe as it was when these were taken, in daylight alone and with the hour's clouds:
 
 <p>
   <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/maps-globe.png" width="49%" alt="the globe as it is right now: live daylight, the terminator, and the city lights beyond it">

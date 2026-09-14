@@ -4,7 +4,7 @@ The README shows each app once or twice. This page shows them in more of their s
 
 ## In motion
 
-Two recordings driven by the mouse: the globe turned by hand, and the January sky panned to the southwest and back.
+Two recordings driven by the mouse: the globe tipped up to Antarctica and rolled round to Africa, and the January sky lifted to the zenith and brought back down to the southwest.
 
 <p>
   <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/gallery/globe-spin.gif" width="49%" alt="the globe spun by dragging">
@@ -27,9 +27,17 @@ The dashboard gives up rows as the window shrinks: the cloud strip first, then t
 
 ## Sunshine
 
+One June day over Westbrook, Maine: night, with the sun's dot below the horizon; dawn; midday; golden hour; dusk. Then a January noon, for what nine hours of daylight do to the arc.
+
 <p>
-  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sunshine-day.png" width="49%" alt="sunshine at midday">
-  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sunshine-dusk.png" width="49%" alt="sunshine at dusk">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sunshine-night.png" width="32%" alt="sunshine at night">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sunshine-dawn.png" width="32%" alt="sunshine at dawn">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sunshine-day.png" width="32%" alt="sunshine at midday">
+</p>
+<p>
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sunshine-golden.png" width="32%" alt="sunshine in the golden hour">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sunshine-dusk.png" width="32%" alt="sunshine at dusk">
+  <img src="https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/sunshine-winter.png" width="32%" alt="a January noon">
 </p>
 
 The year view for Reykjavík, in Icelandic, and for Longyearbyen and Vostok Station, 78° either side of the equator, each with the pointer on the December solstice.

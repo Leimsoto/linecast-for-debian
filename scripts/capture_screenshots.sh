@@ -49,7 +49,8 @@ Targets:
   all        capture every app (default; leaves the hand-made hero alone)
   weather    weather.png, plus weather-reykjavik.png in Icelandic and
              weather-kyoto.png in Japanese, both metric
-  sunshine   sunshine-day.png and sunshine-dusk.png
+  sunshine   one June day in sunshine-night/dawn/day/golden/dusk.png, and
+             sunshine-winter.png for a January noon
   year       sunshine-year.png for Reykjavík in Icelandic, plus -arctic and
              -antarctic at 78° either side
   moon       moon.png, plus moon-okinawa.png in Japanese and moon-calendar.png
@@ -134,17 +135,23 @@ weather() {
 }
 
 sunshine() {
-    printf 'Capturing sunshine at midday…\n'
-    "$CAPTURE_TOOL" -s 120x36 -w 4 --font "$CAPTURE_FONT" -o "$SHOT_DIR/sunshine-day.png" \
-        uv --directory "$REPO_DIR" run python \
-        "$REPO_DIR/scripts/capture_moment.py" \
-        --at 2026-06-21T13:30 --location "$ASTRO_LOCATION" sunshine
-
-    printf 'Capturing sunshine at dusk…\n'
-    "$CAPTURE_TOOL" -s 120x36 -w 4 --font "$CAPTURE_FONT" -o "$SHOT_DIR/sunshine-dusk.png" \
-        uv --directory "$REPO_DIR" run python \
-        "$REPO_DIR/scripts/capture_moment.py" \
-        --at 2026-06-21T20:15 --location "$ASTRO_LOCATION" sunshine
+    # One June day over Westbrook, six ways: night with the sun's dot
+    # under the horizon, dawn, midday, golden hour, dusk, and a January
+    # noon for the difference nine hours of daylight make to the arc.
+    local at name spec
+    for spec in "2026-06-21T23:30|sunshine-night.png" \
+                "2026-06-21T05:05|sunshine-dawn.png" \
+                "2026-06-21T13:30|sunshine-day.png" \
+                "2026-06-21T19:15|sunshine-golden.png" \
+                "2026-06-21T20:15|sunshine-dusk.png" \
+                "2026-01-15T12:00|sunshine-winter.png"; do
+        IFS='|' read -r at name <<<"$spec"
+        printf 'Capturing sunshine %s…\n' "$name"
+        "$CAPTURE_TOOL" -s 120x36 -w 4 --font "$CAPTURE_FONT" -o "$SHOT_DIR/$name" \
+            uv --directory "$REPO_DIR" run python \
+            "$REPO_DIR/scripts/capture_moment.py" \
+            --at "$at" --location "$ASTRO_LOCATION" sunshine
+    done
 }
 
 year() {

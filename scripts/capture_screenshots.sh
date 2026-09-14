@@ -102,17 +102,22 @@ require "$CAPTURE_TOOL"
 require magick
 require uv
 
+# Every app is run as "linecast weather" and so on rather than by its bare
+# name: the project declares only the linecast entry point, so a bare
+# "uv run weather" falls through to whatever weather is on PATH, which on a
+# machine with linecast installed is the released version, not this tree.
+
 weather() {
     # The dashboard looks its best in a smallish window, where the chart
     # stays dense. The home frame is Dublin; two smaller ones show it in
     # other languages, metric, without making a thing of it.
     printf 'Capturing weather…\n'
     "$CAPTURE_TOOL" -s 110x34 -w 10 --font "$CAPTURE_FONT" -o "$SHOT_DIR/weather.png" \
-        uv --directory "$REPO_DIR" run weather --location "$WEATHER_PLACE"
+        uv --directory "$REPO_DIR" run linecast weather --location "$WEATHER_PLACE"
     "$CAPTURE_TOOL" -s 100x30 -w 10 --font "$CAPTURE_FONT" -o "$SHOT_DIR/weather-reykjavik.png" \
-        uv --directory "$REPO_DIR" run weather --location "Reykjavík" --lang is --metric
+        uv --directory "$REPO_DIR" run linecast weather --location "Reykjavík" --lang is --metric
     "$CAPTURE_TOOL" -s 100x30 -w 10 --font "$CAPTURE_FONT" -o "$SHOT_DIR/weather-kyoto.png" \
-        uv --directory "$REPO_DIR" run weather --location "Kyoto, Japan" --lang ja --metric
+        uv --directory "$REPO_DIR" run linecast weather --location "Kyoto, Japan" --lang ja --metric
 }
 
 sunshine() {
@@ -207,7 +212,7 @@ sky() {
 tides() {
     printf 'Capturing tides…\n'
     "$CAPTURE_TOOL" -s 120x36 -w 12 --font "$CAPTURE_FONT" -o "$SHOT_DIR/tides.png" \
-        uv --directory "$REPO_DIR" run tides --station "$TIDE_STATION"
+        uv --directory "$REPO_DIR" run linecast tides --station "$TIDE_STATION"
 }
 
 radar() {
@@ -231,7 +236,7 @@ radar() {
     # No window padding: the radar frame is shot without the border.
     "$CAPTURE_TOOL" -s 120x36 -w 15 --pad 0 --font "$CAPTURE_FONT" \
         -o "$SHOT_DIR/radar.png" \
-        uv --directory "$REPO_DIR" run radar --location "$RADAR_PLACE" "${radar_lang[@]}"
+        uv --directory "$REPO_DIR" run linecast radar --location "$RADAR_PLACE" "${radar_lang[@]}"
 
     printf 'Capturing radar animation…\n'
     # Slow playback in the capture-only wrapper to a frame every half second,
@@ -276,12 +281,12 @@ radar() {
 maps() {
     printf 'Capturing street map…\n'
     "$CAPTURE_TOOL" -s 120x38 -w 15 --font "$CAPTURE_FONT" -o "$SHOT_DIR/maps-street.png" \
-        uv --directory "$REPO_DIR" run maps --location "$STREET_PLACE" \
+        uv --directory "$REPO_DIR" run linecast maps --location "$STREET_PLACE" \
         --zoom 0.015
 
     printf 'Capturing terrain map…\n'
     "$CAPTURE_TOOL" -s 120x38 -w 15 --font "$CAPTURE_FONT" -o "$SHOT_DIR/maps-terrain.png" \
-        uv --directory "$REPO_DIR" run maps --view terrain \
+        uv --directory "$REPO_DIR" run linecast maps --view terrain \
         --location "$TERRAIN_PLACE" --zoom 1.5
 }
 
@@ -307,7 +312,7 @@ print(f"20,{lon:.0f}")')
     # while to arrive at this size, hence the longer settle.
     "$CAPTURE_TOOL" -s 120x38 -w 45 --font "$CAPTURE_FONT" \
         -o "$SHOT_DIR/maps-globe-clouds.png" \
-        uv --directory "$REPO_DIR" run maps --view now --zoom 130 \
+        uv --directory "$REPO_DIR" run linecast maps --view now --zoom 130 \
         --location "$GLOBE_PLACE"
     # The frame is this hour's terminator and city lights — honestly
     # different every run — but *not* this hour's clouds: daylight alone
@@ -316,7 +321,7 @@ print(f"20,{lon:.0f}")')
     # terrain planet and presses S once the canvas is warm.
     "$CAPTURE_TOOL" -s 120x38 -w 25 --font "$CAPTURE_FONT" --key S --sleep 4 \
         -o "$SHOT_DIR/maps-globe.png" \
-        uv --directory "$REPO_DIR" run maps --view terrain --zoom 130 \
+        uv --directory "$REPO_DIR" run linecast maps --view terrain --zoom 130 \
         --location "$GLOBE_PLACE"
 }
 
@@ -328,9 +333,9 @@ hero() {
     # column, then the two bottom-left quarters.
     "$CAPTURE_TOOL" --res 3840x2400 --font 'iA Writer Mono S:size=9' \
         -w 90 -o "$SHOT_DIR/hero.png" \
-        --pane "uv --directory $REPO_DIR run weather --location '$WEATHER_PLACE'" \
-        --pane "uv --directory $REPO_DIR run radar --location '$RADAR_PLACE'" \
-        --pane "uv --directory $REPO_DIR run maps --location '$STREET_PLACE' --zoom 0.015" \
+        --pane "uv --directory $REPO_DIR run linecast weather --location '$WEATHER_PLACE'" \
+        --pane "uv --directory $REPO_DIR run linecast radar --location '$RADAR_PLACE'" \
+        --pane "uv --directory $REPO_DIR run linecast maps --location '$STREET_PLACE' --zoom 0.015" \
         --pane "uv --directory $REPO_DIR run python $REPO_DIR/scripts/capture_moment.py --at 2026-06-21T13:30 --location '$ASTRO_LOCATION' sunshine"
 }
 

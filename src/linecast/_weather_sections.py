@@ -175,9 +175,11 @@ def render_header(data, width, location_name="", runtime=None, aqi_data=None, hi
 # ---------------------------------------------------------------------------
 # The prose lines under the graph
 # ---------------------------------------------------------------------------
-def _muted(sentence):
-    """A sentence as a dashboard line, or nothing when there is no sentence."""
-    return f"{MUTED}{sentence}{RESET}" if sentence else ""
+def _prose(sentence):
+    """A sentence as a dashboard line, in the full text color like the day
+    names and the conditions at the top, or nothing when there is no
+    sentence."""
+    return f"{TEXT}{sentence}{RESET}" if sentence else ""
 
 
 def narrative_lines(data, now, width, runtime=None):
@@ -224,7 +226,7 @@ def narrative_lines(data, now, width, runtime=None):
     # A sentence with nothing to share its line can still outrun a narrow
     # terminal, and a line the terminal wraps itself pushes the header off
     # the top of the screen.  Wrap it here instead.
-    return [_muted(line)
+    return [_prose(line)
             for row in rows
             for line in wrap_display_width(row + end, budget)]
 
@@ -357,8 +359,8 @@ def comparative_sentence(daily, now, runtime=None):
 
 
 def _comparative_line(daily, now, runtime=None):
-    """ANSI-muted comparative sentence for the dashboard."""
-    return _muted(comparative_sentence(daily, now, runtime))
+    """ANSI-colored comparative sentence for the dashboard."""
+    return _prose(comparative_sentence(daily, now, runtime))
 
 
 # ---------------------------------------------------------------------------
@@ -468,8 +470,8 @@ def precipitation_sentence(hourly, now, runtime=None):
 
 
 def _precipitation_line(hourly, now, runtime=None):
-    """ANSI-muted precipitation sentence for the dashboard."""
-    return _muted(precipitation_sentence(hourly, now, runtime))
+    """ANSI-colored precipitation sentence for the dashboard."""
+    return _prose(precipitation_sentence(hourly, now, runtime))
 
 
 def past_precip_sentence(hourly, now, runtime):
@@ -549,7 +551,7 @@ def past_precip_sentence(hourly, now, runtime):
 
 
 def _past_precip_line(hourly, now, runtime):
-    """ANSI-muted past-precipitation sentence for the dashboard."""
-    return _muted(past_precip_sentence(hourly, now, runtime))
+    """ANSI-colored past-precipitation sentence for the dashboard."""
+    return _prose(past_precip_sentence(hourly, now, runtime))
 
 _theme.track_imports(globals(), "linecast._weather_style")

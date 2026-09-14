@@ -44,8 +44,8 @@ def render_daily_mapped(data, width, runtime=None, now=None):
 
     Returns (lines, spans): one dict per line, holding the day's index into
     the daily arrays and, under "cols", the 0-based [start, end) columns of
-    each part present: "day" (name and icon), "bar", "prob", "precip",
-    "wind".  The live view's hover chip reads them."""
+    each part present: "day" (name and icon), "bar", "rain" (the odds and
+    the amount together), "wind".  The live view's hover chip reads them."""
     if runtime is None:
         runtime = current_runtime(WeatherRuntime)
     if now is None:
@@ -279,16 +279,20 @@ def render_daily_mapped(data, width, runtime=None, now=None):
         precip_s, prob_s, wind_s = day_details[i - 1]
         pcolor = _precip_color(wmo)
         # Pad by terminal columns, not code points: CJK labels are double-width.
+        # The odds and the amount are one part, "rain": they answer as one.
+        rain = []
         if max_prob_w:
             line += f"  {pcolor}{_rpad(prob_s, max_prob_w)}"
             if prob_s:
-                cols["prob"] = (cursor + 2, cursor + 2 + max_prob_w)
+                rain.append((cursor + 2, cursor + 2 + max_prob_w))
             cursor += 2 + max_prob_w
         if max_precip_w:
             line += f"  {pcolor}{_lpad(precip_s, max_precip_w)}"
             if precip_s:
-                cols["precip"] = (cursor + 2, cursor + 2 + max_precip_w)
+                rain.append((cursor + 2, cursor + 2 + max_precip_w))
             cursor += 2 + max_precip_w
+        if rain:
+            cols["rain"] = (rain[0][0], rain[-1][1])
         if max_wind_w:
             line += f"  {WIND_COLOR}{_lpad(wind_s, max_wind_w)}"
             if wind_s:

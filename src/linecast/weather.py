@@ -33,6 +33,7 @@ from linecast._weather_i18n import (
     WMO_NAMES,
     WMO_NAMES_I18N,
     _s,
+    _wmo_icons,
     has_string,
 )
 from linecast._weather_render import (
@@ -181,7 +182,9 @@ def _build_hover_tooltip(data, mouse_col, mouse_row, hourly_start, hourly_end, c
     precip_parts = []
     if amount and amount > 0:
         precip_parts.append(f"{fg(*_precip_rgb(code))}{fmt_precip_amount(amount, runtime)}{TFG}")
-    if prob and prob >= 10:
+    # Under 20% the shaded figure is hard to read and says nothing worth
+    # reading; the bar below is a ghost of one anyway.
+    if prob and prob >= 20:
         precip_parts.append(_s("chance", runtime, p=f"{_precip_shade(code, prob)}{prob:.0f}%{TFG}"))
     if precip_parts:
         lines.append(f"{TBG}{TFG} {'  '.join(precip_parts)} ")
@@ -231,8 +234,9 @@ def _build_daily_tooltip(data, mouse_col, mouse_row, daily_start, daily_spans, c
 
     Each part of the row answers for itself: the day's name and icon give
     the day and its weather, the bar the high and low and when they come,
-    the odds the chance of rain and roughly when, the amount the day's
-    total and its heaviest hour, the wind its speed and gusts.  Returns
+    the odds and the amount together the day's total, its chance, the
+    hours with rain and the heaviest of them, the wind its speed and
+    gusts.  Returns
     cursor-positioned escapes, or "" when the pointer is elsewhere.
     mouse_col/mouse_row are 1-based terminal coordinates; daily_start is
     the 0-based line index of the first daily row.
@@ -272,22 +276,24 @@ def _build_daily_tooltip(data, mouse_col, mouse_row, daily_start, daily_spans, c
     TFG = fg(*TOOLTIP_TEXT_RGB)
     deg = "\u00b0"
     code = day_value("weather_code", 0) or 0
-    lines = []
+
+    # Every chip opens with the day it speaks for, in dim type.
+    now_local = _local_now_for_data(data)
+    if date == now_local.date().isoformat():
+        name = _s("today", runtime)
+    else:
+        try:
+            names = FULL_DAY_NAMES.get(runtime.lang, FULL_DAY_NAMES["en"])
+            name = names[datetime.fromisoformat(date).weekday()]
+        except (TypeError, ValueError):
+            name = str(date)
+    lines = [f"{TBG}{DIM} {name} "]
 
     if field == "day":
-        now_local = _local_now_for_data(data)
-        if date == now_local.date().isoformat():
-            name = _s("today", runtime)
-        else:
-            try:
-                names = FULL_DAY_NAMES.get(runtime.lang, FULL_DAY_NAMES["en"])
-                name = names[datetime.fromisoformat(date).weekday()]
-            except (TypeError, ValueError):
-                name = str(date)
-        lines.append(f"{TBG}{TFG} {name} ")
         wmo_name = WMO_NAMES_I18N.get(runtime.lang, {}).get(code) or WMO_NAMES.get(code, "")
         if wmo_name:
-            lines.append(f"{TBG}{TFG} {wmo_name} ")
+            icons = _wmo_icons(runtime)
+            lines.append(f"{TBG}{TFG} {icons.get(code, icons[0])}{TFG} {wmo_name} ")
 
     elif field == "bar":
         temps = hour_values("temperature_2m")
@@ -303,30 +309,36 @@ def _build_daily_tooltip(data, mouse_col, mouse_row, daily_start, daily_spans, c
                     line += f" {TFG}{_s('around', runtime, time=at)}"
             lines.append(f"{line} ")
 
-    elif field == "prob":
+    elif field == "rain":
+        total = day_value("precipitation_sum", 0) or 0
         prob = day_value("precipitation_probability_max", 0) or 0
-        what = _precip_kind_lower(code, runtime)
+        ink = fg(*_precip_rgb(code))
         # Full color here, unlike the hourly chip: the fade explains the
         # bar it sits under, and the daily rows have no such bar.
-        colored = f"{fg(*_precip_rgb(code))}{prob:.0f}%{TFG}"
-        lines.append(f"{TBG}{TFG} {_s('chance_of', runtime, p=colored, what=what)} ")
-        wet = [j for j, v in hour_values("precipitation") if v > 0]
-        if wet:
-            first, last = when(wet[0]), when(wet[-1])
-            if first and last and first != last:
-                lines.append(f"{TBG}{TFG} {first} \u2013 {last} ")
-            elif first:
-                lines.append(f"{TBG}{TFG} {_s('around', runtime, time=first)} ")
-
-    elif field == "precip":
-        total = day_value("precipitation_sum", 0) or 0
-        what = _s(_precip_type(code), runtime)
-        lines.append(f"{TBG}{fg(*_precip_rgb(code))} {what} {fmt_precip_amount(total, runtime)} ")
-        amounts = hour_values("precipitation")
-        if amounts:
-            j, peak = max(amounts, key=lambda jv: jv[1])
-            at = when(j)
-            if peak > 0 and at:
+        amount = f"{ink}{fmt_precip_amount(total, runtime)}{TFG}" if total > 0 else ""
+        if prob > 0:
+            odds = _s("chance_of", runtime, p=f"{ink}{prob:.0f}%{TFG}",
+                      what=_precip_kind_lower(code, runtime))
+            lines.append(f"{TBG}{TFG} {odds} ")
+        elif amount:
+            lines.append(f"{TBG}{ink} {_s(_precip_type(code), runtime)} {amount} ")
+            amount = ""
+        wet = [(j, v) for j, v in hour_values("precipitation") if v > 0]
+        first = when(wet[0][0]) if wet else None
+        last = when(wet[-1][0]) if wet else None
+        all_day = wet and wet[0][0] <= hours[0] + 1 and wet[-1][0] >= hours[-1] - 1
+        if amount and all_day:
+            lines.append(f"{TBG}{TFG} {_s('amount_all_day', runtime, amount=amount)} ")
+        elif amount and first and last and first != last:
+            spell = _s("amount_between", runtime, amount=amount, a=first, b=last)
+            lines.append(f"{TBG}{TFG} {spell} ")
+        elif amount and first:
+            lines.append(f"{TBG}{TFG} {amount} {_s('around', runtime, time=first)} ")
+        elif amount:
+            lines.append(f"{TBG}{TFG} {amount} ")
+        if len(wet) > 1:
+            at = when(max(wet, key=lambda jv: jv[1])[0])
+            if at:
                 lines.append(f"{TBG}{TFG} {_s('heaviest_around', runtime, time=at)} ")
 
     elif field == "wind":
@@ -343,9 +355,11 @@ def _build_daily_tooltip(data, mouse_col, mouse_row, daily_start, daily_spans, c
                     line += f" {_s('around', runtime, time=at)}"
             lines.append(f"{line} ")
 
-    if not lines:
+    if len(lines) < 2:
         return ""
-    return _live.pointer_chip(lines, span["cols"][field][0] + 1, mouse_row, cols, rows, pad_bg=TBG)
+    # The chip's left edge follows the pointer along the row, as the hourly
+    # chip's does across the chart.
+    return _live.pointer_chip(lines, mouse_col, mouse_row, cols, rows, pad_bg=TBG)
 
 
 def forecast_notice(data, runtime, live=False, fetching=False, failed_at=None):

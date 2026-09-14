@@ -202,6 +202,30 @@ def default_clock(country=None):
     return "12" if country in TWELVE_HOUR_COUNTRIES else "24"
 
 
+# The day a printed calendar opens the week on. Monday nearly
+# everywhere; Sunday and Saturday where the wall calendars say so,
+# after CLDR's week data. Australia and China are left on Monday,
+# where their calendars mostly are whatever CLDR says.
+WEEK_STARTS = ("monday", "sunday", "saturday")
+WEEK_START_WEEKDAY = {"monday": 0, "saturday": 5, "sunday": 6}  # date.weekday()
+SUNDAY_FIRST_COUNTRIES = frozenset((
+    "US", "CA", "BR", "MX", "IL", "IN", "JP", "KR", "PH", "SA", "TW", "HK", "ZA",
+))
+SATURDAY_FIRST_COUNTRIES = frozenset((
+    "AE", "AF", "BH", "DJ", "DZ", "EG", "IQ", "IR", "JO", "KW", "LY", "OM",
+    "QA", "SD", "SY",
+))
+
+
+def default_week_start(country=None):
+    """The first day of the week for a user who has expressed no preference."""
+    if country in SUNDAY_FIRST_COUNTRIES:
+        return "sunday"
+    if country in SATURDAY_FIRST_COUNTRIES:
+        return "saturday"
+    return "monday"
+
+
 def resolve_units(namespace=None, environ=None, legacy_env="WEATHER_UNITS",
                   country=_UNSET):
     """The units for this run, and where they came from.
@@ -255,6 +279,31 @@ def resolve_clock(namespace=None, environ=None, country=_UNSET):
         from linecast._location import own_country
         country = own_country()
     return default_clock(country), "auto"
+
+
+def resolve_week_start(namespace=None, environ=None, country=_UNSET):
+    """The first day of the week for this run, and where it came from.
+
+    Returns ("monday" | "sunday" | "saturday", source); source is "flag",
+    "LINECAST_WEEK_START", "config", or "auto".  Precedence: --week-start,
+    LINECAST_WEEK_START, the `week` key in config.json (`linecast week
+    monday|sunday|saturday`), then the default for *country*, looked up
+    as resolve_units does.
+    """
+    env = _environ(environ)
+    if namespace is not None and getattr(namespace, "week_start", None) in WEEK_STARTS:
+        return namespace.week_start, "flag"
+    value = env.get("LINECAST_WEEK_START", "").strip().lower()
+    if value in WEEK_STARTS:
+        return value, "LINECAST_WEEK_START"
+    from linecast._config import saved_week_start
+    saved = saved_week_start()
+    if saved is not None:
+        return saved, "config"
+    if country is _UNSET:
+        from linecast._location import own_country
+        country = own_country()
+    return default_week_start(country), "auto"
 
 
 # The locale variables, in the order gettext consults them.  LANGUAGE is
@@ -479,6 +528,12 @@ def moon_parser():
                          "Default: the calendar native to "
                          "--lang zh, ja, ko, or th; none otherwise")
     _add_clock_flags(p)
+    p.add_argument("--week-start", choices=WEEK_STARTS, default=None,
+                    help="the day the calendar's week opens on (default: "
+                         "sunday in the United States, Canada, Japan, "
+                         "Korea, and the other countries whose printed "
+                         "calendars do; saturday in Egypt and the Gulf; "
+                         "monday elsewhere)")
     p.add_argument("--json", dest="json_mode", action="store_true",
                     help="machine-readable JSON output (implies --print)")
     return p
@@ -722,6 +777,7 @@ class RuntimeConfig:
     json_mode: bool = False  # machine-readable JSON output
     metric: bool = True      # resolved units, every command
     use_24h: bool = True     # resolved clock, every command
+    week_start: str = "monday"  # resolved first day of the week
 
     # the parser whose defaults stand in before a main() has run
     _parser = staticmethod(lambda: _base_parser("linecast", ""))
@@ -744,6 +800,7 @@ class RuntimeConfig:
         units, _source = resolve_units(namespace, env, cls._legacy_units_env,
                                        country)
         clock, _source = resolve_clock(namespace, env, country)
+        week_start, _source = resolve_week_start(namespace, env, country)
         return cls(
             live=_resolve_live(namespace),
             icons=_resolve_icons(namespace, env),
@@ -752,6 +809,7 @@ class RuntimeConfig:
             json_mode=getattr(namespace, "json_mode", False),
             metric=units == "metric",
             use_24h=clock == "24",
+            week_start=week_start,
         )
 
     @classmethod
@@ -785,6 +843,7 @@ class WeatherRuntime(RuntimeConfig):
             celsius=celsius,
             metric=base.metric,
             use_24h=base.use_24h,
+            week_start=base.week_start,
             shading=(not namespace.no_shading
                      and not env_truthy(env.get("WEATHER_NO_SHADING", ""))),
             json_mode=base.json_mode,

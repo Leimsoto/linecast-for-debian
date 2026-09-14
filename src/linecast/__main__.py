@@ -20,6 +20,7 @@ Settings (run alone to show, give a value to set):
   linecast language    en, fr, es, de, it, pt, nl, pl, no, sv, is, da, fi, ja, ko, zh, th, id, or uk
   linecast units       metric or imperial
   linecast clock       12-hour or 24-hour
+  linecast week        The day the moon calendar's week opens on: monday, sunday, or saturday
   linecast icons       nerd, emoji, or plain
   linecast calendar    Which calendar the moon follows: chinese, japanese, korean, thai,
                        hawaiian, samoan, chamorro, refaluwasch, islamic, hebrew, almanac, or none
@@ -70,6 +71,7 @@ COMMANDS = {
     "language": "linecast.language",
     "units": "linecast.units",
     "clock": "linecast.clock",
+    "week": "linecast.week",
     "icons": "linecast.icons",
     # calendar_cmd, not calendar: running any file in this package as a
     # script (python src/linecast/moon.py) puts the package directory

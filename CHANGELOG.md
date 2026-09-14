@@ -4,6 +4,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
+- Moon: The calendar opens the week on the day the country's printed calendars do, judged by your location rather than the display language: Monday in most of the world, Sunday in the United States, Canada, Japan, Korea, and others, Saturday in Egypt and the Gulf. `linecast week sunday` saves a preference, and `moon --week-start` sets it for one run.
 - Weather: The precipitation bar under the hourly chart is only as tall as the forecast's wettest hour can fill. A week of drizzle gets a one-row bar, and the temperature curve takes the rows it gives up.
 - Language: linecast speaks Ukrainian. `linecast language uk` or a Ukrainian terminal locale puts every view in Ukrainian, and the sky names its constellations and brightest stars in Ukrainian.
 - Weather: The daily rows drop the words "Rain" and "Wind" sooner as the window narrows, keeping the temperature bars wide. When no day has both notable rain and notable wind, the two share one column.

@@ -257,7 +257,7 @@ def _human(n):
 def _collect_paths():
     from linecast._config import (
         config_file, read_config, saved_clock, saved_icons, saved_language,
-        saved_location, saved_units,
+        saved_location, saved_units, saved_week_start,
     )
     from linecast._paths import cache_root
     settings = config_file()
@@ -277,11 +277,13 @@ def _collect_paths():
             keys.append("units")
         if saved_clock() is not None:
             keys.append("clock")
+        if saved_week_start() is not None:
+            keys.append("week")
         if saved_icons() is not None:
             keys.append("icons")
         keys.extend(sorted(k for k in config
                            if k not in ("location", "language", "units",
-                                        "clock", "icons")))
+                                        "clock", "week", "icons")))
     root = cache_root()
     exists = os.path.isdir(root)
     writable, reason = cache_writable(root)
@@ -379,7 +381,7 @@ def _is_tty(stream):
 def _collect_preferences():
     from linecast._config import saved_location
     from linecast._location import own_country
-    from linecast._runtime import resolve_clock, resolve_units
+    from linecast._runtime import resolve_clock, resolve_units, resolve_week_start
     env = os.environ
     country = own_country()
 
@@ -392,6 +394,9 @@ def _collect_preferences():
     weather, weather_source = units("WEATHER_UNITS")
     tides, tides_source = units("TIDES_UNITS")
     clock, clock_source = resolve_clock(None, env, country)
+    week, week_source = resolve_week_start(None, env, country)
+    if week_source == "auto" and country:
+        week_source = f"auto: {country}"
     override = env.get("WEATHER_LOCATION", "").strip()
     loc = saved_location()
     if override:
@@ -427,6 +432,8 @@ def _collect_preferences():
         "tides_units_source": tides_source,
         "clock": f"{clock}-hour",
         "clock_source": clock_source,
+        "week": week,
+        "week_source": week_source,
         "location": location,
         "location_source": location_source,
         "language": language,
@@ -558,6 +565,7 @@ def render(report):
     rows = [
         ("units", units),
         ("clock", f"{prefs['clock']} ({prefs['clock_source']})"),
+        ("week", f"{prefs['week']} ({prefs['week_source']})"),
         ("location", prefs["location"]
          + ("" if prefs["location_source"] == "auto"
             else f" ({prefs['location_source']})")),

@@ -249,6 +249,8 @@ linecast clock 24
 
 Every view command also takes `--metric` and `--imperial` for one run, and the ones that show times take `--12h` and `--24h`. `weather` adds `--celsius` and `--fahrenheit` for the temperature alone, so you can have miles and Celsius, say.
 
+The moon's calendar opens the week on Monday, or on Sunday in the United States, Canada, Japan, Korea, Brazil, Mexico, and the other countries whose printed calendars do, or on Saturday in Egypt and the Gulf. `linecast week sunday` fixes it (`monday` and `saturday` too), and `moon --week-start sunday` does it for one run.
+
 ### Language
 
 linecast speaks your terminal's language if it is one of the nineteen it knows, and English otherwise. To choose one yourself, for every run or for one:
@@ -349,6 +351,7 @@ Every view command and `linecast doctor` take `--debug`, which prints a line on 
 | `WEATHER_UNITS` | Units for the weather command; overrides `LINECAST_UNITS` |
 | `TIDES_UNITS` | Units for tide heights; overrides `LINECAST_UNITS` |
 | `LINECAST_CLOCK` | `12` or `24`; overrides the saved clock |
+| `LINECAST_WEEK_START` | `monday`, `sunday`, or `saturday`; overrides the saved week |
 | `LINECAST_LANG` | One of the language codes under [Language](#language); overrides the saved language and the terminal's locale |
 | `LINECAST_ICONS` | `nerd`, `emoji`, or `plain`; overrides the saved icons |
 | `LINECAST_COLOR` | `auto`, `truecolor`, `256`, `16`, or `none` |

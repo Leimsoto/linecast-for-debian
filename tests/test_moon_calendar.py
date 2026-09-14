@@ -30,12 +30,13 @@ def _strip_ansi(text):
 
 
 def _render(cols, rows, lang="en", calendar=None, mouse_pos=None,
-            month_offset=0, now=NOW, lat=43.7, lng=-70.3, israel=False):
+            month_offset=0, now=NOW, lat=43.7, lng=-70.3, israel=False,
+            week_start="monday"):
     from linecast._moon_calendar import render_calendar
     from linecast._runtime import RuntimeConfig
 
     runtime = RuntimeConfig(live=False, icons="emoji", lang=lang,
-                            oneline=False)
+                            oneline=False, week_start=week_start)
     with patch("linecast._moon_calendar.get_terminal_size",
                return_value=(cols, rows)):
         out = render_calendar(now, lat, lng, runtime, fullscreen=True,
@@ -58,17 +59,33 @@ class TestGrid:
         days = sorted(int(t) for t in tokens if 1 <= int(t) <= 30)
         assert days == list(range(1, 31))
 
+    def _first_day_column(self, body, cols=100):
+        first_day_row = next(line for line in body
+                             if re.search(r"\b1\b", _blocks_to_space(line)))
+        return _blocks_to_space(first_day_row).index("1") // (cols // 7)
+
     def test_title_and_weekdays(self):
         body, _chip = _render(100, 32)
         assert "Sep 2026" in body[0]
-        assert "Sun" in body[1] and "Sat" in body[1]
-        # English weeks open on Sunday: Sep 1 2026 is a Tuesday, so day 1
-        # sits under the third column, two empty cells in.
-        first_day_row = next(line for line in body
-                             if re.search(r"\b1\b", _blocks_to_space(line)))
-        assert _blocks_to_space(first_day_row).index("1") >= 2 * (100 // 7)
+        assert "Mon" in body[1] and "Sun" in body[1]
+        # The week opens on Monday by default: Sep 1 2026 is a Tuesday,
+        # so day 1 sits under the second column, one empty cell in.
+        assert body[1].strip().startswith("Mon")
+        assert self._first_day_column(body) == 1
 
-    def test_monday_first_for_german(self):
+    def test_week_start_turns_the_grid(self):
+        # Sunday first puts the Tuesday two cells in; Saturday first, three.
+        body, _chip = _render(100, 32, week_start="sunday")
+        assert body[1].strip().startswith("Sun")
+        assert self._first_day_column(body) == 2
+        body, _chip = _render(100, 32, week_start="saturday")
+        assert body[1].strip().startswith("Sat")
+        assert self._first_day_column(body) == 3
+
+    def test_week_start_is_the_countrys_not_the_languages(self):
+        # A German reader in the United States gets Sunday too.
+        body, _chip = _render(100, 32, lang="de", week_start="sunday")
+        assert body[1].strip().startswith("So")
         body, _chip = _render(100, 32, lang="de")
         assert body[1].strip().startswith("Mo")
 
@@ -245,7 +262,9 @@ class TestCalendars:
 class TestHoverChip:
     def _chip_over(self, day, **kw):
         # Day cells are cell_w=100//7=14 wide from left=1, cell_h=6 from
-        # row 2 (32-row fullscreen, 5 weeks); Sep 2026 leads with 2 blanks.
+        # row 2 (32-row fullscreen, 5 weeks); Sunday first, Sep 2026
+        # leads with 2 blanks.
+        kw.setdefault("week_start", "sunday")
         slot = 2 + day - 1
         wk, c = divmod(slot, 7)
         col = 1 + c * 14 + 3
@@ -284,23 +303,26 @@ class TestHoverChip:
         assert chip.count("十六夜") == 1
 
     def test_hijri_date_in_the_chip(self):
-        # March 2026 opens on a Sunday, so day 20 is week 2, column 5.
+        # Sunday first: March 2026 opens on a Sunday, so day 20 is week 2,
+        # column 5.
         pos = (1 + 5 * 14 + 3, 3 + 2 * 6 + 2)
         _body, chip = _render(100, 32, mouse_pos=pos, calendar="islamic",
-                              now=datetime(2026, 3, 1, 14, 30, tzinfo=ET))
+                              now=datetime(2026, 3, 1, 14, 30, tzinfo=ET),
+                              week_start="sunday")
         assert "Eid al-Fitr · 1 Shawwal 1447 AH" in chip
 
     def test_hebrew_date_in_the_chip(self):
-        # September 2026 opens on a Tuesday, so the 12th is week 1,
-        # column 6, and October's 11th (a Sunday) is week 2, column 0.
+        # Sunday first: September 2026 opens on a Tuesday, so the 12th is
+        # week 1, column 6, and October's 11th (a Sunday) is week 2,
+        # column 0.
         now = datetime(2026, 9, 1, 14, 30, tzinfo=ET)
         pos = (1 + 6 * 14 + 3, 3 + 1 * 6 + 2)
         _body, chip = _render(100, 32, mouse_pos=pos, calendar="hebrew",
-                              now=now)
+                              now=now, week_start="sunday")
         assert "Rosh Hashanah · 1 Tishrei 5787" in chip
         pos = (1 + 0 * 14 + 3, 3 + 2 * 6 + 2)
         _body, chip = _render(100, 32, mouse_pos=pos, calendar="hebrew",
-                              now=now, month_offset=1)
+                              now=now, month_offset=1, week_start="sunday")
         assert "Rosh Chodesh Cheshvan · 30 Tishrei 5787" in chip
 
     def test_off_grid_raises_nothing(self):
@@ -312,14 +334,14 @@ class TestClickedDay:
     def test_maps_a_cell_to_its_day(self):
         from datetime import date
         from linecast._moon_calendar import clicked_day
-        _render(100, 32)
+        _render(100, 32, week_start="sunday")
         # Same geometry as TestHoverChip: day 16 sits in week 2, col 3.
         assert clicked_day(1 + 3 * 14 + 3, 3 + 2 * 6 + 2) == date(2026, 9, 16)
 
     def test_matches_the_hover_chip(self):
         from linecast._moon_calendar import clicked_day
         pos = (1 + 3 * 14 + 3, 3 + 2 * 6 + 2)
-        _body, chip = _render(100, 32, mouse_pos=pos)
+        _body, chip = _render(100, 32, mouse_pos=pos, week_start="sunday")
         d = clicked_day(*pos)
         assert f"Sep {d.day}" in chip
 

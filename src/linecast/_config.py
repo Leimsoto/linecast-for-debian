@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from linecast._paths import config_root
-from linecast._runtime import log_failure
+from linecast._runtime import WEEK_STARTS, log_failure
 
 
 def config_file() -> Path:
@@ -57,6 +57,14 @@ def saved_clock() -> str | None:
     clock = read_config().get("clock")
     if str(clock).strip() in ("12", "24"):
         return str(clock).strip()
+    return None
+
+
+def saved_week_start() -> str | None:
+    """Return 'monday', 'sunday' or 'saturday' saved via `linecast week`, or None."""
+    week = read_config().get("week")
+    if isinstance(week, str) and week.strip().lower() in WEEK_STARTS:
+        return week.strip().lower()
     return None
 
 

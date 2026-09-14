@@ -4,8 +4,8 @@ The per-command flags are read from the argparse parsers in _runtime,
 so a flag added there reaches every shell's completion without a
 parallel list here. Only the pieces argparse does not know about stay
 in this module: the top-level `linecast` dispatcher (hand-rolled in
-__main__), the location/language/units/clock/icons/calendar/doctor subcommands, and the value lists
-for flags whose parsers accept free text.
+__main__), the location/language/units/clock/week/icons/calendar/doctor
+subcommands, and the value lists for flags whose parsers accept free text.
 """
 
 from __future__ import annotations
@@ -44,7 +44,8 @@ COMMANDS = ("weather", "sunshine", "moon", "sky", "tides", "radar", "maps")
 
 GLOBAL_FLAGS = ("--help", "-h", "--version", "-v")
 TOP_LEVEL_COMMANDS = ("weather", "sunshine", "moon", "sky", "tides", "radar", "maps",
-                      "location", "language", "units", "clock", "icons", "calendar",
+                      "location", "language", "units", "clock", "week", "icons",
+                      "calendar",
                       "culture", "link", "doctor",
                       "completion")
 LOCATION_SUBCOMMANDS = ("show", "set", "auto", "search")
@@ -57,6 +58,8 @@ UNITS_SUBCOMMANDS = ("show", "metric", "imperial", "auto")
 UNITS_FLAGS = ("--help", "-h", "--version")
 CLOCK_SUBCOMMANDS = ("show", "12", "24", "auto")
 CLOCK_FLAGS = ("--help", "-h", "--version")
+WEEK_SUBCOMMANDS = ("show", "monday", "sunday", "saturday", "auto")
+WEEK_FLAGS = ("--help", "-h", "--version")
 ICONS_SUBCOMMANDS = ("show", "nerd", "emoji", "plain", "auto")
 ICONS_FLAGS = ("--help", "-h", "--version")
 # `linecast calendar` takes the same names as moon's --calendar, plus
@@ -214,6 +217,8 @@ def _bash_script(flags_by_command):
     units_sub = _SPACE.join(UNITS_SUBCOMMANDS)
     clock = _SPACE.join(CLOCK_FLAGS)
     clock_sub = _SPACE.join(CLOCK_SUBCOMMANDS)
+    week = _SPACE.join(WEEK_FLAGS)
+    week_sub = _SPACE.join(WEEK_SUBCOMMANDS)
     icons = _SPACE.join(ICONS_FLAGS)
     icons_sub = _SPACE.join(ICONS_SUBCOMMANDS)
     calendar = _SPACE.join(CALENDAR_FLAGS)
@@ -341,6 +346,10 @@ _linecast_complete_command() {{
       _linecast_complete_flags {clock}
       COMPREPLY+=( $(compgen -W "{clock_sub}" -- "$cur") )
       ;;
+    week)
+      _linecast_complete_flags {week}
+      COMPREPLY+=( $(compgen -W "{week_sub}" -- "$cur") )
+      ;;
     icons)
       _linecast_complete_flags {icons}
       COMPREPLY+=( $(compgen -W "{icons_sub}" -- "$cur") )
@@ -382,7 +391,7 @@ _linecast_complete() {{
 
   cmd="${{COMP_WORDS[1]}}"
   case "$cmd" in
-    weather|tides|sunshine|moon|sky|radar|maps|location|language|units|clock|icons|calendar|culture|link|doctor|completion)
+    weather|tides|sunshine|moon|sky|radar|maps|location|language|units|clock|week|icons|calendar|culture|link|doctor|completion)
       _linecast_complete_command "$cmd"
       ;;
   esac
@@ -409,6 +418,8 @@ def _zsh_script(flags_by_command):
     units_sub = _SPACE.join(UNITS_SUBCOMMANDS)
     clock = _SPACE.join(CLOCK_FLAGS)
     clock_sub = _SPACE.join(CLOCK_SUBCOMMANDS)
+    week = _SPACE.join(WEEK_FLAGS)
+    week_sub = _SPACE.join(WEEK_SUBCOMMANDS)
     icons = _SPACE.join(ICONS_FLAGS)
     icons_sub = _SPACE.join(ICONS_SUBCOMMANDS)
     calendar = _SPACE.join(CALENDAR_FLAGS)
@@ -533,6 +544,10 @@ _linecast_complete_command() {{
       _linecast_add_flags {clock}
       compadd -- {clock_sub}
       ;;
+    week)
+      _linecast_add_flags {week}
+      compadd -- {week_sub}
+      ;;
     icons)
       _linecast_add_flags {icons}
       compadd -- {icons_sub}
@@ -569,7 +584,7 @@ _linecast() {{
     fi
     cmd="${{words[2]}}"
     case "$cmd" in
-      weather|tides|sunshine|moon|sky|radar|maps|location|language|units|clock|icons|calendar|culture|link|doctor|completion)
+      weather|tides|sunshine|moon|sky|radar|maps|location|language|units|clock|week|icons|calendar|culture|link|doctor|completion)
         _linecast_complete_command "$cmd"
         ;;
     esac
@@ -611,6 +626,7 @@ def _fish_script(flags_by_command):
     language_sub = _SPACE.join(LANGUAGE_SUBCOMMANDS)
     units_sub = _SPACE.join(UNITS_SUBCOMMANDS)
     clock_sub = _SPACE.join(CLOCK_SUBCOMMANDS)
+    week_sub = _SPACE.join(WEEK_SUBCOMMANDS)
     icons_sub = _SPACE.join(ICONS_SUBCOMMANDS)
     calendar_sub = _SPACE.join(CALENDAR_SUBCOMMANDS)
     culture_sub = _SPACE.join(CULTURE_SUBCOMMANDS)
@@ -629,6 +645,8 @@ def _fish_script(flags_by_command):
         "complete -c linecast -f -n '__fish_seen_subcommand_from units' -l help -s h",
         f"complete -c linecast -f -n '__fish_seen_subcommand_from clock' -a '{clock_sub}'",
         "complete -c linecast -f -n '__fish_seen_subcommand_from clock' -l help -s h",
+        f"complete -c linecast -f -n '__fish_seen_subcommand_from week' -a '{week_sub}'",
+        "complete -c linecast -f -n '__fish_seen_subcommand_from week' -l help -s h",
         f"complete -c linecast -f -n '__fish_seen_subcommand_from icons' -a '{icons_sub}'",
         "complete -c linecast -f -n '__fish_seen_subcommand_from icons' -l help -s h",
         f"complete -c linecast -f -n '__fish_seen_subcommand_from calendar' -a '{calendar_sub}'",
@@ -711,6 +729,8 @@ def _nu_script(flags_by_command):
                                 UNITS_SUBCOMMANDS))
     lines.extend(_nu_value_list("linecast-clock-subcommands",
                                 CLOCK_SUBCOMMANDS))
+    lines.extend(_nu_value_list("linecast-week-subcommands",
+                                WEEK_SUBCOMMANDS))
     lines.extend(_nu_value_list("linecast-icons-subcommands",
                                 ICONS_SUBCOMMANDS))
     lines.extend(_nu_value_list("linecast-calendar-subcommands",
@@ -763,6 +783,13 @@ def _nu_script(flags_by_command):
         ))
         for sub in CLOCK_SUBCOMMANDS:
             lines.extend(_nu_extern(f"{prefix}clock {sub}", version_only))
+        lines.extend(_nu_extern(
+            f"{prefix}week",
+            version_only,
+            ['subcommand?: string@"nu-complete linecast-week-subcommands"'],
+        ))
+        for sub in WEEK_SUBCOMMANDS:
+            lines.extend(_nu_extern(f"{prefix}week {sub}", version_only))
         lines.extend(_nu_extern(
             f"{prefix}icons",
             version_only,

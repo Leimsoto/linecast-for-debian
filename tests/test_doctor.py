@@ -88,6 +88,7 @@ class TestOffline:
         assert "  location  (set) (WEATHER_LOCATION)" in out
         assert "  language  fr (LINECAST_LANG)" in out
         assert "  clock     24-hour (auto)" in out
+        assert "  week      monday (auto)" in out
         assert "  WEATHER_LOCATION=(set)" in out
         assert "1.5,2.5" not in out
 
@@ -192,7 +193,7 @@ class TestJson:
             "icons", "theme", "lang", "glyph_widths"}
         assert set(report["preferences"]) == {
             "units", "units_source", "tides_units", "tides_units_source",
-            "clock", "clock_source", "location",
+            "clock", "clock_source", "week", "week_source", "location",
             "location_source", "language", "language_source",
             "calendar", "calendar_source", "culture", "culture_source"}
         assert isinstance(report["environment"], dict)

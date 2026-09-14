@@ -66,14 +66,12 @@ def _rebuild():
 _rebuild()
 _theme.on_reload(_rebuild)
 
-# Sunday opens the week where the printed calendars open it on Sunday;
-# everywhere else Monday does. DAY_NAMES is Monday-first, so the value
-# is the weekday() of the grid's first column.
-_SUNDAY_FIRST = frozenset({"en", "ja", "ko"})
-
-
-def _week_start(lang):
-    return 6 if lang in _SUNDAY_FIRST else 0
+def _week_start(runtime):
+    """The weekday() of the grid's first column: the resolved week start
+    (`linecast week`, by default the country's custom), Monday without a
+    runtime. DAY_NAMES is Monday-first, so this also rotates the header."""
+    from linecast._runtime import WEEK_START_WEEKDAY
+    return WEEK_START_WEEKDAY.get(getattr(runtime, "week_start", None), 0)
 
 
 def _month_title(year, month, lang):
@@ -258,7 +256,7 @@ def render_calendar(now_local, lat, lng, runtime, month_offset=0,
     month += 1
     first = date(year, month, 1)
     days_in = calendar.monthrange(year, month)[1]
-    start = _week_start(lang)
+    start = _week_start(runtime)
     lead = (first.weekday() - start) % 7
     weeks = -(-(lead + days_in) // 7)
 

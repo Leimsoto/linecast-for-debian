@@ -1,7 +1,11 @@
 """Terminal theme probing and derived color helpers.
 
-Theme colors are queried once via OSC and cached at import time.
-If the terminal does not answer quickly, a fallback dark palette is used.
+Theme colors are queried once via OSC and cached at import time.  A
+cursor position query follows the colour questions, and the probe waits
+for its reply: a terminal answers in order, so the reply means every
+colour it was going to give has come, and a terminal that does not know
+the colour questions answers the cursor query alone, at once.  If not
+even that comes in time, a fallback dark palette is used.
 
 The theme can change while a live view is open (the user switches their
 terminal's colour scheme; on Omarchy, `omarchy-theme-set` pushes new
@@ -18,7 +22,6 @@ from __future__ import annotations
 import colorsys
 import os
 import re
-import select
 import sys
 import time
 from typing import Iterable
@@ -52,6 +55,10 @@ _FALLBACK_ANSI: tuple[RGB, ...] = (
     (80, 160, 220),    # 14 bright cyan
     (200, 210, 225),   # 15 bright white
 )
+
+# The questions: foreground, background, and the sixteen ANSI slots.
+_PROBE_QUERY = ("\033]10;?\007\033]11;?\007"
+                + "".join(f"\033]4;{idx};?\007" for idx in range(16))).encode("ascii")
 
 _OSC_RESPONSE_RE = re.compile(
     r"\x1b\](?P<op>10|11|4;(?P<idx>\d{1,2}));"
@@ -292,9 +299,12 @@ def _parse_rgb_value(rgb_value: str):
 
 
 def _theme_query_timeout():
+    # The wait ends when the terminal's reply to the cursor query comes,
+    # which a terminal sends at once; the whole timeout is only spent on a
+    # tty with nothing answering behind it.
     from linecast._runtime import probe_timeout_s
-    return probe_timeout_s("LINECAST_THEME_TIMEOUT_MS", 100, ssh_ms=500,
-                           limit_ms=1000)
+    return probe_timeout_s("LINECAST_THEME_TIMEOUT_MS", 500, ssh_ms=1000,
+                           limit_ms=2000)
 
 
 def _argv_requests_legacy_mode():
@@ -338,10 +348,8 @@ def _query_theme_via_osc(timeout_s: float):
     except Exception:
         return None
 
-    query = "".join(
-        ["\033]10;?\007", "\033]11;?\007"]
-        + [f"\033]4;{idx};?\007" for idx in range(16)]
-    )
+    from linecast import _term
+    query = _PROBE_QUERY + _term.CPR_QUERY
     fg_value = None
     bg_value = None
     ansi_values = {}
@@ -351,61 +359,34 @@ def _query_theme_via_osc(timeout_s: float):
     except Exception:
         return None
 
-    deadline = time.monotonic() + timeout_s
-    buf = ""
     try:
         tty.setraw(fd_in)
-        os.write(fd_out, query.encode("ascii", errors="ignore"))
         try:
             stdout.flush()
         except Exception:
             pass
-
-        while time.monotonic() < deadline:
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                break
-            try:
-                ready, _, _ = select.select([fd_in], [], [], remaining)
-            except (InterruptedError, OSError):
-                continue
-            if not ready:
-                break
-            try:
-                chunk = os.read(fd_in, 4096)
-            except OSError:
-                break
-            if not chunk:
-                break
-            buf += chunk.decode("utf-8", errors="ignore")
-            if len(buf) > 16384:
-                buf = buf[-8192:]
-            for match in _OSC_RESPONSE_RE.finditer(buf):
-                rgb = _parse_rgb_value(match.group("rgb"))
-                if rgb is None:
-                    continue
-                op = match.group("op")
-                if op == "10":
-                    fg_value = rgb
-                elif op == "11":
-                    bg_value = rgb
-                else:
-                    idx_text = match.group("idx")
-                    if idx_text is None:
-                        continue
-                    try:
-                        idx = int(idx_text)
-                    except ValueError:
-                        continue
-                    if 0 <= idx <= 15:
-                        ansi_values[idx] = rgb
-            if fg_value is not None and bg_value is not None and len(ansi_values) == 16:
-                break
+        os.write(fd_out, query)
+        raw, _answered = _term.read_until_reply(fd_in, timeout_s)
     finally:
         try:
             termios.tcsetattr(fd_in, termios.TCSADRAIN, old_settings)
         except Exception:
             pass
+
+    buf = raw.decode("utf-8", errors="ignore")
+    for match in _OSC_RESPONSE_RE.finditer(buf):
+        rgb = _parse_rgb_value(match.group("rgb"))
+        if rgb is None:
+            continue
+        op = match.group("op")
+        if op == "10":
+            fg_value = rgb
+        elif op == "11":
+            bg_value = rgb
+        else:
+            idx = int(match.group("idx"))
+            if 0 <= idx <= 15:
+                ansi_values[idx] = rgb
 
     if fg_value is None or bg_value is None or len(ansi_values) < 16:
         return None
@@ -516,8 +497,6 @@ def reload(timeout_s=None):
 # the terminal's replies come back interleaved with keystrokes, where the
 # key reader hands each OSC body to ingest_osc.  A probe is complete when
 # fg, bg and all sixteen ANSI slots have answered.
-_PROBE_QUERY = ("\033]10;?\007\033]11;?\007"
-                + "".join(f"\033]4;{idx};?\007" for idx in range(16))).encode("ascii")
 _probe = None        # {"fg": rgb, "bg": rgb, "ansi": {idx: rgb}, "started": monotonic}
 _PROBE_STALE_S = 2.0
 

@@ -253,6 +253,9 @@ def calibrate_from_terminal(timeout_s=None):
         return
     if str(os.environ.get("TERM", "")).strip().lower() in ("", "dumb"):
         return
+    from linecast import _term
+    if _term.answered is False:
+        return   # the colour probe's cursor query went unanswered: a mute tty
     _CALIBRATED = True
 
     if timeout_s is None:
@@ -286,6 +289,11 @@ def calibrate_from_terminal(timeout_s=None):
             if len(widths) >= len(_PROBES):
                 break
     finally:
+        if widths:
+            _term.mark_answered()
+        if len(widths) < len(_PROBES):
+            # An answer that comes after this would reach the shell.
+            _term.flush_input(fd_in)
         try:
             os.write(fd_out, b"\r\033[2K")
         except OSError:

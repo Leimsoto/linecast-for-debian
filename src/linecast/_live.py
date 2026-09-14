@@ -7,6 +7,7 @@ or panel over a frame.  The loop supports:
 
 - Auto-refresh on a configurable interval
 - Immediate re-render on terminal resize
+- Frames paced to the terminal: the next waits until the last was read
 - Re-inking in place when the terminal's colour theme changes
 - Keyboard navigation (arrows, q to quit, n to reset)
 - Mouse wheel scrubbing (SGR and legacy X10/VT200 encoding)
@@ -47,6 +48,14 @@ _AUTOWRAP_ON = "\033[?7h"
 # One that does not ignores them, as it ignores any unknown mode.
 _SYNC_BEGIN = "\033[?2026h"
 _SYNC_END = "\033[?2026l"
+
+# The cursor position query sent after each frame, whose reply says the
+# terminal has read the frame (see live_loop), and how long the next
+# frame waits for it: long enough for a terminal that is genuinely
+# behind, and not long on a terminal that has yet to answer at all.
+_CPR_QUERY = _term.CPR_QUERY.decode("ascii")
+_ACK_WAIT_S = 1.0
+_ACK_FIRST_WAIT_S = 0.25
 
 
 def frame_body(text):
@@ -332,6 +341,10 @@ def _read_key(fd, text=False):
                 return action
 
             final = bytes(seq[-1:]) if seq else b''
+            if final == b'R' and seq[:1].isdigit():
+                # A cursor position report: the terminal has reached the
+                # query the loop sent after its last frame (or a probe's).
+                return 'ack'
             return {
                 b'A': 'fwd',
                 b'B': 'back',
@@ -635,6 +648,168 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
     modal_scroll = 0     # scroll offset within the modal
     alert_row_map = {}   # 0-based line index → [(first col, last col, alert index)]
 
+    # Each frame goes out with a cursor position query after it, and the
+    # next frame waits for the reply: the terminal answers once it has
+    # read the frame, so a terminal slower than the loop is never handed
+    # a backlog to play out after the user stops scrolling.  Input that
+    # arrives during the wait is folded into the frame being held.  A
+    # terminal that never answers is asked once, then left alone.
+    sync = _term.frame_sync_enabled()
+    acks_owed = 0
+
+    def _ack_wait():
+        return _ACK_WAIT_S if _term.answered else _ACK_FIRST_WAIT_S
+
+    def handle_input():
+        """Read one key or mouse event and apply it.
+
+        'quit' to leave the loop, 'repaint' when the frame should be drawn
+        again, None when nothing on screen changed -- or when more input
+        is already waiting, so a burst of scrolling paints once at its end.
+        """
+        nonlocal offset, playing, play_frame, mouse_pos, drag_start, drag_delta
+        nonlocal active_alert, modal_scroll, acks_owed
+        action = _read_key(fd, text=bool(text_mode is not None and text_mode()))
+        if action == 'ack':
+            _term.mark_answered()
+            acks_owed = max(0, acks_owed - 1)
+            return None
+        if action == 'theme':
+            return 'repaint'  # the terminal's colours changed
+        help_closed = False
+        if help_panel is not None:
+            was_helping = help_panel.open
+            if help_panel.handle(action):
+                if not was_helping and help_panel.open and drag_start is not None:
+                    on_drag(*drag_delta, True)
+                drag_start = None
+                return 'repaint'
+            help_closed = was_helping and not help_panel.open
+        if (intercept is not None and action is not None
+                and not isinstance(action, tuple)
+                and intercept(action)):
+            return 'repaint'
+        if action == 'quit':
+            if active_alert is not None:
+                active_alert = None
+                modal_scroll = 0
+                return 'repaint'
+            return 'quit'
+        elif action == 'escape':
+            # With mouse tracking, bare ESC is almost always a split mouse
+            # sequence (release bytes arriving late).  Only honour ESC to
+            # dismiss when mouse is off.
+            if not mouse and active_alert is not None:
+                active_alert = None
+                return 'repaint'
+        elif action == 'open':
+            if active_alert is not None and on_open:
+                on_open(active_alert)
+                return 'repaint'
+        elif action in ('fwd', 'back'):
+            step = 1 if action == 'fwd' else -1
+            if auto_play:
+                playing = False
+                play_frame += step
+            else:
+                offset += step * scroll_step
+            if _term.wait_readable(fd, 0):
+                return None  # coalesce rapid scrolling
+            return 'repaint'
+        elif action == 'reset':
+            if auto_play:
+                playing = not playing  # space = play/pause
+                if not playing:
+                    play_frame = 0  # pause returns to the home frame
+            else:
+                offset = 0
+            return 'repaint'
+        elif (on_action is not None and isinstance(action, str)
+              and action.startswith('key:')):
+            if on_action(action[4:]):
+                if _term.wait_readable(fd, 0):
+                    return None  # coalesce held-down keys (zoom taps)
+                return 'repaint'
+        elif mouse and isinstance(action, tuple) and action[0] == 'mouse':
+            _, cb, cx, cy, is_rel = action
+            wheel_cb = _normalize_wheel_cb(cb)
+            if wheel_cb in (64, 65):
+                if on_wheel is not None:
+                    # Caller owns the wheel outright (zoom, panel scroll,
+                    # …) — no scrub fallback.
+                    if on_wheel(1 if wheel_cb == 64 else -1, cx, cy):
+                        if _term.wait_readable(fd, 0):
+                            return None  # coalesce rapid wheel
+                        return 'repaint'
+                    return None
+                if active_alert is not None:
+                    # Scroll the modal
+                    modal_scroll += 3 if wheel_cb == 65 else -3
+                    modal_scroll = max(0, modal_scroll)
+                elif auto_play:
+                    playing = False
+                    play_frame += 1 if wheel_cb == 64 else -1
+                else:
+                    offset += scroll_step if wheel_cb == 64 else -scroll_step
+                if _term.wait_readable(fd, 0):
+                    return None  # coalesce rapid scrolling
+                return 'repaint'
+            if is_rel:
+                # Button release — completes a drag gesture if one
+                # started; otherwise ignore.
+                if drag_start is not None:
+                    dcol, drow = cx - drag_start[0], cy - drag_start[1]
+                    drag_start = None
+                    clicked = (dcol == 0 and drow == 0
+                               and on_click is not None
+                               and on_click(cx, cy))
+                    if on_drag(dcol, drow, True) or clicked:
+                        return 'repaint'
+                return None
+            if (cb & 0b11) == 0 and not (cb & 0x20):
+                # Left button press (not release, not motion)
+                if on_drag is not None:
+                    drag_start = (cx, cy)
+                    drag_delta = (0, 0)
+                row_idx = cy - 1  # 1-based → 0-based
+                if active_alert is not None:
+                    # Click while modal open — dismiss
+                    active_alert = None
+                    modal_scroll = 0
+                    return 'repaint'
+                elif row_idx in alert_row_map:
+                    spans = alert_row_map[row_idx]
+                    col_idx = cx - 1  # 1-based → 0-based
+                    active_alert = next(
+                        (i for start, end, i in spans
+                         if start <= col_idx <= end),
+                        spans[0][2])
+                    modal_scroll = 0
+                    return 'repaint'
+            if cb & 32:
+                if drag_start is not None:
+                    # mid-drag: live preview with cumulative delta
+                    dcol, drow = cx - drag_start[0], cy - drag_start[1]
+                    drag_delta = (dcol, drow)
+                    if on_drag(dcol, drow, False):
+                        if _term.wait_readable(fd, 0):
+                            return None  # coalesce rapid drag motion
+                        return 'repaint'
+                    return None
+                # Hover-capable terminals.
+                mouse_pos = (cx, cy)
+                if _term.wait_readable(fd, 0):
+                    return None  # coalesce rapid motion: render once at the final position
+                return 'repaint'
+            # Fallback for terminals without motion reporting:
+            # update pointer on press so tooltip can still appear.
+            if (cb & 0b11) in (0, 1, 2):
+                mouse_pos = (cx, cy)
+                return 'repaint'
+        if help_closed:
+            return 'repaint'  # even an unbound key must erase the panel
+        return None
+
     init = "\033[?1049h\033[?25l"
     if mouse:
         # Enable both legacy and SGR mouse reporting for broad compatibility.
@@ -654,6 +829,23 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
         sys.stdout.flush()
 
         while True:
+            # Hold this frame until the terminal has read the last one.
+            # Keys and wheel notches that arrive meanwhile change the
+            # state the frame is rendered from; a wakeup or a timer tick
+            # is absorbed the same way, since a repaint is coming.
+            if sync and acks_owed:
+                until = _time.monotonic() + _ack_wait()
+                while acks_owed:
+                    left = until - _time.monotonic()
+                    if left <= 0:
+                        if not _term.answered:
+                            sync = False  # this terminal does not answer
+                        acks_owed = 0
+                        break
+                    if term.wait(min(0.1, left)) == 'input':
+                        if handle_input() == 'quit':
+                            return
+
             # Drain wakeups from before this render: whatever they announced,
             # the frame about to be drawn reflects it.  The drain must come
             # BEFORE render_fn, never after — a background fetch can finish
@@ -687,7 +879,11 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
                 # restore it when the caller's overlay has not done so.
                 if "\033[?1003l" not in overlay:
                     overlay = "\033[?1003h" + overlay
-            sys.stdout.write(frame_paint(main_out, overlay))
+            paint = frame_paint(main_out, overlay)
+            if sync:
+                paint += _CPR_QUERY
+                acks_owed += 1
+            sys.stdout.write(paint)
             sys.stdout.flush()
 
             # Wait for input, resize, or timeout
@@ -707,151 +903,11 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
                     _maybe_probe()
                     continue
                 if event == 'input':
-                    action = _read_key(
-                        fd, text=bool(text_mode is not None and text_mode()))
-                    if action == 'theme':
-                        break  # the terminal's colours changed: repaint
-                    help_closed = False
-                    if help_panel is not None:
-                        was_helping = help_panel.open
-                        if help_panel.handle(action):
-                            if not was_helping and help_panel.open and drag_start is not None:
-                                on_drag(*drag_delta, True)
-                            drag_start = None
-                            break
-                        help_closed = was_helping and not help_panel.open
-                    if (intercept is not None and action is not None
-                            and not isinstance(action, tuple)
-                            and intercept(action)):
-                        break
-                    if action == 'quit':
-                        if active_alert is not None:
-                            active_alert = None
-                            modal_scroll = 0
-                            break
+                    verdict = handle_input()
+                    if verdict == 'quit':
                         return
-                    elif action == 'escape':
-                        # With mouse tracking, bare ESC is almost always a
-                        # split mouse sequence (release bytes arriving late).
-                        # Only honour ESC to dismiss when mouse is off.
-                        if not mouse and active_alert is not None:
-                            active_alert = None
-                            break
-                    elif action == 'open':
-                        if active_alert is not None and on_open:
-                            on_open(active_alert)
-                            break
-                    elif action == 'fwd':
-                        if auto_play:
-                            playing = False
-                            play_frame += 1
-                        else:
-                            offset += scroll_step
-                        if _term.wait_readable(fd, 0):
-                            continue  # coalesce rapid scrolling
+                    if verdict == 'repaint':
                         break
-                    elif action == 'back':
-                        if auto_play:
-                            playing = False
-                            play_frame -= 1
-                        else:
-                            offset -= scroll_step
-                        if _term.wait_readable(fd, 0):
-                            continue  # coalesce rapid scrolling
-                        break
-                    elif action == 'reset':
-                        if auto_play:
-                            playing = not playing  # space = play/pause
-                            if not playing:
-                                play_frame = 0  # pause returns to the home frame
-                        else:
-                            offset = 0
-                        break
-                    elif (on_action is not None and isinstance(action, str)
-                          and action.startswith('key:')):
-                        if on_action(action[4:]):
-                            if _term.wait_readable(fd, 0):
-                                continue  # coalesce held-down keys (zoom taps)
-                            break
-                    elif mouse and isinstance(action, tuple) and action[0] == 'mouse':
-                        _, cb, cx, cy, is_rel = action
-                        wheel_cb = _normalize_wheel_cb(cb)
-                        if wheel_cb in (64, 65):
-                            if on_wheel is not None:
-                                # Caller owns the wheel outright (zoom,
-                                # panel scroll, …) — no scrub fallback.
-                                if on_wheel(1 if wheel_cb == 64 else -1,
-                                            cx, cy):
-                                    if _term.wait_readable(fd, 0):
-                                        continue  # coalesce rapid wheel
-                                    break
-                                continue
-                            if active_alert is not None:
-                                # Scroll the modal
-                                modal_scroll += 3 if wheel_cb == 65 else -3
-                                modal_scroll = max(0, modal_scroll)
-                            elif auto_play:
-                                playing = False
-                                play_frame += 1 if wheel_cb == 64 else -1
-                            else:
-                                offset += scroll_step if wheel_cb == 64 else -scroll_step
-                            if _term.wait_readable(fd, 0):
-                                continue  # coalesce rapid scrolling
-                            break
-                        if is_rel:
-                            # Button release — completes a drag gesture if one
-                            # started; otherwise ignore.
-                            if drag_start is not None:
-                                dcol, drow = cx - drag_start[0], cy - drag_start[1]
-                                drag_start = None
-                                clicked = (dcol == 0 and drow == 0
-                                           and on_click is not None
-                                           and on_click(cx, cy))
-                                if on_drag(dcol, drow, True) or clicked:
-                                    break
-                            continue
-                        if (cb & 0b11) == 0 and not (cb & 0x20):
-                            # Left button press (not release, not motion)
-                            if on_drag is not None:
-                                drag_start = (cx, cy)
-                                drag_delta = (0, 0)
-                            row_idx = cy - 1  # 1-based → 0-based
-                            if active_alert is not None:
-                                # Click while modal open — dismiss
-                                active_alert = None
-                                modal_scroll = 0
-                                break
-                            elif row_idx in alert_row_map:
-                                spans = alert_row_map[row_idx]
-                                col_idx = cx - 1  # 1-based → 0-based
-                                active_alert = next(
-                                    (i for start, end, i in spans
-                                     if start <= col_idx <= end),
-                                    spans[0][2])
-                                modal_scroll = 0
-                                break
-                        if cb & 32:
-                            if drag_start is not None:
-                                # mid-drag: live preview with cumulative delta
-                                dcol, drow = cx - drag_start[0], cy - drag_start[1]
-                                drag_delta = (dcol, drow)
-                                if on_drag(dcol, drow, False):
-                                    if _term.wait_readable(fd, 0):
-                                        continue  # coalesce rapid drag motion
-                                    break
-                                continue
-                            # Hover-capable terminals.
-                            mouse_pos = (cx, cy)
-                            if _term.wait_readable(fd, 0):
-                                continue  # coalesce rapid motion: render once at the final position
-                            break
-                        # Fallback for terminals without motion reporting:
-                        # update pointer on press so tooltip can still appear.
-                        if (cb & 0b11) in (0, 1, 2):
-                            mouse_pos = (cx, cy)
-                            break
-                    if help_closed:
-                        break  # even an unbound key must erase the panel
     except KeyboardInterrupt:
         pass
     # SystemExit is NOT swallowed: a sys.exit(1) from a render callback (or
@@ -859,9 +915,6 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
     # The finally block still restores the terminal on its way out.
     finally:
         _running = False
-        # Puts back the terminal settings, the signal handlers and the
-        # wakeup channel, in that order — see _term.LiveTerminal.close.
-        term.close()
         try:
             cleanup = ""
             if mouse:
@@ -869,10 +922,22 @@ def live_loop(render_fn, interval=60, mouse=False, on_open=None, scroll_step=15,
                 if is_apple_terminal:
                     cleanup += "\033[?1007l"
             cleanup += f"{_AUTOWRAP_ON}\033[?25h\033[?1049l"
+            if sync:
+                cleanup += _CPR_QUERY
             sys.stdout.write(cleanup)
             sys.stdout.flush()
         except Exception:
             pass  # tty may already be gone (SIGHUP); nothing left to restore
+        # What the terminal was still sending -- a colour probe's replies,
+        # mouse reports from before it read the escape above -- is read
+        # and dropped, up to its reply to the query, so none of it reaches
+        # the shell.  Then the terminal settings, the signal handlers and
+        # the wakeup channel go back, in that order (_term.LiveTerminal).
+        try:
+            term.settle(_ack_wait() if sync else 0)
+        except Exception:
+            pass
+        term.close()
         watch.uninstall()
         watch.report()
 

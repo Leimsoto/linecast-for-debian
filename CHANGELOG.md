@@ -20,6 +20,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 - Weather: Hover over the daily chart, not just the hourly chart, for additional detail.
 - Weather: The prose under the chart is in the full text color.
 - Weather: The now and midnight lines run the full height of the hourly chart.
+- Weather: A short window gives up its spacing rows before anything else, and a tall one gets a blank row above the credit.
 - Weather: `weather --json` includes each hour's cloud cover.
 
 ## 2.4.0 — 2026-09-10

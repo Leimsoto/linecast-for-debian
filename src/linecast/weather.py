@@ -80,6 +80,7 @@ from linecast._weather_sources import (
 MIN_HOURLY_ROWS = 4
 MIN_DAILY_ROWS = 3
 MIN_CURVE_ROWS_WITH_CLOUD = 4  # the cloud strip appears only above this
+CURVE_ROWS_COMFORTABLE = 6     # below this the spacing rows give way
 
 
 def data_credits(country_code="", lang="en"):
@@ -432,11 +433,10 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     has_cloud_data = bool(hourly.get("cloud_cover"))
 
     # Count non-hourly lines precisely
-    non_hourly = 2  # header + blank
+    non_hourly = 1  # header
     if notice:
         non_hourly += 1
     non_hourly += len(narrative)
-    non_hourly += 1  # blank before daily
     non_hourly += len(daily_lines_rendered)
     if alert_lines:
         non_hourly += 1 + len(alert_lines)  # blank + alerts
@@ -457,9 +457,22 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     if has_precip_graph:
         hourly_floor += 1
 
-    # A window too short for all of that would push the header off the top
-    # of the screen, so give something up: the prose first, then the days
-    # furthest out.
+    # The spacing rows -- under the header, and between the prose and the
+    # daily rows -- are the first to go: they stay only while the curve
+    # would still have a comfortable height with them in.  A third, above
+    # the credit row, is a luxury of a window with room to spare.
+    comfortable = hourly_floor - 2 + CURVE_ROWS_COMFORTABLE
+    spacing = min(2, max(0, rows - non_hourly - comfortable))
+    blank_before_daily = spacing >= 1   # keeps two blocks of text apart
+    blank_after_header = spacing >= 2
+    non_hourly += spacing
+    blank_before_credit = live and rows - non_hourly - 1 >= comfortable
+    if blank_before_credit:
+        non_hourly += 1
+
+    # A window too short even for the floor would push the header off the
+    # top of the screen, so give something up: the prose first, then the
+    # days furthest out.
     short = hourly_floor - (rows - non_hourly)
     if short > 0 and narrative:
         dropped = min(short, len(narrative))
@@ -504,7 +517,8 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
                                historical=historical))
     if notice:
         lines.append(notice)
-    lines.append("")
+    if blank_after_header:
+        lines.append("")
 
     # Hourly — first pass without hover to establish line boundaries
     hourly_start = len(lines)
@@ -558,7 +572,8 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     # Feels-like, comparative, and precipitation prose
     lines.extend(narrative)
 
-    lines.append("")
+    if blank_before_daily:
+        lines.append("")
 
     # Daily
     daily_start = len(lines)
@@ -576,6 +591,8 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     if hint:
         lines.append(hint)
     if live:
+        if blank_before_credit:
+            lines.append("")
         lines.append(credit_row(cols, runtime.lang, country_code))
 
     # Shorter still than the trimming above could reach: cut the bottom

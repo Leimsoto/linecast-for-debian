@@ -354,7 +354,7 @@ def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0):
         "all_uv": uv_indices,
         "start_idx": start_idx,
         "end_idx": end_idx,
-        "all_temp_range": (all_temp_lo, all_temp_hi) if current_runtime().use_scaled_temp_graph else (-20, 40) if current_runtime().celsius else (-20, 100),
+        "all_temp_range": (all_temp_lo, all_temp_hi) if current_runtime().use_scaled_temp_graph else (-40, 50) if current_runtime().celsius else (-40, 122),
         "all_wind_max": all_wind_max,
         "all_uv_max": all_uv_max,
         "all_precip_max": all_precip_max,

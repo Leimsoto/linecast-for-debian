@@ -596,13 +596,18 @@ def _render_today_line(width, chart_lo, chart_hi, midnight_day_names, sun_labels
     avail = width - right_len
     mid_w = max(0, avail - label_start)
 
+    # A day name or a sun time never touches the label at either end:
+    # "Today" keeps a column clear after it, the range one before it.
+    left_gap = 1 if today_left else 0
+    fit_w = mid_w - 1
+
     mid_canvas = [" "] * mid_w
     mid_colors = [None] * mid_w
 
     for col, name in sorted(midnight_day_names.items()):
         pos = col - label_start
         name_w = visible_len(name)
-        if pos >= 0 and pos + name_w <= mid_w:
+        if pos >= left_gap and pos + name_w <= fit_w:
             cx = pos
             base = None
             for c in name:
@@ -621,9 +626,9 @@ def _render_today_line(width, chart_lo, chart_hi, midnight_day_names, sun_labels
                 cx += cw
 
     for col, (lbl, is_rise) in sorted(sun_labels.items()):
-        pos = max(0, col - label_start)
+        pos = max(left_gap, col - label_start)
         lbl_w = visible_len(lbl)
-        if pos + lbl_w > mid_w:
+        if pos + lbl_w > fit_w:
             continue
         if all(mid_canvas[pos + j] == " " for j in range(lbl_w)):
             color = SUNRISE_LABEL_RGB if is_rise else SUNSET_LABEL_RGB

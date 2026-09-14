@@ -4,6 +4,8 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
+## 2.5.1 — 2026-09-14
+
 - Live views: The last letter of the `? keys` hint is back. A row that reached the last column lost its final character to the clear that follows each frame, so the weather view's hint read "? key" since 2.5.0.
 - Weather: A sunrise or sunset time in the hourly chart's header keeps a space between itself and the day name or the temperature range beside it, instead of running into them.
 

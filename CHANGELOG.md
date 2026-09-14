@@ -4,6 +4,8 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
+## 2.5.2 — 2026-09-14
+
 - Live views: Quitting no longer leaves the terminal's colour replies on the shell's command line. linecast waits for the terminal to finish answering, at startup and on the way out, before it hands the terminal back.
 - Live views: Scrolling or dragging faster than the terminal can draw no longer queues up frames that keep playing after you stop. Each frame waits until the terminal has drawn the one before it, and the input that arrives meanwhile goes into the next frame.
 

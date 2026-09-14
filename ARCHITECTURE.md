@@ -34,6 +34,8 @@ A frame is a string. Anything floating over it — a tooltip, a modal, the searc
 
 Background work should not draw. It changes state and calls `_live.nudge()`, which wakes the loop for a repaint from any thread.
 
+The loop paces itself to the terminal. Every frame goes out with a cursor position query after it, and the next frame is held until the reply comes back, which the terminal sends once it has read the frame; keys and wheel notches that arrive while a frame is held change the state the next one is rendered from. A terminal that never answers is asked once and then left alone. The colour probe in `_theme.py` ends its questions with the same query and waits for that reply rather than a fixed time, and on the way out the loop sends one last query and drops everything the terminal sends before its reply, so a late colour answer or a trailing mouse report never reaches the shell. `_term.py` holds the query, the reader, and `LiveTerminal.settle`.
+
 ## What a view keeps
 
 Everything a live view paints from was fetched on some earlier repaint or in the background. `_scenes.py` holds the two ways of keeping it. A `Memo` is a small bounded dictionary that answers or builds on the calling thread and forgets its oldest entries: basemaps, place names, shaded terrain buffers, route layers. A `SceneCache` holds a view's worth of fetched data — an elevation grid, a street layer, a radar condition field. Asked to block, it loads on the calling thread. Live, a miss starts one background load for that key, answers an empty value so the frame can say "loading", and nudges the loop when the data lands. A `FetchHold` can gate it, so a run of zoom taps repaints at once but only the view you stop on reaches the network.

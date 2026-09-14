@@ -21,10 +21,24 @@ plumbing under it is swapped out here.
 from __future__ import annotations
 
 import os
+import re
 import sys
 import time as _time
 
 WINDOWS = sys.platform == "win32"
+
+# A cursor position query, and the reply it gets: \033[<row>;<col>R.
+# Every terminal answers it, and answers in order with everything sent
+# before it, so a query sent after a batch of output says when the
+# terminal has finished with the batch.  The colour probe sends one
+# after its questions, the live loop one after every frame, and the
+# teardown one after its last escapes.
+CPR_QUERY = b"\033[6n"
+CPR_REPLY = re.compile(rb"\033\[\d+;\d+R")
+
+# Whether this terminal has answered a cursor query: None until one is
+# sent, False after one went unanswered, True once any comes back.
+answered = None
 
 # How often the Windows wait wakes to re-check kbhit() and the window size.
 # Small enough that a keypress feels immediate, large enough to idle cheaply.
@@ -116,6 +130,66 @@ def read_byte(fd):
     except OSError:
         return None
     return data or None
+
+
+def mark_answered():
+    """Note that the terminal answered a cursor position query."""
+    global answered
+    answered = True
+
+
+def read_until_reply(fd, timeout):
+    """Read input until the terminal answers a cursor position query.
+
+    For a probe that has just sent its questions with CPR_QUERY after
+    them: returns (bytes read, whether the reply came) after the reply
+    or after `timeout` seconds, whichever is first.  The bytes hold the
+    answers that preceded the reply.  On a timeout the input queue is
+    flushed, so an answer that arrived late does not reach whatever
+    reads the terminal next.
+    """
+    global answered
+    buf = bytearray()
+    deadline = _time.monotonic() + timeout
+    while True:
+        left = deadline - _time.monotonic()
+        if left <= 0 or not wait_readable(fd, left):
+            break
+        try:
+            chunk = os.read(fd, 4096)
+        except OSError:
+            break
+        if not chunk:
+            break
+        buf.extend(chunk)
+        if CPR_REPLY.search(buf):
+            answered = True
+            return bytes(buf), True
+    if answered is None:
+        answered = False
+    flush_input(fd)
+    return bytes(buf), False
+
+
+def flush_input(fd):
+    """Discard input the terminal has sent and nothing has read."""
+    if WINDOWS:
+        _pending.clear()
+        handle = _console_handle(fd)
+        if handle is not None:
+            _k32.FlushConsoleInputBuffer(handle)
+        return
+    try:
+        termios.tcflush(fd, termios.TCIFLUSH)
+    except (OSError, termios.error):
+        pass
+
+
+def frame_sync_enabled():
+    """Whether the live loop waits for the terminal to finish one frame
+    before it sends the next.  LINECAST_FRAME_SYNC=0 turns it off."""
+    raw = str(os.environ.get("LINECAST_FRAME_SYNC", "1")).strip().lower()
+    return raw not in ("0", "false", "off", "no")
 
 
 def wait_readable(fd, timeout):
@@ -323,6 +397,24 @@ class LiveTerminal:
         return 'timeout'
 
     # -- teardown ----------------------------------------------------------
+    def settle(self, timeout):
+        """Discard what the terminal is still sending, before the tty goes
+        back to the shell.
+
+        The loop has just written its last escapes with CPR_QUERY after
+        them.  Whatever the terminal sends before that reply -- the rest
+        of a colour probe's answers, mouse reports it emitted before it
+        read the escape turning them off -- would otherwise land on the
+        shell's command line, and on macOS the cooked tty echoes them as
+        it goes.  Reads and drops input until the reply or `timeout`
+        seconds, then flushes the queue.
+        """
+        if self._closed:
+            return
+        if not WINDOWS and timeout > 0:
+            read_until_reply(self.fd, timeout)
+        flush_input(self.fd)
+
     def close(self):
         """Put the terminal, the handlers and the wakeup channel back."""
         global _current

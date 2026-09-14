@@ -346,6 +346,7 @@ def fake_tty(monkeypatch):
         monkeypatch.setattr(tty, "setcbreak", lambda fd: None)
     monkeypatch.setenv("LINECAST_THEME_POLL", "0")
     monkeypatch.setenv("LINECAST_THEME_WATCH", "")
+    monkeypatch.setenv("LINECAST_FRAME_SYNC", "0")   # nothing answers a pipe
     yield
     stdin.close()
     os.close(w)

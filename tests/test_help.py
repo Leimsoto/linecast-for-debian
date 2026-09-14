@@ -74,8 +74,11 @@ def run_loop(monkeypatch, actions, **hooks):
     """Drive the actual live loop with decoded input and a fake terminal."""
     terminal = SimpleNamespace(fd=0, install=lambda: None, set_cbreak=lambda: None,
                                drain=lambda: None, close=lambda: None,
+                               settle=lambda timeout: None,
                                wait=lambda timeout: 'input')
     monkeypatch.setattr(_live._term, 'LiveTerminal', lambda fd: terminal)
+    # The fake terminal never answers a cursor query: no frame pacing.
+    monkeypatch.setenv('LINECAST_FRAME_SYNC', '0')
     monkeypatch.setattr(_live._term, 'wait_readable', lambda fd, timeout: False)
     monkeypatch.setattr(_live.sys, 'stdin', SimpleNamespace(fileno=lambda: 0))
     output = io.StringIO()

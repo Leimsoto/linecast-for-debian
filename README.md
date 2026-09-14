@@ -360,7 +360,8 @@ Every view command and `linecast doctor` take `--debug`, which prints a line on 
 | `NO_COLOR` | Any non-empty value disables ANSI colors |
 | `CLICOLOR` / `CLICOLOR_FORCE` | `CLICOLOR=0` disables color; a non-zero `CLICOLOR_FORCE` keeps it on when output is not a terminal |
 | `LINECAST_THEME` | `auto` (default), or `classic` / `legacy` / `off` for the fixed palette |
-| `LINECAST_THEME_TIMEOUT_MS` | How long, in milliseconds, to wait for the terminal to answer the palette query (default `100`, or `500` over SSH) |
+| `LINECAST_THEME_TIMEOUT_MS` | How long, in milliseconds, to wait for the terminal to answer the palette query (default `500`, or `1000` over SSH; a terminal that answers at all does so well inside it) |
+| `LINECAST_FRAME_SYNC` | `0` stops live views waiting for the terminal to finish drawing one frame before sending the next (default `1`) |
 | `LINECAST_WIDTH_TIMEOUT_MS` | How long, in milliseconds, to wait for the terminal to say how wide it draws emoji and other glyphs (default `150`, or `600` over SSH) |
 | `LINECAST_THEME_POLL` | Seconds between re-reading the terminal palette in live views, so a theme switch re-inks the view in place (default `2`; `0` disables) |
 | `LINECAST_THEME_WATCH` | A file whose modification marks a desktop theme change, prompting an immediate re-read (default: Omarchy's current-theme marker; empty disables) |

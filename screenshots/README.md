@@ -6,9 +6,7 @@ credited in the main README's Lineage section. Leave it be.
 
 The README gallery is captured from linecast's live terminal UI with
 [`termshot`](https://github.com/ashuttl/dotfiles-omarchy/tree/main/termshot).
-It renders each app on a temporary offscreen Hyprland monitor at 2× density,
-so refreshing the gallery does not move, resize, or focus anything on the real
-desktop.
+It renders each app in a private headless sway at 2× density, with the desktop's border colour and wallpaper borrowed for the frame, so refreshing the gallery never moves, resizes, or focuses anything on the real desktop, and never borrows the pointer or the keyboard. Every frame is set in one typeface, `LINECAST_CAPTURE_FONT`, so the gallery does not follow whatever font the desktop terminal happens to be using.
 
 From the repository root:
 
@@ -45,7 +43,7 @@ whole-laptop-screen screenshot — weather, dusk sunshine, tides, and radar
 tiled on the real desktop, bar and all — taken live and kept deliberately
 uncropped. For that reason `all` skips the hero. Running the `hero` target
 explicitly *overwrites* it with an auto-capture: four apps tiled by Hyprland
-on the offscreen monitor (termshot's `--pane` mode), where the compositor's
+in termshot's private compositor (its `--pane` mode), where the compositor's
 own gaps and borders do the alignment. Its long settle gives the full-height
 radar pane time to load all 18 animation frames — at that size
 "loading… n/18" lingers in its header well past a minute.

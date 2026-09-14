@@ -12,6 +12,10 @@
 # it, so it only runs when named explicitly. The app captures use live
 # terminal mode so the header, footer, hidden cursor, and full-screen layout
 # match what users actually see.
+#
+# termshot runs each shot in a private headless sway, so nothing here touches
+# the desktop it runs from. Every frame is set in LINECAST_CAPTURE_FONT so the
+# gallery stays in one typeface whatever the desktop terminal is using.
 
 set -euo pipefail
 
@@ -19,6 +23,7 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_DIR=$(cd -- "$SCRIPT_DIR/.." && pwd)
 SHOT_DIR="$REPO_DIR/screenshots"
 CAPTURE_TOOL=${LINECAST_CAPTURE_TOOL:-termshot}
+CAPTURE_FONT=${LINECAST_CAPTURE_FONT:-iA Writer Mono S:size=11}
 
 WEATHER_PLACE=${LINECAST_CAPTURE_WEATHER_PLACE:-Dublin, Ireland}
 RADAR_PLACE=${LINECAST_CAPTURE_RADAR_PLACE:-Glasgow, Scotland}
@@ -49,6 +54,7 @@ Targets:
 
 Environment overrides:
   LINECAST_CAPTURE_TOOL
+  LINECAST_CAPTURE_FONT      fontconfig pattern for every frame but the hero
   LINECAST_CAPTURE_WEATHER_PLACE
   LINECAST_CAPTURE_RADAR_PLACE
   LINECAST_CAPTURE_STREET_PLACE
@@ -89,19 +95,19 @@ require uv
 
 weather() {
     printf 'Capturing weather…\n'
-    "$CAPTURE_TOOL" -s 150x44 -w 10 -o "$SHOT_DIR/weather.png" \
+    "$CAPTURE_TOOL" -s 150x44 -w 10 --font "$CAPTURE_FONT" -o "$SHOT_DIR/weather.png" \
         uv --directory "$REPO_DIR" run weather --location "$WEATHER_PLACE"
 }
 
 sunshine() {
     printf 'Capturing sunshine at midday…\n'
-    "$CAPTURE_TOOL" -s 120x36 -w 4 -o "$SHOT_DIR/sunshine-day.png" \
+    "$CAPTURE_TOOL" -s 120x36 -w 4 --font "$CAPTURE_FONT" -o "$SHOT_DIR/sunshine-day.png" \
         uv --directory "$REPO_DIR" run python \
         "$REPO_DIR/scripts/capture_moment.py" \
         --at 2026-06-21T13:30 --location "$ASTRO_LOCATION" sunshine
 
     printf 'Capturing sunshine at dusk…\n'
-    "$CAPTURE_TOOL" -s 120x36 -w 4 -o "$SHOT_DIR/sunshine-dusk.png" \
+    "$CAPTURE_TOOL" -s 120x36 -w 4 --font "$CAPTURE_FONT" -o "$SHOT_DIR/sunshine-dusk.png" \
         uv --directory "$REPO_DIR" run python \
         "$REPO_DIR/scripts/capture_moment.py" \
         --at 2026-06-21T20:15 --location "$ASTRO_LOCATION" sunshine
@@ -110,7 +116,7 @@ sunshine() {
 year() {
     # The year view at the home location and at two places near the poles,
     # each with the pointer on the December solstice so the hover tooltip is
-    # in frame. On a 120x36 terminal that is column 115, row 18 (noon). The
+    # in frame. On a 120x36 terminal that is column 117, row 19 (noon). The
     # first hover only carries the pointer onto the window: a single warp
     # from outside arrives as a pointer enter, not the motion the app
     # listens for, so the second, real move is what raises the tooltip.
@@ -125,8 +131,8 @@ year() {
                 "$ANTARCTIC_PLACE|2026-06-21T04:30|sunshine-year-antarctic.png"; do
         IFS='|' read -r place at name <<<"$spec"
         printf 'Capturing sunshine year view for %s…\n' "$place"
-        "$CAPTURE_TOOL" -s 120x36 -w 6 \
-            --hover 100x12 --sleep 0.5 --hover 115x18 --sleep 1 \
+        "$CAPTURE_TOOL" -s 120x36 -w 6 --font "$CAPTURE_FONT" \
+            --hover 100x12 --sleep 0.5 --hover 117x19 --sleep 1 \
             -o "$SHOT_DIR/$name" \
             uv --directory "$REPO_DIR" run python \
             "$REPO_DIR/scripts/capture_moment.py" \
@@ -137,7 +143,7 @@ year() {
 
 moon() {
     printf 'Capturing Moon…\n'
-    "$CAPTURE_TOOL" -s 120x40 -w 4 -o "$SHOT_DIR/moon.png" \
+    "$CAPTURE_TOOL" -s 120x40 -w 4 --font "$CAPTURE_FONT" -o "$SHOT_DIR/moon.png" \
         uv --directory "$REPO_DIR" run python \
         "$REPO_DIR/scripts/capture_moment.py" \
         --at 2026-08-22T21:30 --location "$ASTRO_LOCATION" moon
@@ -146,15 +152,13 @@ moon() {
     # September carries 十五夜 on the 25th. capture_moment's --at lands as
     # the place's local time here. The calendar frame presses v and hovers
     # the 25th (column 84, row 27 on 120x40; the first hover only carries
-    # the pointer onto the window, the second raises the chip). --focus
-    # gives the disc frame the same accent border the key presses give
-    # the calendar.
-    "$CAPTURE_TOOL" -s 120x40 -w 6 --focus -o "$SHOT_DIR/moon-okinawa.png" \
+    # the pointer onto the window, the second raises the chip).
+    "$CAPTURE_TOOL" -s 120x40 -w 6 --font "$CAPTURE_FONT" -o "$SHOT_DIR/moon-okinawa.png" \
         uv --directory "$REPO_DIR" run python \
         "$REPO_DIR/scripts/capture_moment.py" \
         --at 2026-09-26T21:30 --location "$OKINAWA_LOCATION" moon -- \
         --lang ja --24h
-    "$CAPTURE_TOOL" -s 120x40 -w 6 --press v --sleep 2 \
+    "$CAPTURE_TOOL" -s 120x40 -w 6 --font "$CAPTURE_FONT" --press v --sleep 2 \
         --hover 84x27 --sleep 1 --hover 85x27 --sleep 2 \
         -o "$SHOT_DIR/moon-calendar.png" \
         uv --directory "$REPO_DIR" run python \
@@ -165,29 +169,27 @@ moon() {
 
 tides() {
     printf 'Capturing tides…\n'
-    "$CAPTURE_TOOL" -s 120x36 -w 12 -o "$SHOT_DIR/tides.png" \
+    "$CAPTURE_TOOL" -s 120x36 -w 12 --font "$CAPTURE_FONT" -o "$SHOT_DIR/tides.png" \
         uv --directory "$REPO_DIR" run tides --station "$TIDE_STATION"
 }
 
 radar() {
     require ffmpeg
     printf 'Capturing radar still…\n'
-    # A harmless Return makes termshot park the pointer outside the offscreen
-    # window. With no window padding, the temporary focus border is excluded
-    # from the capture as well.
-    "$CAPTURE_TOOL" -s 120x36 -w 15 --pad 0 \
-        --press Return -o "$SHOT_DIR/radar.png" \
+    # No window padding: the radar frame is shot without the border.
+    "$CAPTURE_TOOL" -s 120x36 -w 15 --pad 0 --font "$CAPTURE_FONT" \
+        -o "$SHOT_DIR/radar.png" \
         uv --directory "$REPO_DIR" run radar --location "$RADAR_PLACE"
 
     printf 'Capturing radar animation…\n'
-    # Slow playback in the capture-only wrapper, oversample the terminal so
-    # none of LibreWXR's 18 weather frames is skipped, collapse repeated screen
-    # states, then encode one complete loop at the app's observed cadence.
+    # Slow playback in the capture-only wrapper to a frame every half second,
+    # record for longer than the 18 LibreWXR frames take so none is skipped,
+    # collapse repeated screen states, then encode one complete loop at the
+    # app's observed cadence.
     local radar_tmp_dir frame previous diff selected picked=0
     radar_tmp_dir=$(mktemp -d /tmp/linecast-radar-gif.XXXXXX)
-    "$CAPTURE_TOOL" -s 120x36 -w 15 --pad 0 \
-        --press Return \
-        --gif 2 --fps 30 --gif-width 800 -o "$radar_tmp_dir/raw.gif" \
+    "$CAPTURE_TOOL" -s 120x36 -w 15 --pad 0 --font "$CAPTURE_FONT" \
+        --gif 12 --fps 8 --gif-width 800 -o "$radar_tmp_dir/raw.gif" \
         uv --directory "$REPO_DIR" run python \
         "$REPO_DIR/scripts/capture_radar.py" --location "$RADAR_PLACE"
 
@@ -221,12 +223,12 @@ radar() {
 
 maps() {
     printf 'Capturing street map…\n'
-    "$CAPTURE_TOOL" -s 120x38 -w 15 -o "$SHOT_DIR/maps-street.png" \
+    "$CAPTURE_TOOL" -s 120x38 -w 15 --font "$CAPTURE_FONT" -o "$SHOT_DIR/maps-street.png" \
         uv --directory "$REPO_DIR" run maps --location "$STREET_PLACE" \
         --zoom 0.015
 
     printf 'Capturing terrain map…\n'
-    "$CAPTURE_TOOL" -s 120x38 -w 15 -o "$SHOT_DIR/maps-terrain.png" \
+    "$CAPTURE_TOOL" -s 120x38 -w 15 --font "$CAPTURE_FONT" -o "$SHOT_DIR/maps-terrain.png" \
         uv --directory "$REPO_DIR" run maps --view terrain \
         --location "$TERRAIN_PLACE" --zoom 1.5
 }
@@ -237,10 +239,10 @@ globe() {
     # different every run — but *not* this hour's clouds: daylight alone
     # reads instantly, where the cloud layer makes a first-glance reader
     # work out what they are looking at.  So the capture opens the plain
-    # terrain planet and presses s once the canvas is warm.  The default
+    # terrain planet and presses S once the canvas is warm.  The default
     # centre sits on the mid-Atlantic where the terminator usually
     # crosses the disk.
-    "$CAPTURE_TOOL" -s 120x38 -w 25 --press s --sleep 2 \
+    "$CAPTURE_TOOL" -s 120x38 -w 25 --font "$CAPTURE_FONT" --key S --sleep 4 \
         -o "$SHOT_DIR/maps-globe.png" \
         uv --directory "$REPO_DIR" run maps --view terrain --zoom 130 \
         --location "$GLOBE_PLACE"
@@ -248,8 +250,8 @@ globe() {
 
 hero() {
     printf 'Capturing hero…\n'
-    # One real screenshot: four linecast apps tiled by Hyprland on the
-    # offscreen monitor, composed by the compositor's own gaps and borders.
+    # One real screenshot: four linecast apps tiled in termshot's private
+    # compositor, composed by its gaps, borders, and the desktop wallpaper.
     # Pane order maps to dwindle's slots: big top-left, full-height right
     # column, then the two bottom-left quarters.
     "$CAPTURE_TOOL" --res 3840x2400 --font 'iA Writer Mono S:size=9' \

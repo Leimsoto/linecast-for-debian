@@ -4,6 +4,8 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
+- Weather: temperature graph defaults to a static scale to ease comparisons across time. Use --relative to scale the graph to the displayed data instead.
+
 ## 2.5.2 — 2026-09-14
 
 - Live views: Quitting no longer leaves the terminal's colour replies on the shell's command line. linecast waits for the terminal to finish answering, at startup and on the way out, before it hands the terminal back.

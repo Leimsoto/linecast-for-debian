@@ -429,7 +429,8 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
         render_alerts_mapped(alerts, width=cols, runtime=runtime, tz_name=tz_name)
         if alerts else ([], []))
     narrative = narrative_lines(data, now_local, cols, runtime)
-    daily_lines_rendered, daily_spans = render_daily_mapped(data, cols, runtime, now=now_local)
+    daily_lines_rendered, daily_spans = render_daily_mapped(data, cols, runtime, now=now_local,
+                                                            historical=historical)
 
     hint = install_banner()
 

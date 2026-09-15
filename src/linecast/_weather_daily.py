@@ -5,6 +5,7 @@ from datetime import datetime
 from linecast import _theme
 from linecast._graphics import bg, color_mode, fg, visible_len, RESET, BOLD
 from linecast._runtime import WeatherRuntime, current_runtime
+from linecast._weather_hourly import fixed_temp_range
 from linecast._weather_i18n import DAY_NAMES, _s, _wmo_icons
 from linecast._weather_sources import _local_now_for_data
 from linecast._weather_style import (
@@ -32,16 +33,16 @@ def _rpad(s, w):
     return " " * max(0, w - visible_len(s)) + s
 
 
-def render_daily(data, width, runtime=None, now=None):
+def render_daily(data, width, runtime=None, now=None, historical=None):
     """Daily forecast with temperature range bars.
 
     `now` is the local time where the forecast is for; the first row is
     labelled "Today" only when it is today by that clock, and by its
     weekday like the rest when the forecast is from an earlier day."""
-    return render_daily_mapped(data, width, runtime, now)[0]
+    return render_daily_mapped(data, width, runtime, now, historical=historical)[0]
 
 
-def render_daily_mapped(data, width, runtime=None, now=None):
+def render_daily_mapped(data, width, runtime=None, now=None, historical=None):
     """render_daily's lines, with where each row's parts sit.
 
     Returns (lines, spans): one dict per line, holding the day's index into
@@ -78,6 +79,11 @@ def render_daily_mapped(data, width, runtime=None, now=None):
 
     scale_min = min(all_lo)
     scale_max = max(all_hi)
+    # With --absolute the bars share the hourly curve's scale, the place's
+    # own records, so a bar's length and its place on the line mean the
+    # same thing from one day to the next.
+    if runtime.fixed_scale:
+        scale_min, scale_max = fixed_temp_range(historical, (scale_min, scale_max))
 
     # Measure widest right-side detail columns across all days for alignment
     lang = runtime.lang

@@ -1059,9 +1059,15 @@ def _render_precip_rows(window_amount, window_precip, window_codes, graph_w, n_p
         precip_chars.append(f"{fg(*_through_line(rgb, indicators, x))}{SPARKLINE[idx]}")
     return [f"{''.join(precip_chars)}{RESET}"]
 
+def _round_down(n):
+    "round a number down to the nearest ten"
+    return math.floor(n/10)*10
+def _round_up(n):
+    "round a number up to the nearest ten"
+    return math.ceil(n/10)*10
 
 def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runtime=None,
-                  hover_col=None, offset_minutes=0, show_cloud=True):
+                  hover_col=None, offset_minutes=0, show_cloud=True, historical=None):
     """Hourly forecast: braille temperature curve + precipitation graph.
 
     show_cloud: draw the cloud strip when the data has cloud cover; the
@@ -1091,7 +1097,10 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     if runtime.use_scaled_temp_graph:
         chart_yaxis_range = all_temp_range
     else:
-        chart_yaxis_range = (-40, 50) if runtime.celsius else (-40, 122)
+        if historical is not None:
+            chart_yaxis_range = (_round_down(historical.low), _round_up(historical.high))
+        else:
+            chart_yaxis_range = (-40, 50) if runtime.celsius else (-40, 122)
 
     midnight_cols, _noon_cols, midnight_day_names = _compute_time_markers(
         window_dts, total_hours, graph_w, runtime

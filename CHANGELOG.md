@@ -7,6 +7,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 - Live views: Quitting no longer leaves the terminal's colour replies on the shell's command line. linecast waits for the terminal to finish answering, at startup and on the way out, before it hands the terminal back.
 - Live views: Scrolling or dragging faster than the terminal can draw no longer queues up frames that keep playing after you stop. Each frame waits until the terminal has drawn the one before it, and the input that arrives meanwhile goes into the next frame.
 - Weather: The now line and the midnight dividers no longer darken the cloud strip and the precipitation bar where they cross them. They pass behind, so a darker cell always means less cloud or a fainter chance of rain. The line under the mouse still shows through.
+- Weather: In Japanese, drizzle is 霧雨 at every intensity, and the sentence about rain continuing or ending reads more naturally.
 
 ## 2.5.1 — 2026-09-14
 

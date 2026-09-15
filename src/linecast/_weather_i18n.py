@@ -260,7 +260,7 @@ WMO_NAMES_I18N = {
     "ja": {
         0: "\u5feb\u6674", 1: "\u304a\u304a\u3080\u306d\u6674\u308c", 2: "\u6674\u308c\u6642\u3005\u66c7\u308a", 3: "\u66c7\u308a",
         45: "\u9727", 48: "\u7740\u6c37\u6027\u306e\u9727",
-        51: "\u5f31\u3044\u9727\u96e8", 53: "\u9727\u96e8", 55: "\u5f37\u3044\u9727\u96e8",
+        51: "\u9727\u96e8", 53: "\u9727\u96e8", 55: "\u9727\u96e8",
         56: "\u7740\u6c37\u6027\u306e\u9727\u96e8", 57: "\u7740\u6c37\u6027\u306e\u9727\u96e8",
         61: "\u5f31\u3044\u96e8", 63: "\u96e8", 65: "\u5f37\u3044\u96e8",
         66: "\u7740\u6c37\u6027\u306e\u96e8", 67: "\u7740\u6c37\u6027\u306e\u96e8",
@@ -465,7 +465,7 @@ _PRECIP_DESCS_I18N = {
         95: "ukkonen", 96: "ukkonen", 99: "ukkonen",
     },
     "ja": {
-        51: "\u5f31\u3044\u9727\u96e8", 53: "\u9727\u96e8", 55: "\u5f37\u3044\u9727\u96e8",
+        51: "\u9727\u96e8", 53: "\u9727\u96e8", 55: "\u9727\u96e8",
         56: "\u7740\u6c37\u6027\u306e\u9727\u96e8", 57: "\u7740\u6c37\u6027\u306e\u9727\u96e8",
         61: "\u5f31\u3044\u96e8", 63: "\u96e8", 65: "\u5f37\u3044\u96e8",
         66: "\u7740\u6c37\u6027\u306e\u96e8", 67: "\u7740\u6c37\u6027\u306e\u96e8",
@@ -1603,8 +1603,8 @@ _STRINGS = {
         "today_ref": "\u4eca\u65e5",
         "will_be": "{subject}\u306f{comparison}",
         # Precipitation line
-        "ending": "{desc}\u306f{time}\u3084\u3080\u898b\u8fbc\u307f",
-        "continuing": "{desc}\u306f\u4e00\u65e5\u4e2d\u7d9a\u304f\u898b\u8fbc\u307f",
+        "ending": "{desc}\u304c{time}\u3084\u3080\u898b\u8fbc\u307f",
+        "continuing": "{desc}\u304c\u4e00\u65e5\u4e2d\u7d9a\u304f\u898b\u8fbc\u307f",
         "starting": "{time}{desc}\u306e\u898b\u8fbc\u307f",
         "shortly": "\u307e\u3082\u306a\u304f",
         "in_about_an_hour": "\u7d041\u6642\u9593\u5f8c\u306b",

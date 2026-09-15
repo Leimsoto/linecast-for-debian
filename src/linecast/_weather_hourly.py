@@ -327,12 +327,9 @@ def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0, runtime=None)
         total_hours = total_secs / 3600 if total_secs > 0 else 24
 
     # Global stats across all available data for stable layout while scrolling
-    if runtime.use_scaled_temp_graph:
-        all_temp_lo = min(temps) if temps else 0
-        all_temp_hi = max(temps) if temps else 0
-        all_temp_range = (all_temp_lo, all_temp_hi)
-    else:
-        all_temp_range = (-40, 50) if runtime.celsius else (-40, 122)
+    all_temp_lo = min(temps) if temps else 0
+    all_temp_hi = max(temps) if temps else 0
+    all_temp_range = (all_temp_lo, all_temp_hi)
     all_wind_max = max(wind_speeds) if wind_speeds else 0
     all_uv_max = max(uv_indices) if uv_indices else 0
     all_precip_max = max(precip_amount) if precip_amount else 0
@@ -565,7 +562,7 @@ def _find_temperature_extrema(col_temps, graph_w):
     return extrema
 
 
-def _render_today_line(width, chart_lo, chart_hi, midnight_day_names, sun_labels, runtime,
+def _render_today_line(width, all_temp_range, midnight_day_names, sun_labels, runtime,
                        window_dts=None, now=None, offset_minutes=0):
     """Render the hourly section header with day and sun-event labels."""
     # Show "Today" only when the window starts on today's date;
@@ -580,9 +577,10 @@ def _render_today_line(width, chart_lo, chart_hi, midnight_day_names, sun_labels
         hint_text = _s("space_to_now", runtime)
         today_right = f"{DIM}{hint_text}"
     else:
+        (lo, hi) = all_temp_range
         today_right = (
-            f"{_colored_temp(chart_lo, runtime, '°')} "
-            f"{TEXT}\u2192 {_colored_temp(chart_hi, runtime, runtime.temp_unit)}"
+            f"{_colored_temp(lo, runtime, '°')} "
+            f"{TEXT}\u2192 {_colored_temp(hi, runtime, runtime.temp_unit)}"
         )
     if not (midnight_day_names or sun_labels):
         pad = width - visible_len(today_left) - visible_len(today_right)
@@ -1090,8 +1088,10 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     window_dts = window["dts"]
     total_hours = window["total_hours"]
     all_temp_range = window.get("all_temp_range")
-    chart_lo = all_temp_range[0]
-    chart_hi = all_temp_range[1]
+    if runtime.use_scaled_temp_graph:
+        chart_yaxis_range = all_temp_range
+    else:
+        chart_yaxis_range = (-40, 50) if runtime.celsius else (-40, 122)
 
     midnight_cols, _noon_cols, midnight_day_names = _compute_time_markers(
         window_dts, total_hours, graph_w, runtime
@@ -1146,8 +1146,7 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     lines = [
         _render_today_line(
             width,
-            chart_lo,
-            chart_hi,
+            all_temp_range,
             midnight_day_names,
             sun_labels,
             runtime,
@@ -1163,9 +1162,9 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
         lines.append(tick_line)
 
     braille_rows = build_braille_curve(window_temps, graph_w, n_braille_rows,
-                                       value_range=all_temp_range)
+                                       value_range=chart_yaxis_range)
     overlays = _compute_extrema_overlays(extrema, col_temps, n_braille_rows, graph_w, runtime,
-                                          value_range=all_temp_range)
+                                          value_range=chart_yaxis_range)
     lines.extend(_render_braille_rows(braille_rows, col_daylight, midnight_cols, runtime, overlays,
                                        hover_col=hover_col, now_col=now_col))
 

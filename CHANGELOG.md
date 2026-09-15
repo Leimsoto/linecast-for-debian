@@ -4,7 +4,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
-- Weather: temperature graph defaults to a static scale to ease comparisons across time. Use --relative to scale the graph to the displayed data instead.
+- Weather: The new --absolute option tells the temperature graph to use fixed upper and lower bounds, ideal for comparisons across time. The default relative mode scales the graph so that the minimum displayed temperature is at the bottom edge and the maximum is at the top.
 
 ## 2.5.2 — 2026-09-14
 

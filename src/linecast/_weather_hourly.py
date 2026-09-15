@@ -250,7 +250,7 @@ def _interpolate_columns(values, graph_w):
     return interpolate(values, graph_w)
 
 
-def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0, runtime=None):
+def _prepare_hourly_window(hourly, now, graph_w, runtime, offset_minutes=0):
     """Slice hourly arrays to the visible window.
 
     offset_minutes shifts the window start forward (positive) or backward
@@ -1074,8 +1074,8 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
         now = _local_now_for_data(data)
 
     graph_w = max(10, width)
-    window = _prepare_hourly_window(data.get("hourly", {}), now, graph_w,
-                                    offset_minutes=offset_minutes, runtime=runtime)
+    window = _prepare_hourly_window(data.get("hourly", {}), now, graph_w, runtime,
+                                    offset_minutes=offset_minutes)
     if window is None:
         return []
 

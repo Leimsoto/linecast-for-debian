@@ -250,7 +250,7 @@ def _interpolate_columns(values, graph_w):
     return interpolate(values, graph_w)
 
 
-def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0):
+def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0, runtime=None):
     """Slice hourly arrays to the visible window.
 
     offset_minutes shifts the window start forward (positive) or backward
@@ -327,8 +327,12 @@ def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0):
         total_hours = total_secs / 3600 if total_secs > 0 else 24
 
     # Global stats across all available data for stable layout while scrolling
-    all_temp_lo = min(temps) if temps else 0
-    all_temp_hi = max(temps) if temps else 0
+    if runtime.use_scaled_temp_graph:
+        all_temp_lo = min(temps) if temps else 0
+        all_temp_hi = max(temps) if temps else 0
+        all_temp_range = (all_temp_lo, all_temp_hi)
+    else:
+        all_temp_range = (-40, 50) if runtime.celsius else (-40, 122)
     all_wind_max = max(wind_speeds) if wind_speeds else 0
     all_uv_max = max(uv_indices) if uv_indices else 0
     all_precip_max = max(precip_amount) if precip_amount else 0
@@ -354,7 +358,7 @@ def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0):
         "all_uv": uv_indices,
         "start_idx": start_idx,
         "end_idx": end_idx,
-        "all_temp_range": (all_temp_lo, all_temp_hi) if current_runtime().use_scaled_temp_graph else (-40, 50) if current_runtime().celsius else (-40, 122),
+        "all_temp_range": all_temp_range,
         "all_wind_max": all_wind_max,
         "all_uv_max": all_uv_max,
         "all_precip_max": all_precip_max,
@@ -1073,7 +1077,7 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
 
     graph_w = max(10, width)
     window = _prepare_hourly_window(data.get("hourly", {}), now, graph_w,
-                                    offset_minutes=offset_minutes)
+                                    offset_minutes=offset_minutes, runtime=runtime)
     if window is None:
         return []
 

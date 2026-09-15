@@ -129,7 +129,8 @@ def _build_hover_tooltip(data, mouse_col, mouse_row, hourly_start, hourly_end, c
 
     hourly = data.get("hourly", {})
     now = _local_now_for_data(data)
-    window = _prepare_hourly_window(hourly, now, graph_w, offset_minutes=offset_minutes)
+    window = _prepare_hourly_window(hourly, now, graph_w, offset_minutes=offset_minutes,
+                                    runtime=runtime)
     if window is None:
         return ""
 
@@ -569,7 +570,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
             mouse_col_raw = mouse_pos[0] - 1  # 1-based terminal col → 0-based graph col
             if 0 <= mouse_col_raw < graph_w:
                 window = _prepare_hourly_window(hourly, now_local, graph_w,
-                                                offset_minutes=offset_minutes)
+                                                offset_minutes=offset_minutes, runtime=runtime)
                 if window:
                     n = len(window["temps"])
                     total_hours = window["total_hours"]

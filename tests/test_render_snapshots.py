@@ -100,7 +100,7 @@ class TestWeatherSnapshot:
         from linecast._runtime import WeatherRuntime
         defaults = dict(
             live=False, icons="emoji", lang="en", oneline=False,
-            celsius=False, metric=False, shading=False,
+            celsius=False, use_scaled_temp_graph=True, metric=False, shading=False,
         )
         defaults.update(overrides)
         return WeatherRuntime(**defaults)
@@ -113,11 +113,20 @@ class TestWeatherSnapshot:
         output = _weather_render(120, 40, self._make_runtime())
         _compare_or_create("weather_120x40.txt", output)
 
+    def test_weather_80x24_unscaled_graph(self):
+        output = _weather_render(80, 24, self._make_runtime(use_scaled_temp_graph=False))
+        _compare_or_create("weather_80x24_unscaled.txt", output)
+
     def test_weather_metric_french(self):
         runtime = self._make_runtime(lang="fr", celsius=True, metric=True)
         output = _weather_render(80, 24, runtime)
         _compare_or_create("weather_metric_fr_80x24.txt", output)
 
+    def test_weather_metric_french_unscaled(self):
+        runtime = self._make_runtime(lang="fr", celsius=True, metric=True,
+                                     use_scaled_temp_graph=False)
+        output = _weather_render(80, 24, runtime)
+        _compare_or_create("weather_metric_fr_80x24_unscaled.txt", output)
 
 # -----------------------------------------------------------------------
 # Sunshine rendering snapshot

@@ -4,7 +4,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
-- Weather: The new --absolute option tells the temperature graph to use fixed upper and lower bounds, ideal for comparisons across time. The default relative mode scales the graph so that the minimum displayed temperature is at the bottom edge and the maximum is at the top.
+- Weather: `weather --absolute` draws the temperature curve against the location's record low and high instead of the forecast's own range, so a cold day sits low on the chart and a hot one high, morning after morning. The chart still fits the forecast to the window by default. Thanks to Daniel Brooks.
 
 ## 2.5.2 — 2026-09-14
 

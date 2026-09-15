@@ -23,13 +23,17 @@ _CACHE_MAX_AGE = 7 * 86400  # 7 days — historical data doesn't change
 
 @dataclass(frozen=True)
 class HistoricalAverages:
-    """Historical climate averages for a single calendar date."""
-    high: float       # maximum temperature recorded in sample period (in forecast units)
-    avg_high: float   # mean daily high (in forecast units)
-    low: float        # minimum temperature recorded in sample period (in forecast units)
-    avg_low: float    # mean daily low  (in forecast units)
-    avg_precip: float # mean daily precipitation sum
-    years: int        # number of years averaged
+    """Historical climate for one calendar date, and the record for the place.
+
+    The averages are for the one date; the records are the highest daily
+    high and lowest daily low over every day of the archive's span.
+    """
+    avg_high: float    # mean daily high (in forecast units)
+    avg_low: float     # mean daily low  (in forecast units)
+    avg_precip: float  # mean daily precipitation sum
+    years: int         # number of years averaged
+    record_high: float # highest daily high over the whole span (in forecast units)
+    record_low: float  # lowest daily low over the whole span (in forecast units)
 
 
 def fetch_historical(lat: float, lng: float, target_date: date,
@@ -127,13 +131,14 @@ def _compute_averages(data, month: int, day: int) -> Optional[HistoricalAverages
     if count == 0:
         return None
 
+    # The archive leaves a day null now and then; the records skip those.
     return HistoricalAverages(
-        high=max(highs),
         avg_high=round(sum_hi / count, 1),
-        low=min(lows),
         avg_low=round(sum_lo / count, 1),
         avg_precip=round(sum_precip / count, 2),
         years=count,
+        record_high=max(h for h in highs if h is not None),
+        record_low=min(lo for lo in lows if lo is not None),
     )
 
 

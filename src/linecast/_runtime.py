@@ -455,8 +455,9 @@ def weather_parser():
                     help="celsius temperatures only")
     p.add_argument("--fahrenheit", action="store_true",
                     help="fahrenheit temperatures")
-    p.add_argument("--absolute", action="store_false",
-                   help="don’t scale temperature graph to minimum and maximum values present")
+    p.add_argument("--absolute", dest="fixed_scale", action="store_true",
+                    help="fix the temperature graph's scale to the location's record low "
+                         "and high, instead of the forecast's own range")
     p.add_argument("--no-shading", action="store_true",
                     help="disable daylight shading on hourly chart")
     p.add_argument("--json", dest="json_mode", action="store_true",
@@ -825,7 +826,7 @@ class RuntimeConfig:
 class WeatherRuntime(RuntimeConfig):
     # Defaults required: the base class ends in defaulted fields.
     celsius: bool = True
-    use_scaled_temp_graph: bool = True
+    fixed_scale: bool = False
     shading: bool = True
 
     _parser = staticmethod(weather_parser)
@@ -845,7 +846,7 @@ class WeatherRuntime(RuntimeConfig):
             lang=base.lang,
             oneline=base.oneline,
             celsius=celsius,
-            use_scaled_temp_graph=namespace.absolute,
+            fixed_scale=namespace.fixed_scale,
             metric=base.metric,
             use_24h=base.use_24h,
             week_start=base.week_start,

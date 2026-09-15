@@ -74,7 +74,7 @@ def _compare_or_create(snapshot_name, actual):
 
 
 def _weather_render(cols, rows, runtime, fixture="open_meteo_forecast.json",
-                     location_name="Toronto, Ontario"):
+                     location_name="Toronto, Ontario", historical=None):
     """Render weather dashboard with mocked terminal size and clock."""
     from linecast.weather import render_from_data
 
@@ -85,9 +85,19 @@ def _weather_render(cols, rows, runtime, fixture="open_meteo_forecast.json",
          patch("linecast._weather_hourly._local_now_for_data", return_value=FIXED_NOW):
         output, _ = render_from_data(
             data, alerts=[], runtime=runtime,
-            location_name=location_name,
+            location_name=location_name, historical=historical,
         )
     return _strip_ansi(output)
+
+
+def _toronto_records(celsius=False):
+    """Ten years of Toronto, near enough, in the forecast's units."""
+    from linecast._weather_historical import HistoricalAverages
+    if celsius:
+        return HistoricalAverages(avg_high=5.0, avg_low=-3.0, avg_precip=2.0, years=10,
+                                  record_high=36.4, record_low=-26.3)
+    return HistoricalAverages(avg_high=41.0, avg_low=27.0, avg_precip=0.1, years=10,
+                              record_high=97.5, record_low=-15.3)
 
 
 # -----------------------------------------------------------------------
@@ -113,20 +123,25 @@ class TestWeatherSnapshot:
         output = _weather_render(120, 40, self._make_runtime())
         _compare_or_create("weather_120x40.txt", output)
 
-    def test_weather_80x24_unscaled_graph(self):
-        output = _weather_render(80, 24, self._make_runtime(use_scaled_temp_graph=False))
-        _compare_or_create("weather_80x24_unscaled.txt", output)
+    def test_weather_80x24_fixed_scale(self):
+        output = _weather_render(80, 24, self._make_runtime(fixed_scale=True),
+                                 historical=_toronto_records())
+        _compare_or_create("weather_80x24_fixed_scale.txt", output)
+
+    def test_fixed_scale_without_archive_is_the_default_scale(self):
+        fixed = _weather_render(80, 24, self._make_runtime(fixed_scale=True))
+        auto = _weather_render(80, 24, self._make_runtime())
+        assert fixed == auto
 
     def test_weather_metric_french(self):
         runtime = self._make_runtime(lang="fr", celsius=True, metric=True)
         output = _weather_render(80, 24, runtime)
         _compare_or_create("weather_metric_fr_80x24.txt", output)
 
-    def test_weather_metric_french_unscaled(self):
-        runtime = self._make_runtime(lang="fr", celsius=True, metric=True,
-                                     use_scaled_temp_graph=False)
-        output = _weather_render(80, 24, runtime)
-        _compare_or_create("weather_metric_fr_80x24_unscaled.txt", output)
+    def test_weather_metric_french_fixed_scale(self):
+        runtime = self._make_runtime(lang="fr", celsius=True, metric=True, fixed_scale=True)
+        output = _weather_render(80, 24, runtime, historical=_toronto_records(celsius=True))
+        _compare_or_create("weather_metric_fr_80x24_fixed_scale.txt", output)
 
 # -----------------------------------------------------------------------
 # Sunshine rendering snapshot

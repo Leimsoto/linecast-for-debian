@@ -562,7 +562,7 @@ def _find_temperature_extrema(col_temps, graph_w):
     return extrema
 
 
-def _render_today_line(width, all_temp_range, midnight_day_names, sun_labels, runtime,
+def _render_today_line(width, chart_lo, chart_hi, midnight_day_names, sun_labels, runtime,
                        window_dts=None, now=None, offset_minutes=0):
     """Render the hourly section header with day and sun-event labels."""
     # Show "Today" only when the window starts on today's date;
@@ -577,10 +577,9 @@ def _render_today_line(width, all_temp_range, midnight_day_names, sun_labels, ru
         hint_text = _s("space_to_now", runtime)
         today_right = f"{DIM}{hint_text}"
     else:
-        (lo, hi) = all_temp_range
         today_right = (
-            f"{_colored_temp(lo, runtime, '°')} "
-            f"{TEXT}\u2192 {_colored_temp(hi, runtime, runtime.temp_unit)}"
+            f"{_colored_temp(chart_lo, runtime, '°')} "
+            f"{TEXT}\u2192 {_colored_temp(chart_hi, runtime, runtime.temp_unit)}"
         )
     if not (midnight_day_names or sun_labels):
         pad = width - visible_len(today_left) - visible_len(today_right)
@@ -1059,12 +1058,23 @@ def _render_precip_rows(window_amount, window_precip, window_codes, graph_w, n_p
         precip_chars.append(f"{fg(*_through_line(rgb, indicators, x))}{SPARKLINE[idx]}")
     return [f"{''.join(precip_chars)}{RESET}"]
 
-def _round_down(n):
-    "round a number down to the nearest ten"
-    return math.floor(n/10)*10
-def _round_up(n):
-    "round a number up to the nearest ten"
-    return math.ceil(n/10)*10
+
+def fixed_temp_range(historical, forecast_range):
+    """The y-axis for a temperature curve that holds still from day to day.
+
+    The place's record low and high over the archive's span, rounded out
+    to the nearest ten so the bounds sit on round numbers and the curve
+    keeps a little air, and widened to take in a forecast that would beat
+    a record, so the curve never clips.  Without the archive there is
+    nothing local to fix the scale to, and the forecast's own range is
+    the honest fallback.
+    """
+    if historical is None:
+        return forecast_range
+    lo = math.floor(historical.record_low / 10) * 10
+    hi = math.ceil(historical.record_high / 10) * 10
+    return (min(lo, forecast_range[0]), max(hi, forecast_range[1]))
+
 
 def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runtime=None,
                   hover_col=None, offset_minutes=0, show_cloud=True, historical=None):
@@ -1094,13 +1104,16 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     window_dts = window["dts"]
     total_hours = window["total_hours"]
     all_temp_range = window.get("all_temp_range")
-    if runtime.use_scaled_temp_graph:
-        chart_yaxis_range = all_temp_range
+    # The header quotes the range on screen.  The curve is drawn against
+    # the whole forecast's range, so it holds still while scrolling, or
+    # with --absolute against the place's own records, so a cold day sits
+    # low on the chart and a hot one high, run after run.
+    chart_lo = min(window_temps)
+    chart_hi = max(window_temps)
+    if runtime.fixed_scale:
+        chart_yaxis_range = fixed_temp_range(historical, all_temp_range)
     else:
-        if historical is not None:
-            chart_yaxis_range = (_round_down(historical.low), _round_up(historical.high))
-        else:
-            chart_yaxis_range = (-40, 50) if runtime.celsius else (-40, 122)
+        chart_yaxis_range = all_temp_range
 
     midnight_cols, _noon_cols, midnight_day_names = _compute_time_markers(
         window_dts, total_hours, graph_w, runtime
@@ -1155,7 +1168,8 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     lines = [
         _render_today_line(
             width,
-            all_temp_range,
+            chart_lo,
+            chart_hi,
             midnight_day_names,
             sun_labels,
             runtime,

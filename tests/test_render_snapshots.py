@@ -100,7 +100,7 @@ class TestWeatherSnapshot:
         from linecast._runtime import WeatherRuntime
         defaults = dict(
             live=False, icons="emoji", lang="en", oneline=False,
-            celsius=False, use_scaled_temp_graph=True, metric=False, shading=False,
+            celsius=False, metric=False, shading=False,
         )
         defaults.update(overrides)
         return WeatherRuntime(**defaults)

@@ -825,7 +825,7 @@ class RuntimeConfig:
 class WeatherRuntime(RuntimeConfig):
     # Defaults required: the base class ends in defaulted fields.
     celsius: bool = True
-    use_scaled_temp_graph: bool = False
+    use_scaled_temp_graph: bool = True
     shading: bool = True
 
     _parser = staticmethod(weather_parser)

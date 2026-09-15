@@ -24,7 +24,7 @@ FIXTURE = Path(__file__).parent / "fixtures" / "open_meteo_forecast.json"
 
 def _runtime(metric=False):
     return WeatherRuntime(live=False, icons="nerd", lang="en", oneline=False, metric=metric,
-                          use_24h=True, use_scaled_temp_graph=True)
+                          use_24h=True)
 
 
 def _plain(text):

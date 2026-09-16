@@ -56,6 +56,24 @@ class TestTempRangeFlag:
         assert _runtime(["--temp-range=world"]).temp_range == "world"
 
 
+class TestFlash:
+    def test_a_note_comes_down_when_its_time_is_up(self, monkeypatch):
+        from linecast import _live
+        from linecast.weather import WeatherApp
+        view = WeatherApp({}, [], None, 43.7, -79.4, _runtime())
+        view.flash(["hello"], seconds=0.0)
+        monkeypatch.setattr(_live._time, "monotonic", lambda: 10 ** 9)
+        assert view.flash_overlay(80, 24) == ""
+        assert view._flash is None
+
+    def test_a_note_is_boxed_while_it_is_up(self):
+        from linecast.weather import WeatherApp
+        view = WeatherApp({}, [], None, 43.7, -79.4, _runtime())
+        view.flash(["hello there"], seconds=60.0)
+        box = view.flash_overlay(80, 24)
+        assert "hello there" in box and "┌" in box
+
+
 class TestAxisLabels:
     def _blank_rows(self, n_rows, graph_w):
         return [[("\u2800", 0.0)] * graph_w for _ in range(n_rows)]

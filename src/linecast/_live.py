@@ -20,6 +20,7 @@ Mouse protocol references:
 
 import os
 import sys
+import threading
 import time as _time
 
 from linecast import _term
@@ -1016,6 +1017,36 @@ class LiveApp:
 
     def stop(self):
         """The loop is over; park any thread that was serving it."""
+
+    _flash = None  # (paragraphs, deadline) while a note is up
+
+    def flash(self, paragraphs, seconds=3.0):
+        """Float a note in the middle of the screen for `seconds`: what a
+        key just changed, say. `paragraphs` are plain text, wrapped to
+        the box at render time. The loop repaints when it is time to
+        take the note down."""
+        self._flash = (list(paragraphs), _time.monotonic() + seconds)
+        timer = threading.Timer(seconds + 0.05, nudge)
+        timer.daemon = True
+        timer.start()
+
+    def flash_overlay(self, cols, rows):
+        """The note for overlay()'s floating channel, boxed like the help
+        panel and the pickers, or "" once it has expired. A view's render
+        lays it over its own overlay."""
+        if self._flash is None:
+            return ""
+        paragraphs, deadline = self._flash
+        if _time.monotonic() >= deadline:
+            self._flash = None
+            return ""
+        from linecast._graphics import fg
+        from linecast._help import wrap
+        width = max(10, min(cols - 6, 64))
+        lines = []
+        for text in paragraphs:
+            lines += [f" {line}" for line in wrap(text, width)]
+        return menu_box(lines, cols, rows, border=fg(*MUTED))
 
     def hooks(self):
         """The hooks this app overrides, as live_loop keyword arguments."""

@@ -729,7 +729,7 @@ class WeatherApp(_live.LiveApp):
         notice = forecast_notice(self.data, self.runtime, live=True,
                                  fetching=self._refreshing(),
                                  failed_at=self.attempted)
-        return render_from_data(
+        output, alert_rows = render_from_data(
             self.data,
             self.alerts,
             self.runtime,
@@ -743,6 +743,11 @@ class WeatherApp(_live.LiveApp):
             notice=notice,
             country_code=self.country,
         )
+        flash = self.flash_overlay(*get_terminal_size())
+        if flash:
+            body, _, floating = output.partition("\x00")
+            output = _live.overlay(body, floating + flash)
+        return output, alert_rows
 
     def help_panel(self):
         from linecast._help import HelpPanel, entries

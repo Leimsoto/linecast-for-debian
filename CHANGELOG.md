@@ -4,6 +4,7 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
+- Completion: The bash and zsh completion scripts load again. Both stopped with an error once `--week-start` and `--temp-range` gained value lists, because a shell variable cannot carry a hyphen.
 - Weather: The ten-year climate archive behind the "warmer than usual" line and the hourly graph's scale downloads at a quarter of its former size, as do the forecast and air quality. Every download now asks the server to compress its answer.
 
 ## 2.6.0 — 2026-09-15

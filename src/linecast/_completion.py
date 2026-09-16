@@ -187,7 +187,10 @@ def _words(flags):
 
 
 def _var(name):
-    return f"_linecast_{name[2:]}_values"
+    """The bash/zsh variable that holds a flag's value list. A shell
+    identifier cannot contain a hyphen, so --week-start's list lives in
+    _linecast_week_start_values; the flag itself keeps its hyphen."""
+    return f"_linecast_{name[2:].replace('-', '_')}_values"
 
 
 def render_completion(shell: str):

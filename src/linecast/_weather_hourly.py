@@ -1098,7 +1098,8 @@ def _render_precip_rows(window_amount, window_precip, window_codes, graph_w, n_p
                 precip_chars.append(" ")
             continue
         idx = max(0, min(7, int(frac * 7.99)))
-        precip_chars.append(f"{fg(*_through_line(rgb, indicators, x, through_col))}{SPARKLINE[idx]}")
+        color = _through_line(rgb, indicators, x, through_col)
+        precip_chars.append(f"{fg(*color)}{SPARKLINE[idx]}")
     return [f"{''.join(precip_chars)}{RESET}"]
 
 

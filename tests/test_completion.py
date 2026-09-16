@@ -129,8 +129,11 @@ class CompletionScriptTests(unittest.TestCase):
                                          delete=False) as handle:
             handle.write(script)
         try:
+            # The path rides in $1 so a Windows path's backslashes are
+            # not read as escapes.
             result = subprocess.run(
-                [exe, "-f", "-c", f"{prelude}source {handle.name} && {show}"],
+                [exe, "-f", "-c", f'{prelude}source "$1" && {show}', exe,
+                 handle.name],
                 capture_output=True, text=True, check=False)
         finally:
             os.unlink(handle.name)

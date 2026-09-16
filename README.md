@@ -2,7 +2,7 @@
 
 # linecast
 
-**Weather, tides, the sun, the moon, the stars, and a globe, drawn for the terminal. The Old Farmer's Almanac meets Minitel.**
+**Weather, tides, the sun, the moon, maps, and a planetarium, in your terminal. The Old Farmer's Almanac meets Minitel.**
 
 [![Tests](https://github.com/ashuttl/linecast/actions/workflows/test.yml/badge.svg)](https://github.com/ashuttl/linecast/actions/workflows/test.yml)
 [![PyPI](https://img.shields.io/pypi/v/linecast)](https://pypi.org/project/linecast/)

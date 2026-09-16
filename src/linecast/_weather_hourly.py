@@ -741,6 +741,37 @@ def _compute_extrema_overlays(extrema, col_temps, n_rows, graph_w, runtime, valu
     return overlays
 
 
+def _compute_axis_overlays(value_range, braille_rows, n_rows, graph_w, overlays, now_col=None):
+    """Dim labels for the two ends of the chart's temperature axis: the
+    top row's value on the top row, the bottom row's on the bottom,
+    wherever the curve and the other labels leave the cells blank. The
+    left edge first, just past the now line when that sits there, and
+    the right edge when the left is taken. Adds to `overlays` in place."""
+    lo, hi = value_range
+    if n_rows < 1 or len(braille_rows) < n_rows or hi <= lo:
+        return
+    occupied = {}
+    for row, items in overlays.items():
+        for start, label, _color in items:
+            occupied.setdefault(row, set()).update(range(start, start + len(label)))
+    for row, value in ((0, hi), (n_rows - 1, lo)):
+        label = f"{value:.0f}\u00b0"
+        left = 1
+        if now_col is not None and now_col < left + len(label):
+            left = now_col + 1
+        for start in (left, graph_w - len(label) - 1):
+            cols = range(start, start + len(label))
+            if start < 0 or cols[-1] >= len(braille_rows[row]):
+                continue
+            if occupied.get(row, set()).intersection(cols):
+                continue
+            if any(braille_rows[row][c][0] != "\u2800" for c in cols):
+                continue
+            occupied.setdefault(row, set()).update(cols)
+            overlays.setdefault(row, []).append((start, label, MUTED_RGB))
+            break
+
+
 def _render_braille_rows(braille_rows, col_daylight, midnight_cols, runtime,
                          overlays=None, hover_col=None, now_col=None):
     """Render braille temperature rows with optional day/night shading."""
@@ -1168,6 +1199,8 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
                                        value_range=value_range)
     overlays = _compute_extrema_overlays(extrema, col_temps, n_braille_rows, graph_w, runtime,
                                           value_range=value_range)
+    _compute_axis_overlays(value_range, braille_rows, n_braille_rows, graph_w, overlays,
+                           now_col=now_col)
     lines.extend(_render_braille_rows(braille_rows, col_daylight, midnight_cols, runtime, overlays,
                                        hover_col=hover_col, now_col=now_col))
 

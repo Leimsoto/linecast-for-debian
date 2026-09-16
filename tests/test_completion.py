@@ -1,6 +1,10 @@
 import io
+import os
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 
@@ -97,6 +101,59 @@ class CompletionScriptTests(unittest.TestCase):
         themes = " ".join(THEMES)
         self.assertIn(f"complete -c radar -f -l theme -r -a '{themes}'",
                       render_completion("fish"))
+
+    def test_value_list_variables_are_shell_identifiers(self):
+        """--week-start and --temp-range hold value lists; the variable
+        that carries one must not carry the flag's hyphen (#108)."""
+        identifier = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+        for shell, pattern in (
+            ("bash", r"^(_linecast_\S+?_values)="),
+            ("zsh", r"^typeset -a (\S+)$"),
+        ):
+            script = render_completion(shell)
+            names = re.findall(pattern, script, re.MULTILINE)
+            with self.subTest(shell=shell):
+                self.assertIn("_linecast_week_start_values", names)
+                self.assertIn("_linecast_temp_range_values", names)
+                for name in names:
+                    self.assertRegex(name, identifier)
+                self.assertNotIn("-start_values", script)
+                self.assertNotIn("-range_values", script)
+
+    def _source_in_shell(self, shell, script, prelude, show):
+        """Source `script` in `shell` and return what `show` prints."""
+        exe = shutil.which(shell)
+        if exe is None:
+            self.skipTest(f"{shell} is not installed")
+        with tempfile.NamedTemporaryFile("w", suffix=f".{shell}",
+                                         delete=False) as handle:
+            handle.write(script)
+        try:
+            # The path rides in $1 so a Windows path's backslashes are
+            # not read as escapes.
+            result = subprocess.run(
+                [exe, "-f", "-c", f'{prelude}source "$1" && {show}', exe,
+                 handle.name],
+                capture_output=True, text=True, check=False)
+        finally:
+            os.unlink(handle.name)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stderr, "")
+        return result.stdout.strip()
+
+    def test_bash_completion_sources_cleanly(self):
+        out = self._source_in_shell(
+            "bash", render_completion("bash"), "",
+            'echo "$_linecast_week_start_values"')
+        self.assertEqual(out, "monday sunday saturday")
+
+    def test_zsh_completion_sources_cleanly(self):
+        """The README's `source <(linecast completion zsh)` must not
+        fail; `compdef` is stubbed because -f skips compinit."""
+        out = self._source_in_shell(
+            "zsh", render_completion("zsh"), "compdef() { : }; ",
+            'print -r -- "${_linecast_week_start_values[@]}"')
+        self.assertEqual(out, "monday sunday saturday")
 
     def test_invalid_shell_raises(self):
         with self.assertRaises(ValueError):

@@ -9,7 +9,11 @@ their own connections (a threading.local), so worker pools never share
 a socket.
 
 The User-Agent is attached here by default, so callers only pass the
-headers that are specific to them.
+headers that are specific to them.  So is Accept-Encoding: gzip, and a
+body the server declares gzipped comes back inflated, under the same
+byte cap as a plain one; Open-Meteo's ten-year archive is a quarter of
+the size on the wire that way.  A pre-gzipped body a static host serves
+without declaring it is left alone, for the caller to sniff.
 """
 
 import json
@@ -74,6 +78,17 @@ def gunzip_limited(data: bytes, limit: int) -> bytes:
     return out
 
 
+def _inflate(headers, body: bytes, limit: int) -> bytes:
+    """The body as the server meant it: inflated when Content-Encoding
+    says gzip and the bytes agree.  A server that declares gzip and
+    sends plain text (a misconfigured error page, typically) gets the
+    benefit of the doubt rather than a zlib error."""
+    encoding = (headers.get("Content-Encoding") or "").strip().lower()
+    if encoding in ("gzip", "x-gzip") and body[:2] == b"\x1f\x8b":
+        return gunzip_limited(body, limit)
+    return body
+
+
 class HTTPError(OSError):
     """A response that was not 2xx.  Mirrors the attributes callers read
     off urllib.error.HTTPError: code, reason, headers, url."""
@@ -108,7 +123,7 @@ def _fetch_bytes_urllib(url, headers, timeout, limit):
     import urllib.request
     req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return read_limited(resp, limit)
+        return _inflate(resp.headers, read_limited(resp, limit), limit)
 
 
 def _connection(key, timeout):
@@ -170,7 +185,7 @@ def _request(url, headers, timeout, limit):
         try:
             conn.request("GET", selector, headers=headers)
             resp = conn.getresponse()
-            body = read_limited(resp, limit)
+            body = _inflate(resp.headers, read_limited(resp, limit), limit)
         except _stale_connection_errors() as exc:
             _drop(key)
             if reused and attempt == 0:
@@ -189,13 +204,14 @@ def fetch_bytes(url: str, headers: dict[str, str] | None = None,
 
     Raises HTTPError for a non-2xx status, OSError (timeouts, refused
     connections, TLS failures) on transport trouble, and ValueError for
-    a body past the limit.  file:// URLs read the local file, as they
-    did under urllib.
+    a body past the limit, compressed or inflated.  file:// URLs read
+    the local file, as they did under urllib.
     """
     if debug_enabled():
         debug_log(f"fetch {redact_url(url)}")
     from linecast import user_agent
-    hdrs = {"User-Agent": user_agent(), "Connection": "keep-alive"}
+    hdrs = {"User-Agent": user_agent(), "Connection": "keep-alive",
+            "Accept-Encoding": "gzip"}
     if headers:
         hdrs.update(headers)
     if url.startswith("file:"):

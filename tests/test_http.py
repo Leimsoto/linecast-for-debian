@@ -109,6 +109,60 @@ class TestFetchBytes:
         assert headers["User-Agent"] == "custom/1"
         assert headers["Accept-Encoding"] == "gzip"
 
+    def test_gzip_asked_for_by_default(self, conns):
+        conns.script = [_Response()]
+        _http.fetch_bytes("https://h.example/")
+        headers = conns.instances[0].requests[0][2]
+        assert headers["Accept-Encoding"] == "gzip"
+
+    def test_declared_gzip_body_inflated(self, conns):
+        import gzip
+        conns.script = [_Response(body=gzip.compress(b'{"daily": 1}'),
+                                  headers={"content-encoding": "gzip"})]
+        assert _http.fetch_bytes("https://h.example/") == b'{"daily": 1}'
+
+    def test_inflated_body_past_the_limit_refused(self, conns):
+        import gzip
+        conns.script = [_Response(body=gzip.compress(b"\0" * 1000),
+                                  headers={"Content-Encoding": "gzip"})]
+        with pytest.raises(ValueError):
+            _http.fetch_bytes("https://h.example/", limit=100)
+
+    def test_undeclared_gzip_body_left_for_the_caller(self, conns):
+        # static tile hosts serve pre-gzipped bodies with no
+        # Content-Encoding; _vtiles sniffs and inflates those itself
+        import gzip
+        raw = gzip.compress(b"tile")
+        conns.script = [_Response(body=raw)]
+        assert _http.fetch_bytes("https://h.example/") == raw
+
+    def test_declared_gzip_over_a_plain_body_passes_through(self, conns):
+        conns.script = [_Response(body=b"not gzip",
+                                  headers={"Content-Encoding": "gzip"})]
+        assert _http.fetch_bytes("https://h.example/") == b"not gzip"
+
+    def test_proxied_path_inflates_too(self, monkeypatch):
+        import gzip
+        import urllib.request
+        seen = {}
+
+        class _Resp(_Response):
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+        def fake_urlopen(req, timeout=None):
+            seen["headers"] = {k.lower(): v for k, v in req.header_items()}
+            return _Resp(body=gzip.compress(b"via proxy"),
+                         headers={"Content-Encoding": "gzip"})
+
+        monkeypatch.setattr(_http, "_proxied", lambda: True)
+        monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+        assert _http.fetch_bytes("https://h.example/") == b"via proxy"
+        assert seen["headers"]["accept-encoding"] == "gzip"
+
     def test_same_host_reuses_the_connection(self, conns):
         conns.script = [_Response(), _Response(), _Response()]
         for path in ("/1", "/2", "/3"):

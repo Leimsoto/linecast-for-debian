@@ -4,6 +4,9 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
+- Completion: The bash and zsh completion scripts load again. Both stopped with an error once `--week-start` and `--temp-range` gained value lists, because a shell variable cannot carry a hyphen.
+- Weather: The ten-year climate archive behind the "warmer than usual" line and the hourly graph's scale downloads at a quarter of its former size, as do the forecast and air quality. Every download now asks the server to compress its answer.
+
 ## 2.6.0 — 2026-09-15
 
 - Weather: The hourly graph now keeps one scale from day to day: the range of a typical year where you are, taken from the hottest and coldest day of each of the past ten years. A hot day reaches the top of the graph and a cold one the bottom, and the graph no longer rescales each time the forecast changes. Until now the forecast's own high and low always touched the edges, so a mild day looked like a heat wave. `--temp-range forecast` fits the graph to the forecast the old way, and `--temp-range world` uses one scale everywhere, -40 to 50°C. Contributed by [@db48x](https://github.com/db48x) in [#94](https://github.com/ashuttl/linecast/pull/94).

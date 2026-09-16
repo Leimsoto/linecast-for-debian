@@ -14,7 +14,7 @@ Languages: en, fr, es, de, it, pt, nl, pl, no, sv, is, da, fi, id, ja, ko, zh, t
 Usage: weather [--print] [--oneline] [--json] [--location LAT,LNG | PLACE] [--search CITY]
                [--icons SET] [--emoji] [--metric] [--imperial] [--12h] [--24h]
                [--celsius] [--fahrenheit]
-               [--no-shading] [--lang fr] [--classic-colors]
+               [--temp-range forecast|climate|world] [--no-shading] [--lang fr] [--classic-colors]
 """
 
 import math
@@ -543,7 +543,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     hourly_lines = render_hourly(
         data, cols, n_braille_rows=n_braille, n_precip_rows=n_precip_braille,
         now=now_local, runtime=runtime, offset_minutes=offset_minutes,
-        show_cloud=has_cloud_row,
+        show_cloud=has_cloud_row, historical=historical,
     )
 
     # Adjust if hourly used more/fewer lines than budgeted (wind appeared,
@@ -555,7 +555,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
             hourly_lines = render_hourly(
                 data, cols, n_braille_rows=n_braille, n_precip_rows=n_precip_braille,
                 now=now_local, runtime=runtime, offset_minutes=offset_minutes,
-                show_cloud=has_cloud_row,
+                show_cloud=has_cloud_row, historical=historical,
             )
 
     hourly_end = hourly_start + len(hourly_lines)
@@ -582,7 +582,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
         hourly_lines = render_hourly(
             data, cols, n_braille_rows=n_braille, n_precip_rows=n_precip_braille,
             now=now_local, runtime=runtime, hover_col=hover_graph_col,
-            offset_minutes=offset_minutes, show_cloud=has_cloud_row,
+            offset_minutes=offset_minutes, show_cloud=has_cloud_row, historical=historical,
         )
 
     lines.extend(hourly_lines)

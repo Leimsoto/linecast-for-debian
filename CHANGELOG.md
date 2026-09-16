@@ -4,10 +4,15 @@ Notable changes, by release. Notes for the next release collect under **Unreleas
 
 ## Unreleased
 
-- Live views: Quitting no longer leaves the terminal's colour replies on the shell's command line. linecast waits for the terminal to finish answering, at startup and on the way out, before it hands the terminal back.
-- Live views: Scrolling or dragging faster than the terminal can draw no longer queues up frames that keep playing after you stop. Each frame waits until the terminal has drawn the one before it, and the input that arrives meanwhile goes into the next frame.
+- Weather: The hourly graph now keeps one scale from day to day: the range of a typical year where you are, taken from the hottest and coldest day of each of the past ten years. A hot day reaches the top of the graph and a cold one the bottom, and the graph no longer rescales each time the forecast changes. Until now the forecast's own high and low always touched the edges, so a mild day looked like a heat wave. `--temp-range forecast` fits the graph to the forecast the old way, and `--temp-range world` uses one scale everywhere, -40 to 50°C. Contributed by db48x.
+- Weather: The hourly graph labels the top and bottom of its temperature axis, in dim type at the edge where the curve leaves room.
 - Weather: The now line and the midnight dividers no longer darken the cloud strip and the precipitation bar where they cross them. They pass behind, so a darker cell always means less cloud or a fainter chance of rain. The line under the mouse still shows through.
 - Weather: In Japanese, drizzle is 霧雨 at every intensity, and the sentence about rain continuing or ending reads more naturally.
+
+## 2.5.2 — 2026-09-14
+
+- Live views: Quitting no longer leaves the terminal's colour replies on the shell's command line. linecast waits for the terminal to finish answering, at startup and on the way out, before it hands the terminal back.
+- Live views: Scrolling or dragging faster than the terminal can draw no longer queues up frames that keep playing after you stop. Each frame waits until the terminal has drawn the one before it, and the input that arrives meanwhile goes into the next frame.
 
 ## 2.5.1 — 2026-09-14
 

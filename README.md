@@ -2,7 +2,7 @@
 
 # linecast
 
-**Weather, tides, the sun, the moon, the stars, and a globe, drawn for the terminal. The Old Farmer's Almanac meets Minitel.**
+**Weather, tides, the sun, the moon, maps, and a planetarium, in your terminal. The Old Farmer's Almanac meets Minitel.**
 
 [![Tests](https://github.com/ashuttl/linecast/actions/workflows/test.yml/badge.svg)](https://github.com/ashuttl/linecast/actions/workflows/test.yml)
 [![PyPI](https://img.shields.io/pypi/v/linecast)](https://pypi.org/project/linecast/)
@@ -94,7 +94,7 @@ The frames below show each app once or twice. [GALLERY.md](GALLERY.md) shows the
 
 ### Weather
 
-`weather` shows current conditions, a scrollable chart of hourly temperatures shaded by daylight, precipitation, daily highs and lows, air quality, and a line on how today compares with a normal day. Official alerts cover 45 countries. Click one to read it in full, or press `o` to open it in your browser. If the forecast service can't be reached, you get the last forecast it fetched, with a line saying how old it is.
+`weather` shows current conditions, a scrollable chart of hourly temperatures shaded by daylight, precipitation, daily highs and lows, air quality, and a line on how today compares with a normal day. The chart keeps one scale, the range of a typical year where you are, so a hot day reaches the top and a mild one stays in the middle; `--temp-range forecast` fits it to the forecast instead. Official alerts cover 45 countries. Click one to read it in full, or press `o` to open it in your browser. If the forecast service can't be reached, you get the last forecast it fetched, with a line saying how old it is.
 
 ![weather dashboard](https://raw.githubusercontent.com/ashuttl/linecast/main/screenshots/weather.png)
 

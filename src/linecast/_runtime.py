@@ -440,6 +440,10 @@ def _add_clock_flags(p):
                     help="12-hour clock")
 
 
+# What the weather temperature graph spans; the first is the default.
+TEMP_RANGES = ("climate", "forecast", "world")
+
+
 def weather_parser():
     p = _base_parser("linecast weather",
                       "Terminal weather dashboard with braille temperature "
@@ -455,6 +459,11 @@ def weather_parser():
                     help="celsius temperatures only")
     p.add_argument("--fahrenheit", action="store_true",
                     help="fahrenheit temperatures")
+    p.add_argument("--temp-range", dest="temp_range",
+                    choices=TEMP_RANGES, default=TEMP_RANGES[0],
+                    help="what the temperature graph spans: the location's "
+                         "climate over the past ten years, this forecast, or "
+                         "-40 to 50°C for the whole world")
     p.add_argument("--no-shading", action="store_true",
                     help="disable daylight shading on hourly chart")
     p.add_argument("--json", dest="json_mode", action="store_true",
@@ -823,6 +832,7 @@ class RuntimeConfig:
 class WeatherRuntime(RuntimeConfig):
     # Defaults required: the base class ends in defaulted fields.
     celsius: bool = True
+    temp_range: str = "climate"
     shading: bool = True
 
     _parser = staticmethod(weather_parser)
@@ -842,6 +852,7 @@ class WeatherRuntime(RuntimeConfig):
             lang=base.lang,
             oneline=base.oneline,
             celsius=celsius,
+            temp_range=namespace.temp_range,
             metric=base.metric,
             use_24h=base.use_24h,
             week_start=base.week_start,

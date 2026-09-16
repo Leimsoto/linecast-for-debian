@@ -8,6 +8,7 @@ from linecast._braille import build_braille_curve, interpolate
 from linecast._graphics import bg, color_mode, fg, fmt_hour, fmt_time_dt, RESET, visible_len
 from linecast._runtime import WeatherRuntime, current_runtime, log_skipped
 from linecast._i18n import lang_of
+from linecast._weather_historical import temperature_scale
 from linecast._weather_i18n import FULL_DAY_NAMES, _s
 from linecast._weather_sources import _local_now_for_data
 from linecast._weather_style import (
@@ -17,6 +18,7 @@ from linecast._weather_style import (
     CHART_NOW_RGB,
     CLOUD_RGB,
     DIM,
+    MUTED_RGB,
     DIM_RGB,
     SPARKLINE,
     SUNRISE_LABEL_RGB,
@@ -749,6 +751,37 @@ def _compute_extrema_overlays(extrema, col_temps, n_rows, graph_w, runtime, valu
     return overlays
 
 
+def _compute_axis_overlays(value_range, braille_rows, n_rows, graph_w, overlays, now_col=None):
+    """Dim labels for the two ends of the chart's temperature axis: the
+    top row's value on the top row, the bottom row's on the bottom,
+    wherever the curve and the other labels leave the cells blank. The
+    left edge first, just past the now line when that sits there, and
+    the right edge when the left is taken. Adds to `overlays` in place."""
+    lo, hi = value_range
+    if n_rows < 1 or len(braille_rows) < n_rows or hi <= lo:
+        return
+    occupied = {}
+    for row, items in overlays.items():
+        for start, label, _color in items:
+            occupied.setdefault(row, set()).update(range(start, start + len(label)))
+    for row, value in ((0, hi), (n_rows - 1, lo)):
+        label = f"{value:.0f}\u00b0"
+        left = 1
+        if now_col is not None and now_col < left + len(label):
+            left = now_col + 1
+        for start in (left, graph_w - len(label) - 1):
+            cols = range(start, start + len(label))
+            if start < 0 or cols[-1] >= len(braille_rows[row]):
+                continue
+            if occupied.get(row, set()).intersection(cols):
+                continue
+            if any(braille_rows[row][c][0] != "\u2800" for c in cols):
+                continue
+            occupied.setdefault(row, set()).update(cols)
+            overlays.setdefault(row, []).append((start, label, MUTED_RGB))
+            break
+
+
 def _render_braille_rows(braille_rows, col_daylight, midnight_cols, runtime,
                          overlays=None, hover_col=None, now_col=None):
     """Render braille temperature rows with optional day/night shading."""
@@ -1070,11 +1103,13 @@ def _render_precip_rows(window_amount, window_precip, window_codes, graph_w, n_p
 
 
 def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runtime=None,
-                  hover_col=None, offset_minutes=0, show_cloud=True):
+                  hover_col=None, offset_minutes=0, show_cloud=True, historical=None):
     """Hourly forecast: braille temperature curve + precipitation graph.
 
     show_cloud: draw the cloud strip when the data has cloud cover; the
-    dashboard turns it off in a window too short to spare the row."""
+    dashboard turns it off in a window too short to spare the row.
+    historical: the location's HistoricalAverages, which set the graph's
+    scale under --temp-range climate."""
     if runtime is None:
         runtime = current_runtime(WeatherRuntime)
     daily = data.get("daily", {})
@@ -1096,9 +1131,11 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     window_wind_dirs = window["wind_dirs"]
     window_dts = window["dts"]
     total_hours = window["total_hours"]
-    all_temp_range = window.get("all_temp_range")
     chart_lo = min(window_temps)
     chart_hi = max(window_temps)
+    # The curve is scaled to the whole forecast, so it holds still while
+    # scrolling; --temp-range can widen that to the climate or the world.
+    value_range = temperature_scale(runtime, historical, window.get("all_temp_range"))
 
     midnight_cols, _noon_cols, midnight_day_names = _compute_time_markers(
         window_dts, total_hours, graph_w, runtime
@@ -1170,9 +1207,11 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
         lines.append(tick_line)
 
     braille_rows = build_braille_curve(window_temps, graph_w, n_braille_rows,
-                                       value_range=all_temp_range)
+                                       value_range=value_range)
     overlays = _compute_extrema_overlays(extrema, col_temps, n_braille_rows, graph_w, runtime,
-                                          value_range=all_temp_range)
+                                          value_range=value_range)
+    _compute_axis_overlays(value_range, braille_rows, n_braille_rows, graph_w, overlays,
+                           now_col=now_col)
     lines.extend(_render_braille_rows(braille_rows, col_daylight, midnight_cols, runtime, overlays,
                                        hover_col=hover_col, now_col=now_col))
 

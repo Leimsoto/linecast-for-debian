@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+
+export PYBUILD_NAME=linecast
+export PYBUILD_SYSTEM=pyproject
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_auto_test:
+	# Tests require pytest and live network for integration; skipped during package build
+	true
+
+execute_after_dh_auto_install:
+	mkdir -p debian/linecast/usr/share/bash-completion/completions
+	PYTHONPATH=$(CURDIR)/src python3 -m linecast completion bash > debian/linecast/usr/share/bash-completion/completions/linecast
+	mkdir -p debian/linecast/usr/share/zsh/vendor-completions
+	PYTHONPATH=$(CURDIR)/src python3 -m linecast completion zsh > debian/linecast/usr/share/zsh/vendor-completions/_linecast
+	mkdir -p debian/linecast/usr/share/fish/vendor_completions.d
+	PYTHONPATH=$(CURDIR)/src python3 -m linecast completion fish > debian/linecast/usr/share/fish/vendor_completions.d/linecast.fish

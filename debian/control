@@ -1,0 +1,30 @@
+Source: linecast
+Section: utils
+Priority: optional
+Maintainer: Leim Soto <leimsoto@users.noreply.github.com>
+Build-Depends: debhelper-compat (= 13),
+               dh-python,
+               python3-all,
+               python3-hatchling,
+               python3-build,
+               python3-installer
+Standards-Version: 4.7.0
+Homepage: https://github.com/ashuttl/linecast
+Vcs-Browser: https://github.com/Leimsoto/linecast-for-debian
+Vcs-Git: https://github.com/Leimsoto/linecast-for-debian.git
+Rules-Requires-Root: no
+
+Package: linecast
+Architecture: all
+Depends: ${misc:Depends},
+         ${python3:Depends}
+Recommends: ca-certificates
+Suggests: fonts-noto-color-emoji
+Description: Weather, tides, the sun, the moon, and maps drawn for the terminal
+ Linecast brings weather forecasts, radar animations, solar arcs, lunar phases
+ with multiple cultural calendars, night sky views, tide tables, and street
+ or terrain maps directly into modern terminal emulators.
+ .
+ Built with braille dots, block glyphs, and 24-bit true color, linecast draws
+ rich terminal visualisations with zero runtime C or external Python
+ dependencies on Linux.

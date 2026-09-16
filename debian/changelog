@@ -1,0 +1,8 @@
+linecast (2.6.1-1) unstable; urgency=medium
+
+  * Initial Debian package release. (Closes: #1000000)
+  * Built for Python 3 using Hatchling backend.
+  * Included shell auto-completions for bash, zsh, and fish.
+  * Added manual page linecast(1).
+
+ -- Leim Soto <leimsoto@users.noreply.github.com>  Wed, 16 Sep 2026 09:00:00 -0500

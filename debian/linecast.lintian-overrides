@@ -1,0 +1,2 @@
+# STARS.md is shipped in the python package data directory for runtime reference/credits
+linecast: package-contains-documentation-outside-usr-share-doc [*STARS.md*]

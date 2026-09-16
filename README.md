@@ -17,12 +17,14 @@
 
 linecast turns free public data into seven live, mouse-friendly terminal apps for macOS, Linux, and Windows. It is pure Python with no dependencies, takes its colors from your terminal theme, and needs no accounts or API keys.
 
+> **Debian / Ubuntu package:** This repository is a fork configured to build and distribute compliant Debian (`.deb`) packages for `linecast`, including automatic shell completions, manual pages, and zero external dependencies.
+
 | Command | What it shows |
 | --- | --- |
 | `linecast weather` | A weather forecast with current conditions, an hourly and seven-day forecast, and official alerts for 45 countries |
 | `linecast sunshine` | The sun's path across the sky today, and the hours of daylight through the year |
 | `linecast moon` | The moon as seen from a given location, with rise and set times and the next full and new moons |
-| `linecast sky` | The sky from where you stand: at night, a terminal planetarium shows you the stars, the constellations, the planets, the Moon, and the Milky Way |
+| `linecast sky` | The sky from where you stand: at night, a planetarium shows stars, constellations, planets, and the Milky Way |
 | `linecast tides` | A scrollable tide curve shaded by daylight |
 | `linecast radar` | Animated weather radar for the whole world, with warnings, temperature, and wind, drawn in the terminal grid |
 | `linecast maps` | Street maps, terrain, and a globe you can spin, with live daylight and clouds, place search, and directions |
@@ -30,6 +32,35 @@ linecast turns free public data into seven live, mouse-friendly terminal apps fo
 **[Install](#install) · [Using it](#using-it) · [A closer look](#a-closer-look) · [Settings](#settings) · [Contributing](#contributing)**
 
 ## Install
+
+### Debian / Ubuntu (.deb)
+
+Download the `.deb` package from the [Releases](https://github.com/Leimsoto/linecast-for-debian/releases) page and install it with `apt`:
+
+```sh
+sudo apt install ./linecast_*_all.deb
+```
+
+Or build and install the `.deb` package directly from source:
+
+```sh
+# 1. Install build dependencies
+sudo apt install -y debhelper dh-python python3-hatchling python3-build python3-installer
+
+# 2. Compile the .deb package (artifacts are saved in dist/)
+./scripts/build_deb.sh
+
+# 3. Install
+sudo apt install ./dist/linecast_*_all.deb
+```
+
+The Debian package adheres to Debian policy standards and features:
+- Executable binary `/usr/bin/linecast`
+- Automated shell completions for **Bash**, **Zsh**, and **Fish**
+- System manual page (`man linecast`)
+- Zero external runtime dependencies on Linux (runs on Python 3 standard library)
+
+### Other package managers
 
 With [homebrew](https://brew.sh/):
 

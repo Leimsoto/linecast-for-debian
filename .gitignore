@@ -8,3 +8,15 @@ build/
 .claude/worktrees/
 .DS_Store
 .obsidian/
+
+# Debian packaging artifacts
+.pybuild/
+debian/.debhelper/
+debian/*.debhelper
+debian/debhelper-build-stamp
+debian/files
+debian/linecast/
+debian/linecast.substvars
+*.deb
+*.buildinfo
+*.changes

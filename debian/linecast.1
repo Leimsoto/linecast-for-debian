@@ -1,0 +1,107 @@
+.TH LINECAST 1 "September 2026" "linecast 2.6.1" "User Commands"
+.SH NAME
+linecast \- weather, tides, the sun, the moon, and maps drawn for the terminal
+.SH SYNOPSIS
+.B linecast
+[\fIOPTIONS\fR]
+.I COMMAND
+[\fIARGS\fR...]
+.SH DESCRIPTION
+.B linecast
+is a terminal weather and celestial observation suite. It brings weather
+forecasts, radar animations, solar arcs, lunar phases with multiple cultural
+calendars, night sky views, tide tables, and street or terrain maps directly
+into terminal emulators using Braille characters, Unicode block glyphs, and
+24-bit true color.
+.PP
+On Linux, linecast runs on pure Python using standard library facilities,
+requiring no external C or Python dependencies.
+.SH COMMANDS
+.TP
+.B weather
+Conditions now, the day's temperature curve, the forecast, and alerts.
+.TP
+.B sunshine
+The sun's arc across the sky, dawn to dusk, or the whole year.
+.TP
+.B moon
+The moon as it looks tonight, its rise and set, and a month calendar.
+.TP
+.B sky
+The stars, planets, and Milky Way over you, as you would see them.
+.TP
+.B tides
+Tide chart from the nearest station, or a global model where there is none.
+.TP
+.B radar
+Weather radar over a map, the last hour and the next.
+.TP
+.B maps
+Street maps, hillshaded terrain, and routes.
+.SH SETTINGS COMMANDS
+.TP
+.B location [\fIshow\fR | \fIset\fR \fIPLACE\fR | \fIauto\fR | \fIsearch\fR \fIQUERY\fR]
+A fixed place, instead of the one your IP address suggests.
+.TP
+.B language [\fIshow\fR | \fICODE\fR | \fIauto\fR]
+Language code: en, fr, es, de, it, pt, nl, pl, no, sv, is, da, fi, ja, ko, zh, th, id, uk, or vi.
+.TP
+.B units [\fIshow\fR | \fImetric\fR | \fIimperial\fR]
+Units configuration.
+.TP
+.B clock [\fIshow\fR | \fI12h\fR | \fI24h\fR]
+Clock time format.
+.TP
+.B week [\fIshow\fR | \fImonday\fR | \fIsunday\fR | \fIsaturday\fR]
+The day the moon calendar's week opens on.
+.TP
+.B icons [\fIshow\fR | \fInerd\fR | \fIemoji\fR | \fIplain\fR]
+Icon style for rendering.
+.TP
+.B calendar [\fIshow\fR | \fICALENDAR\fR]
+Calendar system: chinese, japanese, korean, vietnamese, thai, hawaiian, samoan, chamorro, refaluwasch, islamic, hebrew, almanac, or none.
+.TP
+.B culture [\fIshow\fR | \fICULTURE\fR]
+Whose constellations the sky draws: IAU (none) or various cultural sky traditions.
+.SH HOUSEKEEPING COMMANDS
+.TP
+.B link
+Make short commands (weather, moon, sunshine, tides, radar, maps, sky) beside linecast via symlinks or shell aliases.
+.TP
+.B doctor
+Check configuration, file locations, terminal capabilities, and provider status.
+.TP
+.B completion [\fIbash\fR | \fIzsh\fR | \fIfish\fR | \fInu\fR]
+Emit shell completion script.
+.SH GLOBAL OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Show help message and exit.
+.TP
+.BR \-v ", " \-\-version
+Show program version and exit.
+.TP
+.BI \-\-location " PLACE"
+Override location for one run (name or coordinates, e.g. "41.88,-87.63").
+.TP
+.BI \-\-lang " CODE"
+Override language for one run.
+.TP
+.BR \-\-metric ", " \-\-imperial
+Override units for one run.
+.TP
+.BR \-\-12h ", " \-\-24h
+Override time format for one run.
+.SH FILES
+.TP
+.I ~/.config/linecast/config.json
+User configuration file.
+.TP
+.I ~/.cache/linecast/
+Cache directory for offline tiles, astronomical catalogues, and data.
+.SH SEE ALSO
+Further documentation and upstream source code are available at
+https://github.com/ashuttl/linecast and https://github.com/Leimsoto/linecast-for-debian.
+.SH AUTHORS
+Andrew Shuttleworth Fowler <https://github.com/ashuttl/linecast>.
+Debian packaging by Leim Soto <https://github.com/Leimsoto/linecast-for-debian>.

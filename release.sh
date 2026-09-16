@@ -82,19 +82,37 @@ if n != 1:
 open(changelog, "w").write(text)
 EOF
 
+# --- 4b. Update debian/changelog ---
+python3 - "$LINECAST_DIR/debian/changelog" "$NEW_VERSION" <<'EOF'
+import sys, datetime
+deb_changelog, version = sys.argv[1:3]
+now = datetime.datetime.now(datetime.timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000")
+new_entry = f"linecast ({version}-1) unstable; urgency=medium\n\n  * New upstream release {version}.\n\n -- Leim Soto <leimsoto@users.noreply.github.com>  {now}\n\n"
+try:
+    content = open(deb_changelog).read()
+except FileNotFoundError:
+    content = ""
+open(deb_changelog, "w").write(new_entry + content)
+EOF
+
 # --- 5. Sync the lockfile so it never trails the tag ---
 cd "$LINECAST_DIR"
 if command -v uv >/dev/null 2>&1; then
   uv lock --quiet
 fi
 
-# --- 6. Commit, tag with the notes, push, publish the release ---
-git add pyproject.toml uv.lock CHANGELOG.md
+# --- 6. Build debian package ---
+if [ -x "$LINECAST_DIR/scripts/build_deb.sh" ]; then
+  "$LINECAST_DIR/scripts/build_deb.sh"
+fi
+
+# --- 7. Commit, tag with the notes, push, publish the release ---
+git add pyproject.toml uv.lock CHANGELOG.md debian/changelog
 git commit -m "$TAG"
 git tag -a "$TAG" -F "$NOTES_FILE"
 git push origin main "$TAG"
 
-gh release create "$TAG" --title "$TAG" --notes-file "$NOTES_FILE"
+gh release create "$TAG" dist/*.deb --title "$TAG" --notes-file "$NOTES_FILE"
 
-echo "Pushed $TAG and published its GitHub Release. CI will publish to PyPI."
+echo "Pushed $TAG and published its GitHub Release with .deb package."
 echo "Homebrew follows on its own: BrewTestBot bumps homebrew/core from PyPI."

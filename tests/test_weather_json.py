@@ -224,9 +224,11 @@ class TestOptionalSections:
 
     def test_historical_asdict(self):
         hist = HistoricalAverages(avg_high=41.2, avg_low=26.7,
-                                  avg_precip=0.11, years=10)
+                                  avg_precip=0.11, years=10,
+                                  year_high=91.3, year_low=-3.6)
         assert _payload(historical=hist)["historical"] == {
             "avg_high": 41.2, "avg_low": 26.7, "avg_precip": 0.11, "years": 10,
+            "year_high": 91.3, "year_low": -3.6,
         }
 
     def test_empty_data_yields_nulls_not_errors(self):

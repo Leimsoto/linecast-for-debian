@@ -14,7 +14,7 @@ Languages: en, fr, es, de, it, pt, nl, pl, no, sv, is, da, fi, id, ja, ko, zh, t
 Usage: weather [--print] [--oneline] [--json] [--location LAT,LNG | PLACE] [--search CITY]
                [--icons SET] [--emoji] [--metric] [--imperial] [--12h] [--24h]
                [--celsius] [--fahrenheit]
-               [--no-shading] [--lang fr] [--classic-colors]
+               [--temp-range forecast|climate|world] [--no-shading] [--lang fr] [--classic-colors]
 """
 
 import math
@@ -129,8 +129,7 @@ def _build_hover_tooltip(data, mouse_col, mouse_row, hourly_start, hourly_end, c
 
     hourly = data.get("hourly", {})
     now = _local_now_for_data(data)
-    window = _prepare_hourly_window(hourly, now, graph_w, runtime,
-                                    offset_minutes=offset_minutes)
+    window = _prepare_hourly_window(hourly, now, graph_w, offset_minutes=offset_minutes)
     if window is None:
         return ""
 
@@ -544,7 +543,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
     hourly_lines = render_hourly(
         data, cols, n_braille_rows=n_braille, n_precip_rows=n_precip_braille,
         now=now_local, runtime=runtime, offset_minutes=offset_minutes,
-        show_cloud=has_cloud_row, historical=historical
+        show_cloud=has_cloud_row, historical=historical,
     )
 
     # Adjust if hourly used more/fewer lines than budgeted (wind appeared,
@@ -556,7 +555,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
             hourly_lines = render_hourly(
                 data, cols, n_braille_rows=n_braille, n_precip_rows=n_precip_braille,
                 now=now_local, runtime=runtime, offset_minutes=offset_minutes,
-                show_cloud=has_cloud_row, historical=historical
+                show_cloud=has_cloud_row, historical=historical,
             )
 
     hourly_end = hourly_start + len(hourly_lines)
@@ -569,7 +568,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
             graph_w = max(10, cols)
             mouse_col_raw = mouse_pos[0] - 1  # 1-based terminal col → 0-based graph col
             if 0 <= mouse_col_raw < graph_w:
-                window = _prepare_hourly_window(hourly, now_local, graph_w, runtime,
+                window = _prepare_hourly_window(hourly, now_local, graph_w,
                                                 offset_minutes=offset_minutes)
                 if window:
                     n = len(window["temps"])
@@ -583,7 +582,7 @@ def render_from_data(data, alerts, runtime, location_name="", offset_minutes=0, 
         hourly_lines = render_hourly(
             data, cols, n_braille_rows=n_braille, n_precip_rows=n_precip_braille,
             now=now_local, runtime=runtime, hover_col=hover_graph_col,
-            offset_minutes=offset_minutes, show_cloud=has_cloud_row, historical=historical
+            offset_minutes=offset_minutes, show_cloud=has_cloud_row, historical=historical,
         )
 
     lines.extend(hourly_lines)

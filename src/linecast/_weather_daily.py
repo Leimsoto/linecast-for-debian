@@ -76,6 +76,9 @@ def render_daily_mapped(data, width, runtime=None, now=None):
     if not all_lo or not all_hi:
         return lines, spans
 
+    # The bars keep the week's own scale whatever --temp-range says: on
+    # the location's they shrink to slivers, and the curve above already
+    # shows the week against it.
     scale_min = min(all_lo)
     scale_max = max(all_hi)
 

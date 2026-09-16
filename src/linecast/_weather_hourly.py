@@ -8,6 +8,7 @@ from linecast._braille import build_braille_curve, interpolate
 from linecast._graphics import bg, color_mode, fg, fmt_hour, fmt_time_dt, RESET, visible_len
 from linecast._runtime import WeatherRuntime, current_runtime, log_skipped
 from linecast._i18n import lang_of
+from linecast._weather_historical import temperature_scale
 from linecast._weather_i18n import FULL_DAY_NAMES, _s
 from linecast._weather_sources import _local_now_for_data
 from linecast._weather_style import (
@@ -17,6 +18,7 @@ from linecast._weather_style import (
     CHART_NOW_RGB,
     CLOUD_RGB,
     DIM,
+    MUTED_RGB,
     DIM_RGB,
     SPARKLINE,
     SUNRISE_LABEL_RGB,
@@ -250,7 +252,7 @@ def _interpolate_columns(values, graph_w):
     return interpolate(values, graph_w)
 
 
-def _prepare_hourly_window(hourly, now, graph_w, runtime, offset_minutes=0):
+def _prepare_hourly_window(hourly, now, graph_w, offset_minutes=0):
     """Slice hourly arrays to the visible window.
 
     offset_minutes shifts the window start forward (positive) or backward
@@ -329,7 +331,6 @@ def _prepare_hourly_window(hourly, now, graph_w, runtime, offset_minutes=0):
     # Global stats across all available data for stable layout while scrolling
     all_temp_lo = min(temps) if temps else 0
     all_temp_hi = max(temps) if temps else 0
-    all_temp_range = (all_temp_lo, all_temp_hi)
     all_wind_max = max(wind_speeds) if wind_speeds else 0
     all_uv_max = max(uv_indices) if uv_indices else 0
     all_precip_max = max(precip_amount) if precip_amount else 0
@@ -355,7 +356,7 @@ def _prepare_hourly_window(hourly, now, graph_w, runtime, offset_minutes=0):
         "all_uv": uv_indices,
         "start_idx": start_idx,
         "end_idx": end_idx,
-        "all_temp_range": all_temp_range,
+        "all_temp_range": (all_temp_lo, all_temp_hi),
         "all_wind_max": all_wind_max,
         "all_uv_max": all_uv_max,
         "all_precip_max": all_precip_max,
@@ -562,7 +563,7 @@ def _find_temperature_extrema(col_temps, graph_w):
     return extrema
 
 
-def _render_today_line(width, all_temp_range, midnight_day_names, sun_labels, runtime,
+def _render_today_line(width, chart_lo, chart_hi, midnight_day_names, sun_labels, runtime,
                        window_dts=None, now=None, offset_minutes=0):
     """Render the hourly section header with day and sun-event labels."""
     # Show "Today" only when the window starts on today's date;
@@ -577,10 +578,9 @@ def _render_today_line(width, all_temp_range, midnight_day_names, sun_labels, ru
         hint_text = _s("space_to_now", runtime)
         today_right = f"{DIM}{hint_text}"
     else:
-        (lo, hi) = all_temp_range
         today_right = (
-            f"{_colored_temp(lo, runtime, '°')} "
-            f"{TEXT}\u2192 {_colored_temp(hi, runtime, runtime.temp_unit)}"
+            f"{_colored_temp(chart_lo, runtime, '°')} "
+            f"{TEXT}\u2192 {_colored_temp(chart_hi, runtime, runtime.temp_unit)}"
         )
     if not (midnight_day_names or sun_labels):
         pad = width - visible_len(today_left) - visible_len(today_right)
@@ -1059,19 +1059,15 @@ def _render_precip_rows(window_amount, window_precip, window_codes, graph_w, n_p
         precip_chars.append(f"{fg(*_through_line(rgb, indicators, x))}{SPARKLINE[idx]}")
     return [f"{''.join(precip_chars)}{RESET}"]
 
-def _round_down(n):
-    "round a number down to the nearest ten"
-    return math.floor(n/10)*10
-def _round_up(n):
-    "round a number up to the nearest ten"
-    return math.ceil(n/10)*10
 
 def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runtime=None,
                   hover_col=None, offset_minutes=0, show_cloud=True, historical=None):
     """Hourly forecast: braille temperature curve + precipitation graph.
 
     show_cloud: draw the cloud strip when the data has cloud cover; the
-    dashboard turns it off in a window too short to spare the row."""
+    dashboard turns it off in a window too short to spare the row.
+    historical: the location's HistoricalAverages, which set the graph's
+    scale under --temp-range climate."""
     if runtime is None:
         runtime = current_runtime(WeatherRuntime)
     daily = data.get("daily", {})
@@ -1080,7 +1076,7 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
         now = _local_now_for_data(data)
 
     graph_w = max(10, width)
-    window = _prepare_hourly_window(data.get("hourly", {}), now, graph_w, runtime,
+    window = _prepare_hourly_window(data.get("hourly", {}), now, graph_w,
                                     offset_minutes=offset_minutes)
     if window is None:
         return []
@@ -1093,14 +1089,11 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     window_wind_dirs = window["wind_dirs"]
     window_dts = window["dts"]
     total_hours = window["total_hours"]
-    all_temp_range = window.get("all_temp_range")
-    if runtime.use_scaled_temp_graph:
-        chart_yaxis_range = all_temp_range
-    else:
-        if historical is not None:
-            chart_yaxis_range = (_round_down(historical.low), _round_up(historical.high))
-        else:
-            chart_yaxis_range = (-40, 50) if runtime.celsius else (-40, 122)
+    chart_lo = min(window_temps)
+    chart_hi = max(window_temps)
+    # The curve is scaled to the whole forecast, so it holds still while
+    # scrolling; --temp-range can widen that to the climate or the world.
+    value_range = temperature_scale(runtime, historical, window.get("all_temp_range"))
 
     midnight_cols, _noon_cols, midnight_day_names = _compute_time_markers(
         window_dts, total_hours, graph_w, runtime
@@ -1155,7 +1148,8 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
     lines = [
         _render_today_line(
             width,
-            all_temp_range,
+            chart_lo,
+            chart_hi,
             midnight_day_names,
             sun_labels,
             runtime,
@@ -1171,9 +1165,9 @@ def render_hourly(data, width, n_braille_rows=2, n_precip_rows=0, now=None, runt
         lines.append(tick_line)
 
     braille_rows = build_braille_curve(window_temps, graph_w, n_braille_rows,
-                                       value_range=chart_yaxis_range)
+                                       value_range=value_range)
     overlays = _compute_extrema_overlays(extrema, col_temps, n_braille_rows, graph_w, runtime,
-                                          value_range=chart_yaxis_range)
+                                          value_range=value_range)
     lines.extend(_render_braille_rows(braille_rows, col_daylight, midnight_cols, runtime, overlays,
                                        hover_col=hover_col, now_col=now_col))
 

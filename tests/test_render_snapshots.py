@@ -74,7 +74,7 @@ def _compare_or_create(snapshot_name, actual):
 
 
 def _weather_render(cols, rows, runtime, fixture="open_meteo_forecast.json",
-                     location_name="Toronto, Ontario"):
+                     location_name="Toronto, Ontario", historical=None):
     """Render weather dashboard with mocked terminal size and clock."""
     from linecast.weather import render_from_data
 
@@ -85,7 +85,7 @@ def _weather_render(cols, rows, runtime, fixture="open_meteo_forecast.json",
          patch("linecast._weather_hourly._local_now_for_data", return_value=FIXED_NOW):
         output, _ = render_from_data(
             data, alerts=[], runtime=runtime,
-            location_name=location_name,
+            location_name=location_name, historical=historical,
         )
     return _strip_ansi(output)
 
@@ -113,20 +113,37 @@ class TestWeatherSnapshot:
         output = _weather_render(120, 40, self._make_runtime())
         _compare_or_create("weather_120x40.txt", output)
 
-    def test_weather_80x24_unscaled_graph(self):
-        output = _weather_render(80, 24, self._make_runtime(use_scaled_temp_graph=False))
-        _compare_or_create("weather_80x24_unscaled.txt", output)
+    def _toronto_archive(self):
+        # A typical Toronto year's extremes, in the fixture's units, for the
+        # default climate range.
+        from linecast._weather_historical import HistoricalAverages
+        return HistoricalAverages(avg_high=41.2, avg_low=26.7, avg_precip=0.11,
+                                  years=10, year_high=91.3, year_low=-3.6)
+
+    def test_weather_80x24_climate(self):
+        output = _weather_render(80, 24, self._make_runtime(temp_range="climate"),
+                                 historical=self._toronto_archive())
+        _compare_or_create("weather_80x24_climate.txt", output)
+
+    def test_weather_80x24_climate_without_archive_is_the_forecast(self):
+        # No archive answer: the graph falls back to the forecast's own range.
+        output = _weather_render(80, 24, self._make_runtime(temp_range="climate"))
+        _compare_or_create("weather_80x24.txt", output)
+
+    def test_weather_80x24_world(self):
+        output = _weather_render(80, 24, self._make_runtime(temp_range="world"))
+        _compare_or_create("weather_80x24_world.txt", output)
 
     def test_weather_metric_french(self):
         runtime = self._make_runtime(lang="fr", celsius=True, metric=True)
         output = _weather_render(80, 24, runtime)
         _compare_or_create("weather_metric_fr_80x24.txt", output)
 
-    def test_weather_metric_french_unscaled(self):
+    def test_weather_metric_french_climate(self):
         runtime = self._make_runtime(lang="fr", celsius=True, metric=True,
-                                     use_scaled_temp_graph=False)
-        output = _weather_render(80, 24, runtime)
-        _compare_or_create("weather_metric_fr_80x24_unscaled.txt", output)
+                                     temp_range="climate")
+        output = _weather_render(80, 24, runtime, historical=self._toronto_archive())
+        _compare_or_create("weather_metric_fr_80x24_climate.txt", output)
 
 # -----------------------------------------------------------------------
 # Sunshine rendering snapshot

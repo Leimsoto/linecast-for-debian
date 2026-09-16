@@ -87,6 +87,31 @@ class TestComputeAverages:
         assert result.years == 1
         assert result.avg_high == 60.0
 
+    def test_year_high_and_low_average_each_years_extremes(self):
+        """A typical year's extremes, not the one freak day in the archive."""
+        data = self._make_data([
+            ("2020-01-15", 30.0, -8.0, 0.0),
+            ("2020-07-04", 91.0, 68.0, 0.0),
+            ("2021-01-20", 28.0, 2.0, 0.0),
+            ("2021-07-04", 101.0, 66.0, 0.0),  # 2021's freak day
+        ])
+        result = _compute_averages(data, 7, 4)
+        assert result.year_high == 96.0   # (91 + 101) / 2
+        assert result.year_low == -3.0    # (-8 + 2) / 2
+
+    def test_year_extremes_skip_none_values(self):
+        data = {
+            "daily": {
+                "time": ["2020-03-27", "2021-03-27", "2021-08-01"],
+                "temperature_2m_max": [None, 60.0, 95.0],
+                "temperature_2m_min": [None, 40.0, None],
+                "precipitation_sum": [None, 0.1, 0.0],
+            }
+        }
+        result = _compute_averages(data, 3, 27)
+        assert result.year_high == 95.0
+        assert result.year_low == 40.0
+
     def test_feb_29_leap_day(self):
         """Leap day (Feb 29) should match only years that have it."""
         data = self._make_data([

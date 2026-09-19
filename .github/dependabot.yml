@@ -1,8 +1,0 @@
-# Keeps the commit pins in the workflows current: each action is pinned
-# to a full SHA with the version as a comment, and Dependabot bumps both.
-version: 2
-updates:
-  - package-ecosystem: github-actions
-    directory: /
-    schedule:
-      interval: weekly
